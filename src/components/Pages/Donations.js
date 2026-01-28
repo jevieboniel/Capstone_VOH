@@ -69,9 +69,9 @@
     );
 
     const Progress = ({ value = 0 }) => (
-    <div className="w-full h-2 rounded-full bg-gray-100 overflow-hidden">
+    <div className="w-full h-3 rounded-full bg-gray-200 overflow-hidden shadow-inner">
         <div
-        className="h-full rounded-full bg-blue-500 transition-all"
+        className="h-full rounded-full bg-gradient-to-r from-purple-500 via-violet-500 to-indigo-500 transition-all shadow-lg"
         style={{ width: `${Math.min(Math.max(value, 0), 100)}%` }}
         />
     </div>
@@ -83,7 +83,7 @@
     {
         id: 1,
         amount: 500,
-        currency: "USD",
+        currency: "PHP",
         date: "2025-09-03",
         time: "14:23:45",
         type: "One-time",
@@ -249,96 +249,115 @@
     const OverviewView = () => (
         <div className="space-y-6">
         {/* Recent Donations */}
-        <Card className="border-blue-200 bg-blue-50">
-            <CardContent>
-            <div className="flex items-start gap-4">
-                <div className="shrink-0 rounded-full bg-blue-600 p-3">
-                <Bell className="h-5 w-5 text-white" />
+        <Card className="border-blue-200 bg-gradient-to-br from-blue-50 via-blue-50 to-indigo-50 shadow-lg">
+            <CardContent className="p-6">
+            <div className="flex items-start gap-4 mb-5">
+                <div className="shrink-0 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 p-3.5 shadow-lg">
+                <Bell className="h-6 w-6 text-white" />
                 </div>
-
                 <div className="flex-1">
-                <div className="text-sm sm:text-base font-semibold text-blue-900">
+                <h3 className="text-lg sm:text-xl font-bold text-blue-900 mb-1">
                     Recent Donations Received
+                </h3>
+                <p className="text-sm text-blue-700">Latest contributions from our supporters</p>
                 </div>
+            </div>
 
-                <div className="mt-4 space-y-3">
-                    {mockDonations.slice(0, 3).map((donation) => (
-                    <div key={donation.id} className="flex items-center justify-between gap-4 text-sm">
-                        <div className="flex min-w-0 items-center gap-3">
-                        <CheckCircle className="h-4 w-4 text-green-600" />
-                        <span className="truncate text-gray-800">Anonymous Donor</span>
-                        <Badge className="text-xs">{donation.method}</Badge>
+            <div className="space-y-3">
+                {mockDonations.slice(0, 3).map((donation, index) => (
+                <div 
+                    key={donation.id} 
+                    className="bg-white rounded-xl p-4 shadow-sm border border-blue-100 hover:shadow-md hover:border-blue-200 transition-all duration-200"
+                >
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <div className="shrink-0 w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
+                        <CheckCircle className="h-5 w-5 text-green-600" />
                         </div>
-                        <span className="shrink-0 font-semibold text-blue-900">
+                        <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-gray-900 text-sm sm:text-base">Anonymous Donor</p>
+                        <div className="flex items-center gap-2 flex-wrap mt-1">
+                            <Badge className="text-xs bg-blue-100 text-blue-700 border-blue-200">
+                            {donation.method}
+                            </Badge>
+                            <span className="text-xs text-gray-500">{donation.purpose}</span>
+                        </div>
+                        </div>
+                    </div>
+                    <div className="flex items-center justify-between sm:justify-end gap-3">
+                        <span className="font-bold text-lg sm:text-xl text-blue-900">
                         {formatCurrency(donation.amount, donation.currency)}
                         </span>
                     </div>
-                    ))}
+                    </div>
                 </div>
-                </div>
+                ))}
             </div>
             </CardContent>
         </Card>
 
         {/* Key Metrics */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-            <Card>
-            <CardContent>
+            <Card className="hover:shadow-lg transition-shadow duration-200 border-l-4 border-l-green-500">
+            <CardContent className="p-5">
                 <div className="flex items-center justify-between">
-                <div>
-                    <p className="text-xs sm:text-sm font-medium text-gray-600">Total Donations</p>
-                    <p className="text-2xl sm:text-3xl font-bold text-gray-900">{fmtPeso(totalDonations)}</p>
-                    <p className="text-xs sm:text-sm text-green-600">+15% from last month</p>
+                <div className="flex-1">
+                    <p className="text-xs sm:text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">Total Donations</p>
+                    <p className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">{fmtPeso(totalDonations)}</p>
+                    <p className="text-xs sm:text-sm text-green-600 font-medium flex items-center gap-1">
+                    <TrendingUp className="h-3 w-3" />
+                    +15% from last month
+                    </p>
                 </div>
-                <div className="bg-green-100 p-2 sm:p-3 rounded-full">
-                    <DollarSign className="h-5 w-5 sm:h-6 sm:w-6 text-green-600" />
+                <div className="bg-gradient-to-br from-green-500 to-emerald-600 p-3 sm:p-4 rounded-2xl shadow-lg">
+                    <DollarSign className="h-6 w-6 sm:h-7 sm:w-7 text-white" />
                 </div>
                 </div>
             </CardContent>
             </Card>
 
-            <Card>
-            <CardContent>
+            <Card className="hover:shadow-lg transition-shadow duration-200 border-l-4 border-l-blue-500">
+            <CardContent className="p-5">
                 <div className="flex items-center justify-between">
-                <div>
-                    <p className="text-xs sm:text-sm font-medium text-gray-600">Transactions</p>
-                    <p className="text-2xl sm:text-3xl font-bold text-gray-900">{totalTransactions}</p>
-                    <p className="text-xs sm:text-sm text-blue-600">{recurringDonors} recurring</p>
+                <div className="flex-1">
+                    <p className="text-xs sm:text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">Transactions</p>
+                    <p className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">{totalTransactions}</p>
+                    <p className="text-xs sm:text-sm text-blue-600 font-medium">{recurringDonors} recurring donors</p>
                 </div>
-                <div className="bg-blue-100 p-2 sm:p-3 rounded-full">
-                    <Users className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600" />
+                <div className="bg-gradient-to-br from-blue-500 to-indigo-600 p-3 sm:p-4 rounded-2xl shadow-lg">
+                    <Users className="h-6 w-6 sm:h-7 sm:w-7 text-white" />
                 </div>
                 </div>
             </CardContent>
             </Card>
 
-            <Card>
-            <CardContent>
+            <Card className="hover:shadow-lg transition-shadow duration-200 border-l-4 border-l-purple-500">
+            <CardContent className="p-5">
                 <div className="flex items-center justify-between">
-                <div>
-                    <p className="text-xs sm:text-sm font-medium text-gray-600">Monthly Goal</p>
-                    <p className="text-2xl sm:text-3xl font-bold text-gray-900">{fmtPeso(currentMonthTotal)}</p>
-                    <p className="text-xs sm:text-sm text-purple-600">{goalProgress.toFixed(0)}% of goal</p>
+                <div className="flex-1">
+                    <p className="text-xs sm:text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">Monthly Goal</p>
+                    <p className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">{fmtPeso(currentMonthTotal)}</p>
+                    <p className="text-xs sm:text-sm text-purple-600 font-medium">{goalProgress.toFixed(0)}% achieved</p>
                 </div>
-                <div className="bg-purple-100 p-2 sm:p-3 rounded-full">
-                    <Target className="h-5 w-5 sm:h-6 sm:w-6 text-purple-600" />
+                <div className="bg-gradient-to-br from-purple-500 to-violet-600 p-3 sm:p-4 rounded-2xl shadow-lg">
+                    <Target className="h-6 w-6 sm:h-7 sm:w-7 text-white" />
                 </div>
                 </div>
             </CardContent>
             </Card>
 
-            <Card>
-            <CardContent>
+            <Card className="hover:shadow-lg transition-shadow duration-200 border-l-4 border-l-orange-500">
+            <CardContent className="p-5">
                 <div className="flex items-center justify-between">
-                <div>
-                    <p className="text-xs sm:text-sm font-medium text-gray-600">Avg Donation</p>
-                    <p className="text-2xl sm:text-3xl font-bold text-gray-900">
+                <div className="flex-1">
+                    <p className="text-xs sm:text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">Avg Donation</p>
+                    <p className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">
                     {fmtPeso(Math.round(totalDonations / mockDonations.length))}
                     </p>
-                    <p className="text-xs sm:text-sm text-orange-600">Per transaction</p>
+                    <p className="text-xs sm:text-sm text-orange-600 font-medium">Per transaction</p>
                 </div>
-                <div className="bg-orange-100 p-2 sm:p-3 rounded-full">
-                    <Heart className="h-5 w-5 sm:h-6 sm:w-6 text-orange-600" />
+                <div className="bg-gradient-to-br from-orange-500 to-amber-600 p-3 sm:p-4 rounded-2xl shadow-lg">
+                    <Heart className="h-6 w-6 sm:h-7 sm:w-7 text-white" />
                 </div>
                 </div>
             </CardContent>
@@ -346,24 +365,36 @@
         </div>
 
         {/* Monthly Goal Progress */}
-        <Card>
-            <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-                <Target className="h-5 w-5 text-gray-900" />
-                October 2025 Goal Progress
+        <Card className="bg-gradient-to-br from-purple-50 via-white to-blue-50 border-purple-200 shadow-lg">
+            <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-3">
+                <div className="bg-gradient-to-br from-purple-500 to-violet-600 p-2.5 rounded-xl shadow-md">
+                <Target className="h-5 w-5 text-white" />
+                </div>
+                <span className="text-lg sm:text-xl">October 2025 Goal Progress</span>
             </CardTitle>
 
-            <div className="text-sm sm:text-base font-semibold text-blue-600">
+            <div className="text-base sm:text-lg font-bold text-purple-600 bg-purple-100 px-4 py-2 rounded-lg">
                 {fmtPeso(currentMonthTotal)} / {fmtPeso(monthlyGoal)}
             </div>
             </CardHeader>
 
-            <CardContent className="space-y-3">
-            <Progress value={goalProgress} />
-            <p className="text-xs sm:text-sm text-gray-600">
-                {goalProgress.toFixed(0)}% complete • Exceeded by{" "}
-                {fmtPeso(Math.max(currentMonthTotal - monthlyGoal, 0))}
-            </p>
+            <CardContent className="space-y-4 pt-4">
+            <div className="space-y-2">
+                <Progress value={goalProgress} />
+                <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-600 font-medium">{goalProgress.toFixed(0)}% Complete</span>
+                <span className="text-purple-600 font-semibold">
+                    Exceeded by {fmtPeso(Math.max(currentMonthTotal - monthlyGoal, 0))}
+                </span>
+                </div>
+            </div>
+            <div className="bg-green-50 border border-green-200 rounded-lg p-3 flex items-center gap-3">
+                <CheckCircle className="h-5 w-5 text-green-600 shrink-0" />
+                <p className="text-sm text-green-800 font-medium">
+                🎉 Congratulations! You've exceeded this month's goal!
+                </p>
+            </div>
             </CardContent>
         </Card>
 
@@ -445,27 +476,30 @@
 
     const DonationsView = () => (
         <div className="space-y-6">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between bg-white p-5 rounded-xl shadow-sm border border-gray-200">
             <div>
-            <h2 className="text-xl font-semibold text-gray-900">All Donations</h2>
-            <p className="text-sm text-gray-600">View and track all donation records</p>
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2">
+                <Gift className="h-6 w-6 text-blue-600" />
+                All Donations
+            </h2>
+            <p className="text-sm text-gray-600 mt-1">View and track all donation records</p>
             </div>
 
-            <UiButton variant="outline" size="medium" onClick={handleExportData} className="flex items-center gap-2">
+            <UiButton variant="outline" size="medium" onClick={handleExportData} className="flex items-center gap-2 hover:bg-blue-50 hover:border-blue-300">
             <Download className="h-4 w-4" />
-            Export
+            Export CSV
             </UiButton>
         </div>
 
-        <Card>
-            <CardContent>
+        <Card className="shadow-md">
+            <CardContent className="p-4">
             <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                 <Input
-                placeholder="Search by purpose or payment method..."
+                placeholder="🔍 Search by purpose or payment method..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
+                className="pl-12 h-12 text-base border-2 focus:border-blue-400"
                 />
             </div>
             </CardContent>
@@ -473,45 +507,53 @@
 
         <div className="space-y-4">
             {filteredDonations.map((donation) => (
-            <Card key={donation.id}>
-                <CardContent>
+            <Card key={donation.id} className="hover:shadow-xl transition-all duration-200 border-l-4 border-l-blue-500">
+                <CardContent className="p-5 sm:p-6">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="flex items-start gap-4 sm:items-center">
-                    <div className="rounded-full bg-green-100 p-3">
-                        <DollarSign className="h-5 w-5 text-green-600" />
+                    <div className="flex items-start gap-4 sm:items-center flex-1 min-w-0">
+                    <div className="shrink-0 rounded-2xl bg-gradient-to-br from-green-500 to-emerald-600 p-3.5 shadow-lg">
+                        <DollarSign className="h-6 w-6 text-white" />
                     </div>
 
-                    <div className="min-w-0">
-                        <div className="font-medium text-gray-900">Anonymous Donor</div>
+                    <div className="min-w-0 flex-1">
+                        <div className="font-bold text-gray-900 text-base sm:text-lg mb-1">Anonymous Donor</div>
 
-                        <div className="mt-1 flex flex-col gap-1 text-sm text-gray-600 sm:flex-row sm:items-center sm:gap-4">
+                        <div className="flex flex-col gap-2 text-sm text-gray-600">
                         <div className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4 text-gray-400" />
-                            <span>
-                            {new Date(donation.date).toLocaleDateString()} {donation.time}
+                            <Calendar className="h-4 w-4 text-blue-500 shrink-0" />
+                            <span className="font-medium">
+                            {new Date(donation.date).toLocaleDateString()} • {donation.time}
                             </span>
                         </div>
-                        <div className="truncate">Payment ID: {donation.paymentId}</div>
+                        <div className="flex items-center gap-2">
+                            <span className="text-xs text-gray-500 font-mono bg-gray-100 px-2 py-1 rounded">
+                            {donation.paymentId}
+                            </span>
+                        </div>
                         </div>
 
-                        <div className="mt-2 flex flex-wrap items-center gap-2">
-                        <Badge className="text-xs">{donation.method}</Badge>
-                        <span className="text-xs text-gray-600">{donation.purpose}</span>
+                        <div className="mt-3 flex flex-wrap items-center gap-2">
+                        <Badge className="text-xs bg-blue-100 text-blue-700 border-blue-200 font-semibold">
+                            {donation.method}
+                        </Badge>
+                        <span className="text-xs text-gray-600 bg-gray-100 px-2.5 py-1 rounded-full font-medium">
+                            {donation.purpose}
+                        </span>
                         </div>
                     </div>
                     </div>
 
-                    <div className="text-left sm:text-right">
-                    <div className="text-xl font-bold text-gray-900">
+                    <div className="text-left sm:text-right shrink-0">
+                    <div className="text-2xl sm:text-3xl font-bold text-blue-900 mb-2">
                         {formatCurrency(donation.amount, donation.currency)}
                     </div>
 
-                    <div className="mt-2 flex flex-wrap gap-2 sm:justify-end">
-                        <span className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium ${getTypeColor(donation.type)}`}>
+                    <div className="flex flex-wrap gap-2 sm:justify-end">
+                        <span className={`inline-flex items-center rounded-full border px-3 py-1.5 text-xs font-semibold shadow-sm ${getTypeColor(donation.type)}`}>
                         {donation.type}
                         </span>
-                        <span className="inline-flex items-center rounded-full border border-green-200 bg-green-100 px-3 py-1 text-xs font-medium text-green-800">
-                        {donation.status}
+                        <span className="inline-flex items-center rounded-full border border-green-300 bg-green-100 px-3 py-1.5 text-xs font-semibold text-green-800 shadow-sm">
+                        ✓ {donation.status}
                         </span>
                     </div>
                     </div>
