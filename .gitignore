@@ -21,3 +21,10 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+
+
+#  ADD GIT IGNORE FILES
+backend/node_modules
+backend/.env
+package-lock.json
