@@ -1,6 +1,5 @@
     import React, { useMemo, useState, useEffect } from "react";
     import {
-    Plus,
     Target,
     Calendar,
     CheckCircle,
@@ -13,44 +12,16 @@
     Eye,
     Edit,
     User,
-    Save,
-    X,
     ChevronDown,
     ChevronRight,
-    FileText,
     } from "lucide-react";
     import Button from "../UI/Button";
+    import Milestonemodal from "../Modals/MilestoneModal";
+    import { UI } from "../UI/uiTokens";
+    import UpdateMilestoneModal from "../Modals/UpdateMilestoneModal";
+    import MilestoneDetailsModal from "../Modals/MilestoneDetailsModal";
 
-    /* ===========================
-    ✅ UI TOKENS (MATCH DASHBOARD)
-    =========================== */
-    const UI = {
-    page: "p-6 bg-gray-50 min-h-screen space-y-6",
-    container: "space-y-6",
-    card: "bg-white rounded-xl shadow-sm border border-gray-200",
-    cardPad: "p-5",
-    cardHeader: "px-5 py-4 border-b border-gray-100 flex items-center justify-between gap-2",
-    cardContent: "px-5 py-5",
-    btnPrimary:
-        "inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 text-white text-sm font-medium shadow-sm hover:bg-blue-700 transition px-4 py-2.5",
-    btnOutline:
-        "inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white text-gray-800 text-sm font-medium hover:bg-gray-50 transition px-4 py-2.5",
-    btnSmallOutline:
-        "inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white text-gray-700 text-xs font-medium hover:bg-gray-50 transition px-3 py-2",
-    iconBtn: "h-9 w-9 inline-flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-600",
-    input:
-        "w-full px-4 py-2.5 rounded-lg bg-gray-100 border border-transparent focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none text-sm",
-    select:
-        "w-full px-4 py-2.5 rounded-lg bg-gray-100 border border-transparent focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none text-sm",
-    textarea:
-        "w-full px-4 py-2.5 rounded-lg bg-gray-100 border border-transparent focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none text-sm min-h-[110px] resize-none",
-    modalOverlay: "fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4",
-    modalBox: "w-full bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden",
-    modalHeader: "px-5 py-4 border-b border-gray-100 flex items-center justify-between",
-    modalBody: "px-5 py-5",
-    modalFooter: "px-5 py-4 border-t border-gray-100 flex items-center justify-end gap-3",
-    };
-
+    
     /* ----------------- Helpers (status + colors) ----------------- */
     const getStatusColor = (status) => {
     switch (status) {
@@ -113,7 +84,7 @@
         .slice(0, 2);
 
     /* ===========================
-    ✅ NORMALIZERS (MAKE STATS MATCH ACROSS FILES)
+    NORMALIZERS (MAKE STATS MATCH ACROSS FILES)
     =========================== */
     const normalizeCategory = (c) => {
     const v = String(c || "").trim().toLowerCase();
@@ -572,7 +543,7 @@
                                     <p className="mt-1 text-xs text-gray-600">{m.category}</p>
                                     </div>
                                 </div>
-
+                                
                                 <span
                                     className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium ${getStatusColor(
                                     m.status
@@ -632,414 +603,45 @@
         </div>
 
         {/* Add Milestone Modal */}
-        {openModal && <AddMilestoneModal onClose={handleCloseModal} onSave={handleSaveMilestone} children={children} />}
+        {openModal && <Milestonemodal 
+        onClose={handleCloseModal} 
+        onSave={handleSaveMilestone} 
+        children={children}
+        />
+        }
 
         {/* Details Modal */}
         {selectedMilestone && (
-            <div className={UI.modalOverlay}>
-            <div className={`${UI.modalBox} max-w-2xl`}>
-                <div className={UI.modalHeader}>
-                <div className="flex items-center gap-2">
-                    <FileText className="h-5 w-5" />
-                    <h2 className="text-base font-semibold text-gray-900">Milestone Details</h2>
-                </div>
-                <button onClick={closeDetails} className={UI.iconBtn} type="button">
-                    <X className="h-4 w-4" />
-                </button>
-                </div>
-
-                <div className={`${UI.modalBody} space-y-4`}>
-                <div className="flex items-start gap-4">
-                    <div className="grid h-16 w-16 place-items-center rounded-full bg-gray-100 text-base font-semibold text-gray-700">
-                    {initials(selectedMilestone.child)}
-                    </div>
-
-                    <div className="flex-1">
-                    <h3 className="font-medium text-gray-900">{selectedMilestone.child}</h3>
-                    <div className="mt-1 flex items-center gap-2 text-sm text-gray-600">
-                        {(() => {
-                        const meta = getCategoryMeta(selectedMilestone.category);
-                        const Icon = meta.icon;
-                        return (
-                            <>
-                            <Icon className={`h-4 w-4 ${meta.chipIcon}`} />
-                            <span>{selectedMilestone.category}</span>
-                            </>
-                        );
-                        })()}
-                    </div>
-                    </div>
-
-                    <span
-                    className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium ${getStatusColor(
-                        selectedMilestone.status
-                    )}`}
-                    >
-                    {getStatusIcon(selectedMilestone.status)}
-                    <span>{selectedMilestone.status}</span>
-                    </span>
-                </div>
-
-                <div className="h-px bg-gray-200" />
-
-                <div>
-                    <h4 className="mb-2 font-medium text-gray-900">{selectedMilestone.milestone}</h4>
-                    <p className="text-sm text-gray-700">{selectedMilestone.description || "—"}</p>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                    <div>
-                    <p className="text-sm font-medium text-gray-600">Assigned By</p>
-                    <p className="text-sm text-gray-900">{selectedMilestone.assignedBy || "—"}</p>
-                    </div>
-                    <div>
-                    <p className="text-sm font-medium text-gray-600">Target Date</p>
-                    <p className="text-sm text-gray-900">{selectedMilestone.targetDate ? formatDate(selectedMilestone.targetDate) : "—"}</p>
-                    </div>
-                    <div>
-                    <p className="text-sm font-medium text-gray-600">Created Date</p>
-                    <p className="text-sm text-gray-900">{selectedMilestone.createdDate ? formatDate(selectedMilestone.createdDate) : "—"}</p>
-                    </div>
-                    <div>
-                    <p className="text-sm font-medium text-gray-600">Last Updated</p>
-                    <p className="text-sm text-gray-900">{selectedMilestone.lastUpdated ? formatDate(selectedMilestone.lastUpdated) : "—"}</p>
-                    </div>
-                </div>
-
-                <div>
-                    <div className="mb-2 flex items-center justify-between">
-                    <p className="text-sm font-medium text-gray-600">Progress</p>
-                    <p className="text-lg font-bold text-gray-900">{clamp(selectedMilestone.progress)}%</p>
-                    </div>
-                    <ProgressBar value={selectedMilestone.progress} height="h-3" />
-                </div>
-
-                {selectedMilestone.objectives?.length > 0 && (
-                    <div>
-                    <p className="mb-2 text-sm font-medium text-gray-600">Objectives</p>
-                    <ul className="space-y-1">
-                        {selectedMilestone.objectives.map((obj, idx) => (
-                        <li key={idx} className="flex items-start gap-2 text-sm text-gray-700">
-                            <span className="text-blue-600">•</span>
-                            <span>{obj}</span>
-                        </li>
-                        ))}
-                    </ul>
-                    </div>
-                )}
-
-                {selectedMilestone.notes && (
-                    <div>
-                    <p className="mb-2 text-sm font-medium text-gray-600">Current Notes</p>
-                    <div className="rounded-lg bg-blue-50 p-3 text-sm text-gray-700">{selectedMilestone.notes}</div>
-                    </div>
-                )}
-                </div>
-            </div>
-            </div>
+        <MilestoneDetailsModal
+            UI={UI}
+            selectedMilestone={selectedMilestone}
+            closeDetails={closeDetails}
+            initials={initials}
+            getCategoryMeta={getCategoryMeta}
+            getStatusColor={getStatusColor}
+            getStatusIcon={getStatusIcon}
+            formatDate={formatDate}
+            clamp={clamp}
+            ProgressBar={ProgressBar}
+        />
         )}
 
         {/* Update Modal */}
-        {editingMilestone && (
-            <div className={UI.modalOverlay}>
-            <div className={`${UI.modalBox} max-w-xl`}>
-                <div className={UI.modalHeader}>
-                <div>
-                    <div className="flex items-center gap-2">
-                    <Edit className="h-5 w-5" />
-                    <h2 className="text-base font-semibold text-gray-900">Update Milestone</h2>
-                    </div>
-                    <p className="mt-1 text-sm text-gray-600">Update progress, status, and notes for this milestone.</p>
-                </div>
-                <button onClick={closeUpdate} className={UI.iconBtn} type="button">
-                    <X className="h-4 w-4" />
-                </button>
-                </div>
-
-                <div className="max-h-[75vh] overflow-y-auto px-5 py-5 space-y-4">
-                <div>
-                    <p className="text-sm font-medium text-gray-600">Child</p>
-                    <p className="text-sm text-gray-900">{editingMilestone.child}</p>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">Category</label>
-                    <select
-                        className={UI.select}
-                        value={editingMilestone.category}
-                        onChange={(e) => setEditingMilestone((p) => ({ ...p, category: e.target.value }))}
-                    >
-                        <option value="Physical">Physical</option>
-                        <option value="Educational">Educational</option>
-                        <option value="Social">Social</option>
-                        <option value="Emotional">Emotional</option>
-                    </select>
-                    </div>
-
-                    <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">Status</label>
-                    <select
-                        className={UI.select}
-                        value={editingMilestone.status}
-                        onChange={(e) => setEditingMilestone((p) => ({ ...p, status: e.target.value }))}
-                    >
-                        <option value="Planned">Planned</option>
-                        <option value="In Progress">In Progress</option>
-                        <option value="At Risk">At Risk</option>
-                        <option value="Completed">Completed</option>
-                    </select>
-                    </div>
-                </div>
-
-                <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">Milestone Title</label>
-                    <input
-                    className={UI.input}
-                    value={editingMilestone.milestone}
-                    onChange={(e) => setEditingMilestone((p) => ({ ...p, milestone: e.target.value }))}
-                    placeholder="Milestone title"
-                    />
-                </div>
-
-                <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">Description</label>
-                    <textarea
-                    className={UI.textarea}
-                    rows={3}
-                    value={editingMilestone.description || ""}
-                    onChange={(e) => setEditingMilestone((p) => ({ ...p, description: e.target.value }))}
-                    />
-                </div>
-
-                <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">Progress: {clamp(editingMilestone.progress)}%</label>
-                    <input
-                    type="range"
-                    min="0"
-                    max="100"
-                    value={clamp(editingMilestone.progress)}
-                    onChange={(e) =>
-                        setEditingMilestone((p) => ({
-                        ...p,
-                        progress: parseInt(e.target.value, 10) || 0,
-                        }))
-                    }
-                    className="w-full"
-                    />
-                    <ProgressBar value={editingMilestone.progress} height="h-2" />
-                </div>
-
-                <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">Target Date</label>
-                    <input
-                    type="date"
-                    className={UI.input}
-                    value={editingMilestone.targetDate || ""}
-                    onChange={(e) => setEditingMilestone((p) => ({ ...p, targetDate: e.target.value }))}
-                    />
-                </div>
-
-                <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">Objectives</label>
-                    {(editingMilestone.objectives || []).map((obj, idx) => (
-                    <div key={idx} className="flex gap-2">
-                        <input
-                        className={UI.input}
-                        value={obj}
-                        onChange={(e) => updateEditingObjective(idx, e.target.value)}
-                        placeholder={`Objective ${idx + 1}`}
-                        />
-                        {(editingMilestone.objectives || []).length > 1 && (
-                        <button
-                            onClick={() => removeEditingObjective(idx)}
-                            className="h-10 w-10 inline-flex items-center justify-center rounded-lg border border-gray-300 hover:bg-gray-50"
-                            type="button"
-                        >
-                            <X className="h-4 w-4" />
-                        </button>
-                        )}
-                    </div>
-                    ))}
-                    <button type="button" onClick={addEditingObjective} className={UI.btnOutline}>
-                    <Plus className="h-4 w-4" />
-                    Add Objective
-                    </button>
-                </div>
-
-                <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">Notes</label>
-                    <textarea
-                    className={UI.textarea}
-                    rows={3}
-                    value={editingMilestone.notes || ""}
-                    onChange={(e) => setEditingMilestone((p) => ({ ...p, notes: e.target.value }))}
-                    />
-                </div>
-                </div>
-
-                <div className={UI.modalFooter}>
-                <button onClick={closeUpdate} className={UI.btnOutline} type="button">
-                    Cancel
-                </button>
-                <button onClick={saveUpdate} className={UI.btnPrimary} type="button">
-                    <Save className="h-4 w-4" />
-                    Save Changes
-                </button>
-                </div>
-            </div>
-            </div>
-        )}
+        <UpdateMilestoneModal
+            UI={UI}
+            editingMilestone={editingMilestone}
+            setEditingMilestone={setEditingMilestone}
+            closeUpdate={closeUpdate}
+            saveUpdate={saveUpdate}
+            clamp={clamp}
+            ProgressBar={ProgressBar}
+            updateEditingObjective={updateEditingObjective}
+            addEditingObjective={addEditingObjective}
+            removeEditingObjective={removeEditingObjective}
+            />
         </div>
     );
     };
 
     export default Development;
 
-    /* ==========================================================
-    AddMilestoneModal (DB Children dropdown)
-    ========================================================== */
-    const AddMilestoneModal = ({ onClose, onSave, children = [] }) => {
-    const [childId, setChildId] = useState("");
-    const [category, setCategory] = useState("");
-    const [title, setTitle] = useState("");
-    const [description, setDescription] = useState("");
-    const [targetDate, setTargetDate] = useState("");
-    const [notes, setNotes] = useState("");
-    const [objectives, setObjectives] = useState([""]);
-
-    const addObjective = () => setObjectives([...objectives, ""]);
-
-    const updateObjective = (value, index) => {
-        const list = [...objectives];
-        list[index] = value;
-        setObjectives(list);
-    };
-
-    const submitForm = () => {
-        if (!childId || !category || !title || !targetDate) {
-        alert("Please fill required fields");
-        return;
-        }
-
-        onSave({
-        childId: Number(childId),
-        category,
-        title,
-        description,
-        targetDate,
-        objectives,
-        notes,
-        });
-    };
-
-    return (
-        <div className={UI.modalOverlay}>
-        <div className={`${UI.modalBox} max-w-2xl`}>
-            <div className={UI.modalHeader}>
-            <h2 className="text-lg font-semibold flex items-center gap-2">
-                <Target className="h-5 w-5 text-purple-600" />
-                Add New Milestone
-            </h2>
-            <button onClick={onClose} className={UI.iconBtn} type="button">
-                <X className="h-4 w-4" />
-            </button>
-            </div>
-
-            <div className={`${UI.modalBody} space-y-4 max-h-[75vh] overflow-y-auto`}>
-            {/* FIELDS */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Child *</label>
-                <select value={childId} onChange={(e) => setChildId(e.target.value)} className={UI.select}>
-                    <option value="">Select child</option>
-                    {children.map((c) => (
-                    <option key={c.id} value={c.id}>
-                        {c.fullName || c.name}
-                    </option>
-                    ))}
-                </select>
-                </div>
-
-                <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Category *</label>
-                <select value={category} onChange={(e) => setCategory(e.target.value)} className={UI.select}>
-                    <option value="">Select category</option>
-                    <option value="Physical">Physical</option>
-                    <option value="Educational">Educational</option>
-                    <option value="Social">Social</option>
-                    <option value="Emotional">Emotional</option>
-                </select>
-                </div>
-            </div>
-
-            <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Milestone Title *</label>
-                <input
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="e.g. Reading Level 3"
-                className={UI.input}
-                />
-            </div>
-
-            <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Description</label>
-                <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Describe milestone..."
-                className={UI.textarea}
-                />
-            </div>
-
-            <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Target Date *</label>
-                <input type="date" value={targetDate} onChange={(e) => setTargetDate(e.target.value)} className={UI.input} />
-            </div>
-
-            <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Objectives</label>
-                {objectives.map((obj, i) => (
-                <input
-                    key={i}
-                    value={obj}
-                    onChange={(e) => updateObjective(e.target.value, i)}
-                    placeholder={`Objective ${i + 1}`}
-                    className={UI.input}
-                />
-                ))}
-                <button onClick={addObjective} className={UI.btnOutline} type="button">
-                <Plus className="h-4 w-4" />
-                Add Objective
-                </button>
-            </div>
-
-            <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Initial Notes</label>
-                <textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Additional notes..." className={UI.textarea} />
-            </div>
-            </div>
-
-            <div className={UI.modalFooter}>
-            <Button
-                onClick={onClose}
-                variant="outline"
-                type="button"
-                className="px-5 py-2"
-                >
-                Cancel
-            </Button>
-            <Button
-                onClick={submitForm}
-                variant="primary"
-                type="button"
-                className="px-5 py-2"
-                >
-                Create Milestone
-            </Button>
-            </div>
-        </div>
-        </div>
-    );
-    };
