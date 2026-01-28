@@ -1,100 +1,149 @@
+// -----------------------------------------
+// ROUTES
+// -----------------------------------------
 export const ROUTES = [
-    {
-      path: '/dashboard',
-      name: 'Dashboard',
-      icon: 'ChartBarIcon',
-      component: 'Dashboard',
-      showInNav: true
-    },
-    {
-        path: '/users',
-        name: 'Users',
-        icon: 'UsersIcon',
-        component: 'Users',
-        showInNav: true
-      },
-      {
-        path: '/settings',
-        name: 'Settings',
-        icon: 'CogIcon',
-        component: 'Settings',
-        showInNav: true
-      },
-      {
-        path: '/profile',
-        name: 'Profile',
-        icon: 'UserIcon',
-        component: 'Profile',
-        showInNav: false
-      },
-    {
-      category: 'Content',
-      items: [
-        
-        {
-          path: '/products',
-          name: 'Products',
-          icon: 'ShoppingBagIcon',
-          component: 'Products',
-          showInNav: true
-        }
-      ]
-    },
-    // {
-    //   category: 'Settings',
-    //   items: [
-        
-        
-    //   ]
-    // }
-  ];
-  
-  // Icon mapping
-  export const ICON_MAP = {
-    ChartBarIcon: 'M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z',
-    UsersIcon: 'M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z',
-    ShoppingBagIcon: 'M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z',
-    CogIcon: 'M4.5 12a7.5 7.5 0 0015 0m-15 0a7.5 7.5 0 1115 0m-15 0a7.5 7.5 0 0115 0',
-    UserIcon: 'M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z'
-  };
-  
-  // Helper function to get all routes for routing
-  export const getAllRoutes = () => {
-    const routes = [];
-    
-    ROUTES.forEach(item => {
-      if (item.path) {
-        // Standalone route
-        routes.push(item);
-      } else if (item.items) {
-        // Category with items
-        routes.push(...item.items);
-      }
-    });
-    
-    return routes;
-  };
-  
-  // Helper function to get navigation items for sidebar
-  export const getNavItems = () => {
-    const navItems = [];
-    
-    ROUTES.forEach(item => {
-      if (item.path && item.showInNav) {
-        // Standalone route for sidebar
-        navItems.push({
-          ...item,
-          isStandalone: true
-        });
-      } else if (item.category && item.items) {
-        // Category with items
-        navItems.push({
-          ...item,
-          isCategory: true
-        });
-      }
-    });
-    
-    return navItems;
-  };
-  
+  {
+    path: '/profile',
+    name: 'Profile',
+    icon: 'UserCircleIcon', // profile avatar (not in sidebar)
+    component: 'Profile',
+    showInNav: false,
+  },
+  {
+    path: '/dashboard',
+    name: 'Dashboard',
+    icon: 'HomeIcon', // house icon
+    component: 'Dashboard',
+    showInNav: true,
+  },
+  {
+    path: '/children',
+    name: 'Children',
+    icon: 'UsersIcon', // people icon
+    component: 'Children',
+    showInNav: true,
+  },
+  {
+    path: '/children/development',
+    name: 'Development',
+    icon: 'TrendingUpIcon', // arrow going up/right
+    component: 'Development',
+    showInNav: true,
+  },
+  {
+    path: '/children/donations',
+    name: 'Donations',
+    icon: 'DollarSignIcon', // $
+    component: 'Donations',
+    showInNav: true,
+  },
+  {
+    path: '/children/reports',
+    name: 'Reports',
+    icon: 'DocumentIcon', // document with text
+    component: 'Reports',
+    showInNav: true,
+  },
+  {
+    path: '/children/alerts',
+    name: 'Alerts',
+    icon: 'AlertTriangleIcon', // warning triangle
+    component: 'Alerts',
+    showInNav: true,
+  },
+  {
+    path: '/users',
+    name: 'Users',
+    icon: 'ShieldIcon', // shield
+    component: 'Users',
+    showInNav: true,
+  },
+  {
+    path: '/settings',
+    name: 'Settings',
+    icon: 'Cog6ToothIcon', // settings cog
+    component: 'Settings',
+    showInNav: true,
+  },
+];
+
+// -----------------------------------------
+// ICON MAP (SVG path "d" attributes)
+// -----------------------------------------
+// Use like: <path d={ICON_MAP[route.icon]} />
+export const ICON_MAP = {
+  // Home
+  HomeIcon:
+    'M3 10.5L12 3l9 7.5V21a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1V10.5z',
+
+  // Children list main (use your original UsersIcon – nice and detailed)
+  UsersIcon:
+    'M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0z',
+
+  // Development (arrow trending up)
+  TrendingUpIcon:
+    'M3 17l6-6 4 4 8-8',
+
+  // Donations ($)
+  DollarSignIcon:
+    'M12 2v20M16 8H10a2 2 0 0 0 0 4h4a2 2 0 0 1 0 4H8',
+
+  // Reports (document with some lines)
+  DocumentIcon:
+    'M9 3.75h6.75L21 9v11.25A2.25 2.25 0 0 1 18.75 22.5H9A2.25 2.25 0 0 1 6.75 20.25V6A2.25 2.25 0 0 1 9 3.75zM12 11.25h5.25M12 14.25h3.75M12 17.25h2.25',
+
+  // Alerts (triangle with !)
+  AlertTriangleIcon:
+    'M12 9v4m0 4h.01M3 19h18L12 3z',
+
+  // Users (shield)
+  ShieldIcon:
+    'M12 3l7 4v6c0 5-3.5 9-7 9s-7-4-7-9V7l7-4z',
+
+  // Settings (cog)
+  Cog6ToothIcon:
+    'M12 3a2 2 0 0 1 2 2v1.2a7 7 0 0 1 2.4.98l.85-.85a2 2 0 1 1 2.8 2.8l-.85.85a7 7 0 0 1 .98 2.4H19a2 2 0 1 1 0 4h-1.2a7 7 0 0 1-.98 2.4l.85.85a2 2 0 1 1-2.8 2.8l-.85-.85a7 7 0 0 1-2.4.98V19a2 2 0 1 1-4 0v-1.2a7 7 0 0 1-2.4-.98l-.85.85a2 2 0 1 1-2.8-2.8l.85-.85a7 7 0 0 1-.98-2.4H5a2 2 0 1 1 0-4h1.2a7 7 0 0 1 .98-2.4l-.85-.85a2 2 0 1 1 2.8-2.8l.85.85A7 7 0 0 1 12 6.2V5a2 2 0 0 1 2-2z',
+
+  // Profile (circle + shoulders)
+  UserCircleIcon:
+    'M12 6.75a3 3 0 1 1 0 6 3 3 0 0 1 0-6zM4.5 19.5a7.5 7.5 0 0 1 15 0A9.75 9.75 0 0 1 12 21.75 9.75 9.75 0 0 1 4.5 19.5z',
+};
+
+// -----------------------------------------
+// HELPERS
+// -----------------------------------------
+export const getAllRoutes = () => {
+  const routes = [];
+
+  ROUTES.forEach((item) => {
+    if (item.path) {
+      // Standalone route
+      routes.push(item);
+    } else if (item.items) {
+      // Category with items (if you add grouped sections later)
+      routes.push(...item.items);
+    }
+  });
+
+  return routes;
+};
+
+export const getNavItems = () => {
+  const navItems = [];
+
+  ROUTES.forEach((item) => {
+    if (item.path && item.showInNav) {
+      navItems.push({
+        ...item,
+        isStandalone: true,
+      });
+    } else if (item.category && item.items) {
+      navItems.push({
+        ...item,
+        isCategory: true,
+      });
+    }
+  });
+
+  return navItems;
+};

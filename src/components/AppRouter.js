@@ -6,18 +6,27 @@ import MainLayout from './Layout/MainLayout';
 import Login from './Pages/Login';
 import Dashboard from './Pages/Dashboard';
 import Users from './Pages/Users';
+import Children from './Pages/Children';
+import Development from './Pages/Development';
+import Alerts from './Pages/Alerts';
+import Donations from './Pages/Donations';
+import Reports from './Pages/Reports';
+
 
 // Placeholder components for other routes
 // const Users = () => <div className="p-6"><h1 className="text-2xl font-bold">Users Management</h1></div>;
-const Products = () => <div className="p-6"><h1 className="text-2xl font-bold">Products Management</h1></div>;
 const Settings = () => <div className="p-6"><h1 className="text-2xl font-bold">Settings</h1></div>;
 const Profile = () => <div className="p-6"><h1 className="text-2xl font-bold">User Profile</h1></div>;
 
 // Component mapping
 const componentMap = {
   Dashboard,
+  Children,
+  Development,
+  Alerts,
+  Donations,
+  Reports,
   Users,
-  Products,
   Settings,
   Profile
 };

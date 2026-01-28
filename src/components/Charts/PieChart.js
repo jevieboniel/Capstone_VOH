@@ -1,41 +1,39 @@
-import React from 'react';
-import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import React from "react";
+import { PieChart as RePieChart, Pie, Cell, Tooltip } from "recharts";
 
-const CustomPieChart = ({ 
-  data, 
-  dataKey, 
-  nameKey,
-  colors = ['#0ea5e9', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'],
-  height = 300,
-  title = "Pie Chart"
+const PieChart = ({
+  data,
+  dataKey,
+  nameKey = "name",
+  outerRadius = 80,
+  showLabels = true,
+  labelFormatter, // optional custom label
+  cx = "50%",
+  cy = "50%",
 }) => {
   return (
-    <div className="bg-white rounded-lg shadow-md border border-gray-200 p-4 lg:p-6">
-      <h3 className="text-lg font-medium text-gray-900 mb-4">{title}</h3>
-      
-      <ResponsiveContainer width="100%" height={height}>
-        <PieChart>
-          <Pie
-            data={data}
-            cx="50%"
-            cy="50%"
-            labelLine={false}
-            label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-            outerRadius={80}
-            fill="#8884d8"
-            dataKey={dataKey}
-            nameKey={nameKey}
-          >
-            {data.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
-            ))}
-          </Pie>
-          <Tooltip formatter={(value) => [value, 'Value']} />
-          <Legend />
-        </PieChart>
-      </ResponsiveContainer>
-    </div>
+    <RePieChart>
+      <Pie
+        data={data}
+        cx={cx}
+        cy={cy}
+        labelLine={false}
+        label={
+          showLabels
+            ? labelFormatter ||
+              (({ [nameKey]: nm, percent }) => `${nm} ${(percent * 100).toFixed(0)}%`)
+            : false
+        }
+        outerRadius={outerRadius}
+        dataKey={dataKey}
+      >
+        {data.map((entry, index) => (
+          <Cell key={`cell-${index}`} fill={entry.color} />
+        ))}
+      </Pie>
+      <Tooltip />
+    </RePieChart>
   );
 };
 
-export default CustomPieChart;
+export default PieChart;

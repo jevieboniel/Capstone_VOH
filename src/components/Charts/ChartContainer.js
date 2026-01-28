@@ -1,25 +1,20 @@
-import React from 'react';
+import React from "react";
+import { ResponsiveContainer } from "recharts";
 
-const ChartContainer = ({ 
-  children, 
-  title, 
-  subtitle,
-  className = "",
-  action
-}) => {
+const ChartContainer = ({ title, icon: Icon, height = 300, children }) => {
   return (
-    <div className={`bg-white rounded-lg shadow-md border border-gray-200 ${className}`}>
-      {(title || action) && (
-        <div className="px-4 lg:px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-          <div>
-            {title && <h3 className="text-lg font-medium text-gray-900">{title}</h3>}
-            {subtitle && <p className="text-sm text-gray-600">{subtitle}</p>}
-          </div>
-          {action && <div>{action}</div>}
-        </div>
-      )}
-      <div className="p-4 lg:p-6">
-        {children}
+    <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+      <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between gap-2">
+        <h2 className="text-base sm:text-lg font-semibold text-gray-900 flex items-center gap-2">
+          {Icon ? <Icon className="h-5 w-5" /> : null}
+          {title}
+        </h2>
+      </div>
+
+      <div className="px-4 py-4">
+        <ResponsiveContainer width="100%" height={height}>
+          {children}
+        </ResponsiveContainer>
       </div>
     </div>
   );

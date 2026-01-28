@@ -8,7 +8,7 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  
+
   const { login } = useAuth();
   const navigate = useNavigate();
 
@@ -17,39 +17,59 @@ const Login = () => {
     setLoading(true);
     setError('');
 
-    const result = login(email, password);
-    
+    const result = await login(email, password);
+
+
     if (result.success) {
       navigate('/dashboard');
     } else {
       setError(result.error);
     }
-    
+
     setLoading(false);
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
+      <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-xl shadow-md">
+        
+        {/* LOGO + TITLE */}
+        <div className="flex flex-col items-center">
+          
+          {/* Circle Logo */}
+          <div className="h-24 w-24 rounded-full bg-white shadow-lg overflow-hidden flex items-center justify-center">
+            <img
+              src="/voh.jpg"
+              alt="Admin Logo"
+              className="h-full w-full object-cover"
+            />
+          </div>
+
           <h2 className="mt-6 text-center text-2xl lg:text-3xl font-extrabold text-gray-900">
-            Admin Dashboard
+            Village of Hope
           </h2>
+
           <p className="mt-2 text-center text-sm text-gray-600">
-            Sign in to your account
+            Child Tracking & Development Monitoring
           </p>
         </div>
-        
+
+        {/* FORM */}
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+          
           {error && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-4">
               <p className="text-red-600 text-sm">{error}</p>
             </div>
           )}
-          
+
+          {/* Email */}
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-              Email address
+            <label
+              htmlFor="email"
+              className="block text-sm font-medium text-gray-700"
+            >
+              Email
             </label>
             <input
               id="email"
@@ -62,9 +82,13 @@ const Login = () => {
               placeholder="Enter your email"
             />
           </div>
-          
+
+          {/* Password */}
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+            <label
+              htmlFor="password"
+              className="block text-sm font-medium text-gray-700"
+            >
               Password
             </label>
             <input
@@ -79,6 +103,7 @@ const Login = () => {
             />
           </div>
 
+          {/* Submit Button */}
           <div>
             <Button
               type="submit"
@@ -88,12 +113,6 @@ const Login = () => {
             >
               Sign in
             </Button>
-          </div>
-
-          <div className="text-center text-xs lg:text-sm text-gray-600 space-y-1">
-            <p className="font-medium">Demo credentials:</p>
-            <p>admin@example.com / admin123</p>
-            <p>user@example.com / user123</p>
           </div>
         </form>
       </div>
