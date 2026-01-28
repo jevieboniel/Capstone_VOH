@@ -1,7 +1,7 @@
 import React, { useMemo, useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { Plus, Search, Eye, Pencil, UserPlus, MapPin, User, Calendar, Heart, FileText } from "lucide-react";
-
+import { Search, Eye, Pencil, UserPlus, MapPin, User, Calendar, Heart, FileText } from "lucide-react";
+import Button from "../UI/Button";
 import {
   AddChildModal,
   EditProfileModal,
@@ -173,13 +173,17 @@ const Children = () => {
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Children Management</h1>
         </div>
 
-        <button
-          onClick={() => setShowModal(true)}
-          className="flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium shadow-sm hover:bg-blue-700 transition w-full sm:w-auto"
-          type="button"
-        >
-          <Plus size={18} /> Add Child
-        </button>
+        <Button
+  onClick={() => setShowModal(true)}
+  variant="primary"
+  type="button"
+  className="w-full sm:w-[110px] h-[40px] rounded-xl">
+  <div className="flex flex-col items-center justify-center gap-1">
+    <span className="text-sm font-medium">Add Child</span>
+  </div>
+</Button>
+
+
       </div>
 
       <div className="relative">

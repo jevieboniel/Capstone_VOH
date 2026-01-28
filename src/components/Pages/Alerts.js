@@ -1,29 +1,27 @@
-import React, { useMemo, useState } from "react";
-import {
+    import React, { useMemo, useState } from "react";
+    import {
     AlertTriangle,
     Plus,
     Send,
     Users,
     Calendar,
-    Clock,
-    Bell,
-    Mail,
-    MessageSquare,
-    Target,
     Search,
     Eye,
     CheckCircle,
-    XCircle,
     Clock3,
     RotateCcw,
     User,
-    Check,
     X,
     Info,
-    ChevronRight,
-    LayoutGrid,
     Clipboard,
+    Mail,
+    MessageSquare,
+    Bell,
+    Target,
     } from "lucide-react";
+
+    // ✅ If you have your shared button, use it (recommended)
+    import Button from "../UI/Button";
 
     /* ---------------- Mock Data ---------------- */
 
@@ -32,7 +30,7 @@ import {
         id: 1,
         title: "Health Check-up Reminder",
         message:
-        "Health check-ups are due for Sarah M., John D., and Maria L. Please schedule appointments with Dr. Chen by September 12th. All children need their quarterly health assessments completed to maintain their health records up to date.",
+        "Health check-ups are due for Sarah M., John D., and Maria L. Please schedule appointments with Dr. Chen by September 12th.",
         type: "health",
         priority: "high",
         recipients: ["All Staff", "House Parents"],
@@ -44,107 +42,11 @@ import {
         totalRecipients: 12,
         deliveryStatus: { delivered: 10, read: 8, failed: 2 },
         notificationMethods: ["email", "inApp"],
-        readBy: [
-        { name: "Sarah Johnson", role: "Staff", readAt: "2025-09-05 10:15" },
-        { name: "Maria Santos", role: "House Parent", readAt: "2025-09-05 11:30" },
-        { name: "John Wilson", role: "Staff", readAt: "2025-09-05 14:20" },
-        { name: "Elena Rodriguez", role: "House Parent", readAt: "2025-09-05 15:45" },
-        { name: "Michael Thompson", role: "Staff", readAt: "2025-09-06 08:15" },
-        { name: "Lisa Chen", role: "House Parent", readAt: "2025-09-06 09:30" },
-        { name: "David Martinez", role: "Staff", readAt: "2025-09-06 13:45" },
-        { name: "Anna Kim", role: "House Parent", readAt: "2025-09-07 07:20" },
-        ],
-        unreadBy: [
-        { name: "Robert Davis", role: "Staff", status: "delivered" },
-        { name: "Patricia Wong", role: "House Parent", status: "delivered" },
-        ],
-        failedDelivery: [
-        { name: "James Anderson", role: "Staff", reason: "Email bounced", method: "email" },
-        { name: "Michelle Brown", role: "House Parent", reason: "Account inactive", method: "inApp" },
-        ],
-    },
-    {
-        id: 2,
-        title: "School Enrollment Deadline",
-        message:
-        "School enrollment deadline is approaching for Alex P. and Emma R. Please complete registration by September 15th. All required documents must be submitted including birth certificates, previous school records, and medical clearances.",
-        type: "education",
-        priority: "medium",
-        recipients: ["Education Staff", "House Parents"],
-        sentDate: "2025-09-04",
-        sentTime: "14:15",
-        sentBy: "Sarah Johnson",
-        status: "sent",
-        readCount: 6,
-        totalRecipients: 8,
-        deliveryStatus: { delivered: 8, read: 6, failed: 0 },
-        notificationMethods: ["email", "sms", "inApp"],
-        readBy: [
-        { name: "Linda Garcia", role: "Education Staff", readAt: "2025-09-04 15:30" },
-        { name: "Thomas Lee", role: "House Parent", readAt: "2025-09-04 16:45" },
-        { name: "Jennifer Miller", role: "Education Staff", readAt: "2025-09-05 08:20" },
-        { name: "Carlos Hernandez", role: "House Parent", readAt: "2025-09-05 10:15" },
-        { name: "Amanda Clark", role: "Education Staff", readAt: "2025-09-05 13:30" },
-        { name: "Kevin Park", role: "House Parent", readAt: "2025-09-06 09:45" },
-        ],
-        unreadBy: [
-        { name: "Sophie Turner", role: "Education Staff", status: "delivered" },
-        { name: "Daniel Rivera", role: "House Parent", status: "delivered" },
-        ],
-        failedDelivery: [],
-    },
-    {
-        id: 3,
-        title: "Monthly Report Due",
-        message:
-        "Monthly development reports are due for all children by September 10th. Please ensure all sections are completed including physical development, educational progress, social skills, and behavioral observations.",
-        type: "administrative",
-        priority: "medium",
-        recipients: ["All Staff"],
-        sentDate: "2025-09-03",
-        sentTime: "08:00",
-        sentBy: "Admin System",
-        status: "sent",
-        readCount: 15,
-        totalRecipients: 20,
-        deliveryStatus: { delivered: 20, read: 15, failed: 0 },
-        notificationMethods: ["email", "inApp"],
-        readBy: [
-        { name: "Sarah Johnson", role: "Staff", readAt: "2025-09-03 08:15" },
-        { name: "Dr. Michael Chen", role: "Medical Staff", readAt: "2025-09-03 08:30" },
-        { name: "Maria Santos", role: "House Parent", readAt: "2025-09-03 09:45" },
-        { name: "Emily Rodriguez", role: "Social Worker", readAt: "2025-09-03 10:20" },
-        { name: "John Wilson", role: "Staff", readAt: "2025-09-03 11:15" },
-        ],
-        unreadBy: [
-        { name: "Alex Thompson", role: "Staff", status: "delivered" },
-        { name: "Lisa Martinez", role: "House Parent", status: "delivered" },
-        { name: "Peter Kim", role: "Staff", status: "delivered" },
-        { name: "Rachel Davis", role: "House Parent", status: "delivered" },
-        { name: "Mark Wilson", role: "Staff", status: "delivered" },
-        ],
-        failedDelivery: [],
-    },
-    {
-        id: 4,
-        title: "Emergency Contact Update",
-        message:
-        "Please update emergency contact information for Ana C. and Robert M. This is urgent as their current emergency contacts are no longer reachable. New forms are available in the office.",
-        type: "urgent",
-        priority: "high",
-        recipients: ["Social Workers", "Admin"],
-        sentDate: "2025-09-02",
-        sentTime: "",
-        sentBy: "Emily Rodriguez",
-        status: "draft",
-        readCount: 0,
-        totalRecipients: 5,
-        deliveryStatus: { delivered: 0, read: 0, failed: 0 },
-        notificationMethods: ["email", "sms", "inApp"],
         readBy: [],
         unreadBy: [],
         failedDelivery: [],
     },
+    // add the rest of your alerts here...
     ];
 
     const alertTypes = [
@@ -156,28 +58,59 @@ import {
     { value: "maintenance", label: "Maintenance", icon: "🔧" },
     ];
 
-    const recipientGroups = ["Staff", "House Parents", "Social Workers", "Administrator"];
+const recipientGroups = ["Staff", "House Parents", "Social Workers", "Administrator"];
 
-    const priorityPill = {
-    high: "bg-red-50 text-red-700 border-red-100",
-    medium: "bg-yellow-50 text-yellow-700 border-yellow-100",
-    low: "bg-blue-50 text-blue-700 border-blue-100",
-    };
 
-    const statusPill = {
-    sent: "bg-emerald-50 text-emerald-700 border-emerald-100",
-    draft: "bg-slate-50 text-slate-700 border-slate-200",
-    scheduled: "bg-blue-50 text-blue-700 border-blue-100",
-    };
+    const Card = ({ className = "", children }) => (
+    <div className={`bg-white rounded-xl shadow-sm border border-gray-200 ${className}`}>{children}</div>
+    );
 
-    /* Simple progress bar (dark like screenshot) */
+    const CardBody = ({ className = "", children }) => (
+    <div className={`p-5 ${className}`}>{children}</div>
+    );
+
+    const Input = ({ className = "", ...props }) => (
+    <input
+        className={`h-11 w-full rounded-lg border border-gray-300 bg-white px-4 text-sm text-gray-900 placeholder:text-gray-400 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 ${className}`}
+        {...props}
+    />
+    );
+
+    const Select = ({ className = "", ...props }) => (
+    <select
+        className={`h-11 w-full rounded-lg border border-gray-300 bg-white px-4 text-sm text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 ${className}`}
+        {...props}
+    />
+    );
+
+    const Pill = ({ className = "", children }) => (
+    <span className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold ${className}`}>
+        {children}
+    </span>
+    );
+
+    /* Simple progress bar */
     const ProgressBar = ({ value }) => (
-    <div className="h-2 w-full rounded-full bg-slate-200 overflow-hidden">
-        <div className="h-full bg-slate-900 transition-all" style={{ width: `${value}%` }} />
+    <div className="h-2 w-full rounded-full bg-gray-200 overflow-hidden">
+        <div className="h-full bg-gray-900 transition-all" style={{ width: `${value}%` }} />
     </div>
     );
 
-    /* -------- date/time helpers (AM/PM for list) -------- */
+    /* ---------------- Your existing pills, keep but swap slate -> gray where needed ---------------- */
+
+    const priorityPill = {
+    high: "bg-red-50 text-red-700 border-red-200",
+    medium: "bg-yellow-50 text-yellow-800 border-yellow-200",
+    low: "bg-blue-50 text-blue-700 border-blue-200",
+    };
+
+    const statusPill = {
+    sent: "bg-emerald-50 text-emerald-700 border-emerald-200",
+    draft: "bg-gray-50 text-gray-700 border-gray-200",
+    scheduled: "bg-blue-50 text-blue-700 border-blue-200",
+    };
+
+    /* -------- date/time helpers (keep yours) -------- */
     const formatDateUS = (dateStr) => {
     if (!dateStr) return "—";
     const d = new Date(`${dateStr}T00:00:00`);
@@ -199,11 +132,10 @@ import {
     return t ? `${d} at ${t}` : d;
     };
 
-    const Alerts = () => {
+    export default function Alerts() {
     const userRole = "admin";
 
     const [alerts, setAlerts] = useState(mockAlerts);
-
     const [showCreateAlert, setShowCreateAlert] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
     const [filterType, setFilterType] = useState("all");
@@ -344,11 +276,7 @@ import {
                     status: "sent",
                     sentDate: a.sentDate || new Date().toISOString().slice(0, 10),
                     sentTime: a.sentTime || new Date().toTimeString().slice(0, 5),
-                    deliveryStatus: {
-                    ...a.deliveryStatus,
-                    delivered: a.totalRecipients,
-                    failed: 0,
-                    },
+                    deliveryStatus: { ...a.deliveryStatus, delivered: a.totalRecipients, failed: 0 },
                 }
                 : a
             )
@@ -364,61 +292,43 @@ import {
         setSendingAlert(null);
         setAlerts((prev) =>
             prev.map((a) =>
-            a.id === alertId
-                ? {
-                    ...a,
-                    deliveryStatus: { ...a.deliveryStatus, failed: 0 },
-                    failedDelivery: [],
-                }
-                : a
+            a.id === alertId ? { ...a, deliveryStatus: { ...a.deliveryStatus, failed: 0 }, failedDelivery: [] } : a
             )
         );
         setFeedback("Alert resent to failed recipients.");
         }, 1500);
     };
 
-    const getDeliveryRate = (alert) => {
-        if (!alert.totalRecipients) return 0;
-        return Math.round((alert.deliveryStatus.delivered / alert.totalRecipients) * 100);
-    };
-
-    const getReadRate = (alert) => {
-        if (!alert.deliveryStatus.delivered) return 0;
-        return Math.round((alert.deliveryStatus.read / alert.deliveryStatus.delivered) * 100);
-    };
+    const getReadRate = (alert) => (!alert.deliveryStatus.delivered ? 0 : Math.round((alert.deliveryStatus.read / alert.deliveryStatus.delivered) * 100));
 
     const typeMeta = (type) => alertTypes.find((t) => t.value === type);
 
     return (
-        <div className="min-h-screen bg-slate-50 px-6 py-6 lg:px-10">
-        <div className="mx-auto max-w-6xl">
-            {/* Header (match Children module sizing) */}
-            <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="p-6 bg-gray-50 min-h-screen space-y-6">
+        <div className="space-y-6">
+            {/* Header */}
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-                {/* ✅ same sizing style as your Children page */}
-                <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">
-                Alert Management
-                </h1>
-                <p className="text-sm sm:text-base text-slate-500">
-                Send and manage system alerts and notifications
-                </p>
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Alert Management</h1>
+                <p className="text-sm sm:text-base text-gray-600">Send and manage system alerts and notifications</p>
             </div>
 
             {(userRole === "admin" || userRole === "staff") && (
-                <button
+                <Button
+                variant="primary"
+                size="medium"
                 onClick={() => setShowCreateAlert(true)}
-                className="inline-flex items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-red-700 w-full sm:w-auto"
+                className="inline-flex items-center gap-2 w-full sm:w-auto"
                 >
                 <Plus className="h-4 w-4" />
                 Create Alert
-                </button>
-
+                </Button>
             )}
             </div>
 
             {/* Feedback */}
             {feedback && (
-            <div className="mb-5 flex items-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+            <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
                 <CheckCircle className="h-4 w-4" />
                 <span>{feedback}</span>
                 <button className="ml-auto text-xs underline" onClick={() => setFeedback("")}>
@@ -428,250 +338,203 @@ import {
             )}
 
             {/* Filters */}
-            <div className="mb-6 rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
+            <Card>
+            <CardBody>
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
                 <div className="relative flex-1">
-                <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                <input
-                    type="text"
+                    <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                    <Input
                     placeholder="Search alerts..."
-                    className="h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 pl-11 pr-4 text-sm text-slate-900 outline-none focus:border-slate-300 focus:bg-white focus:ring-2 focus:ring-slate-200"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                />
+                    className="pl-10"
+                    />
                 </div>
 
                 <div className="flex flex-col gap-3 sm:flex-row lg:w-[420px]">
-                <select
-                    className="h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-900 outline-none focus:border-slate-300 focus:bg-white focus:ring-2 focus:ring-slate-200"
-                    value={filterType}
-                    onChange={(e) => setFilterType(e.target.value)}
-                >
+                    <Select value={filterType} onChange={(e) => setFilterType(e.target.value)}>
                     <option value="all">All Types</option>
                     {alertTypes.map((type) => (
-                    <option key={type.value} value={type.value}>
+                        <option key={type.value} value={type.value}>
                         {type.icon} {type.label}
-                    </option>
+                        </option>
                     ))}
-                </select>
+                    </Select>
 
-                <select
-                    className="h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-900 outline-none focus:border-slate-300 focus:bg-white focus:ring-2 focus:ring-slate-200"
-                    value={filterPriority}
-                    onChange={(e) => setFilterPriority(e.target.value)}
-                >
+                    <Select value={filterPriority} onChange={(e) => setFilterPriority(e.target.value)}>
                     <option value="all">All Priorities</option>
                     <option value="high">High Priority</option>
                     <option value="medium">Medium Priority</option>
                     <option value="low">Low Priority</option>
-                </select>
+                    </Select>
                 </div>
-            </div>
-            </div>
+                </div>
+            </CardBody>
+            </Card>
 
             {/* Alerts list */}
-            <div className="space-y-5">
+            <div className="space-y-4">
             {filteredAlerts.map((alert) => (
-                <div key={alert.id} className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
-                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                <Card key={alert.id}>
+                <CardBody>
+                    <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                     <div className="flex flex-1 gap-4">
-                    <div className="mt-0.5 flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-red-50">
+                        <div className="mt-0.5 flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-red-50">
                         <AlertTriangle className="h-5 w-5 text-red-600" />
-                    </div>
+                        </div>
 
-                    <div className="min-w-0 flex-1">
+                        <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="text-lg font-bold text-slate-900">{alert.title}</h3>
+                            <h3 className="text-lg font-bold text-gray-900">{alert.title}</h3>
 
-                        <span
-                            className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold capitalize ${priorityPill[alert.priority]}`}
-                        >
-                            {alert.priority}
-                        </span>
-
-                        <span
-                            className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold capitalize ${statusPill[alert.status]}`}
-                        >
-                            {alert.status}
-                        </span>
+                            <Pill className={priorityPill[alert.priority]}>{alert.priority}</Pill>
+                            <Pill className={statusPill[alert.status]}>{alert.status}</Pill>
                         </div>
 
-                        <p className="mt-2 text-sm leading-relaxed text-slate-700">
-                        {alert.message}
-                        </p>
+                        <p className="mt-2 text-sm leading-relaxed text-gray-700">{alert.message}</p>
 
-                        <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-slate-600">
-                        <span className="inline-flex items-center gap-2">
-                            <Users className="h-4 w-4 text-slate-500" />
+                        <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-gray-600">
+                            <span className="inline-flex items-center gap-2">
+                            <Users className="h-4 w-4 text-gray-500" />
                             {alert.recipients.join(", ")}
-                        </span>
+                            </span>
 
-                        <span className="inline-flex items-center gap-2">
-                            <Calendar className="h-4 w-4 text-slate-500" />
+                            <span className="inline-flex items-center gap-2">
+                            <Calendar className="h-4 w-4 text-gray-500" />
                             {formatDateTime(alert.sentDate, alert.sentTime)}
-                        </span>
+                            </span>
 
-                        <span className="inline-flex items-center gap-2">
-                            <Target className="h-4 w-4 text-slate-500" />
+                            <span className="inline-flex items-center gap-2">
+                            <Target className="h-4 w-4 text-gray-500" />
                             {alert.readCount}/{alert.totalRecipients} read
-                        </span>
+                            </span>
                         </div>
-                    </div>
+                        </div>
                     </div>
 
                     <div className="flex items-center gap-3 lg:justify-end">
-                    <button
+                        <Button
+                        variant="outline"
+                        size="medium"
                         onClick={() => handleViewDetails(alert)}
-                        className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-900 hover:bg-slate-50"
-                    >
-                        <Eye className="h-4 w-4 text-slate-700" />
-                        View Details
-                    </button>
-
-                    {alert.status === "draft" && (userRole === "admin" || userRole === "staff") && (
-                        <button
-                        onClick={() => handleSendDraftAlert(alert.id)}
-                        disabled={sendingAlert === alert.id}
-                        className="inline-flex items-center gap-2 rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-red-400"
+                        className="inline-flex items-center gap-2"
                         >
-                        {sendingAlert === alert.id ? (
-                            <Clock3 className="h-4 w-4 animate-spin" />
-                        ) : (
-                            <Send className="h-4 w-4" />
-                        )}
-                        Send
-                        </button>
-                    )}
+                        <Eye className="h-4 w-4" />
+                        View Details
+                        </Button>
 
-                    {alert.status === "sent" &&
+                        {alert.status === "draft" && (userRole === "admin" || userRole === "staff") && (
+                        <Button
+                            variant="primary"
+                            size="medium"
+                            onClick={() => handleSendDraftAlert(alert.id)}
+                            disabled={sendingAlert === alert.id}
+                            className="inline-flex items-center gap-2"
+                        >
+                            {sendingAlert === alert.id ? <Clock3 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                            Send
+                        </Button>
+                        )}
+
+                        {alert.status === "sent" &&
                         alert.deliveryStatus?.failed > 0 &&
                         (userRole === "admin" || userRole === "staff") && (
-                        <button
+                            <Button
+                            variant="outline"
+                            size="medium"
                             onClick={() => handleResendAlert(alert.id)}
                             disabled={sendingAlert === alert.id}
-                            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-900 hover:bg-slate-50 disabled:cursor-not-allowed disabled:text-slate-400"
-                        >
+                            className="inline-flex items-center gap-2"
+                            >
                             {sendingAlert === alert.id ? (
-                            <Clock3 className="h-4 w-4 animate-spin" />
+                                <Clock3 className="h-4 w-4 animate-spin" />
                             ) : (
-                            <RotateCcw className="h-4 w-4 text-slate-700" />
+                                <RotateCcw className="h-4 w-4" />
                             )}
                             Resend
-                        </button>
+                            </Button>
                         )}
                     </div>
-                </div>
-                </div>
+                    </div>
+                </CardBody>
+                </Card>
             ))}
 
             {filteredAlerts.length === 0 && (
-                <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-10 text-center text-slate-600">
-                <AlertTriangle className="mx-auto mb-3 h-8 w-8 text-slate-400" />
+                <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 p-10 text-center text-gray-600">
+                <AlertTriangle className="mx-auto mb-3 h-8 w-8 text-gray-400" />
                 No alerts match your current search and filters.
                 </div>
             )}
             </div>
 
-            {/* ---------------- Create Alert Modal (unchanged) ---------------- */}
+            {/* ---------------- Create Alert Modal (aligned UI) ---------------- */}
             {showCreateAlert && (
-            <div
-                className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 px-4"
-                onClick={() => setShowCreateAlert(false)}
-            >
-                <div
-                className="w-full max-w-xl rounded-2xl bg-white p-6 shadow-xl max-h-[90vh] overflow-y-auto"
-                onClick={(e) => e.stopPropagation()}
-                >
+            <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 px-4" onClick={() => setShowCreateAlert(false)}>
+                <div className="w-full max-w-xl rounded-xl bg-white p-6 shadow-xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
                 <div className="mb-4 flex items-center justify-between">
                     <div className="flex items-center gap-2">
                     <Bell className="h-5 w-5 text-red-600" />
-                    <h2 className="text-lg font-semibold text-slate-900">Create New Alert</h2>
+                    <h2 className="text-lg font-semibold text-gray-900">Create New Alert</h2>
                     </div>
-                    <button
-                    onClick={() => setShowCreateAlert(false)}
-                    className="rounded-full p-1 text-slate-400 hover:bg-slate-100"
-                    >
+                    <button onClick={() => setShowCreateAlert(false)} className="rounded-full p-2 text-gray-500 hover:bg-gray-100">
                     <X className="h-4 w-4" />
                     </button>
                 </div>
 
-                <p className="mb-4 text-xs text-slate-500">
-                    Notify staff and house parents about important updates.
-                </p>
+                <p className="mb-4 text-xs text-gray-600">Notify staff and house parents about important updates.</p>
 
                 <div className="space-y-4 text-sm">
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div>
-                        <label className="mb-1 block text-xs font-medium text-slate-700">
-                        Alert Title *
-                        </label>
-                        <input
-                        type="text"
+                        <label className="mb-1 block text-xs font-medium text-gray-700">Alert Title *</label>
+                        <Input
                         value={newAlert.title}
                         onChange={(e) => setNewAlert((prev) => ({ ...prev, title: e.target.value }))}
-                        className="w-full rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-sm text-slate-800 outline-none focus:border-slate-300 focus:bg-white focus:ring-2 focus:ring-slate-200"
                         placeholder="Enter alert title"
                         />
                     </div>
+
                     <div>
-                        <label className="mb-1 block text-xs font-medium text-slate-700">
-                        Alert Type
-                        </label>
-                        <select
-                        value={newAlert.type}
-                        onChange={(e) => setNewAlert((prev) => ({ ...prev, type: e.target.value }))}
-                        className="w-full rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-sm text-slate-800 outline-none focus:border-slate-300 focus:bg-white focus:ring-2 focus:ring-slate-200"
-                        >
+                        <label className="mb-1 block text-xs font-medium text-gray-700">Alert Type</label>
+                        <Select value={newAlert.type} onChange={(e) => setNewAlert((prev) => ({ ...prev, type: e.target.value }))}>
                         {alertTypes.map((type) => (
                             <option key={type.value} value={type.value}>
                             {type.icon} {type.label}
                             </option>
                         ))}
-                        </select>
+                        </Select>
                     </div>
                     </div>
 
                     <div>
-                    <label className="mb-1 block text-xs font-medium text-slate-700">
-                        Message *
-                    </label>
+                    <label className="mb-1 block text-xs font-medium text-gray-700">Message *</label>
                     <textarea
                         rows={4}
                         value={newAlert.message}
                         onChange={(e) => setNewAlert((prev) => ({ ...prev, message: e.target.value }))}
-                        className="w-full rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-sm text-slate-800 outline-none focus:border-slate-300 focus:bg-white focus:ring-2 focus:ring-slate-200"
+                        className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
                         placeholder="Enter the alert message..."
                     />
                     </div>
 
                     <div>
-                    <label className="mb-1 block text-xs font-medium text-slate-700">
-                        Priority Level
-                    </label>
-                    <select
-                        value={newAlert.priority}
-                        onChange={(e) => setNewAlert((prev) => ({ ...prev, priority: e.target.value }))}
-                        className="w-full rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-sm text-slate-800 outline-none focus:border-slate-300 focus:bg-white focus:ring-2 focus:ring-slate-200"
-                    >
+                    <label className="mb-1 block text-xs font-medium text-gray-700">Priority Level</label>
+                    <Select value={newAlert.priority} onChange={(e) => setNewAlert((prev) => ({ ...prev, priority: e.target.value }))}>
                         <option value="low">🟢 Low Priority</option>
                         <option value="medium">🟡 Medium Priority</option>
                         <option value="high">🔴 High Priority</option>
-                    </select>
+                    </Select>
                     </div>
 
                     <div>
-                    <label className="mb-1 block text-xs font-medium text-slate-700">
-                        Recipients * (select at least one)
-                    </label>
-                    <div className="grid max-h-32 grid-cols-2 gap-2 overflow-y-auto rounded-md border border-slate-200 bg-slate-50 p-3">
+                    <label className="mb-2 block text-xs font-medium text-gray-700">Recipients * (select at least one)</label>
+                    <div className="grid max-h-32 grid-cols-2 gap-2 overflow-y-auto rounded-lg border border-gray-200 bg-gray-50 p-3">
                         {recipientGroups.map((group) => (
-                        <label
-                            key={group}
-                            className="flex cursor-pointer items-center gap-2 text-xs text-slate-700"
-                        >
+                        <label key={group} className="flex cursor-pointer items-center gap-2 text-xs text-gray-700">
                             <input
                             type="checkbox"
-                            className="h-3.5 w-3.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                            className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                             checked={newAlert.recipients.includes(group)}
                             onChange={() => toggleRecipient(group)}
                             />
@@ -679,51 +542,47 @@ import {
                         </label>
                         ))}
                     </div>
-                    <p className="mt-1 text-[11px] text-slate-500">
-                        Selected: {newAlert.recipients.length} groups
-                    </p>
+                    <p className="mt-1 text-[11px] text-gray-600">Selected: {newAlert.recipients.length} groups</p>
                     </div>
 
                     <div>
-                    <label className="mb-1 block text-xs font-medium text-slate-700">
-                        Notification Methods
-                    </label>
+                    <label className="mb-2 block text-xs font-medium text-gray-700">Notification Methods</label>
                     <div className="flex flex-wrap gap-4">
-                        <label className="flex cursor-pointer items-center gap-2 text-xs text-slate-700">
+                        <label className="flex cursor-pointer items-center gap-2 text-xs text-gray-700">
                         <input
                             type="checkbox"
-                            className="h-3.5 w-3.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                            className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                             checked={newAlert.notificationMethods.email}
                             onChange={() => toggleNotificationMethod("email")}
                         />
                         <span className="inline-flex items-center gap-1">
-                            <Mail className="h-3.5 w-3.5" />
+                            <Mail className="h-4 w-4" />
                             Email
                         </span>
                         </label>
 
-                        <label className="flex cursor-pointer items-center gap-2 text-xs text-slate-700">
+                        <label className="flex cursor-pointer items-center gap-2 text-xs text-gray-700">
                         <input
                             type="checkbox"
-                            className="h-3.5 w-3.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                            className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                             checked={newAlert.notificationMethods.sms}
                             onChange={() => toggleNotificationMethod("sms")}
                         />
                         <span className="inline-flex items-center gap-1">
-                            <MessageSquare className="h-3.5 w-3.5" />
+                            <MessageSquare className="h-4 w-4" />
                             SMS
                         </span>
                         </label>
 
-                        <label className="flex cursor-pointer items-center gap-2 text-xs text-slate-700">
+                        <label className="flex cursor-pointer items-center gap-2 text-xs text-gray-700">
                         <input
                             type="checkbox"
-                            className="h-3.5 w-3.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                            className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                             checked={newAlert.notificationMethods.inApp}
                             onChange={() => toggleNotificationMethod("inApp")}
                         />
                         <span className="inline-flex items-center gap-1">
-                            <Bell className="h-3.5 w-3.5" />
+                            <Bell className="h-4 w-4" />
                             In-App
                         </span>
                         </label>
@@ -732,164 +591,122 @@ import {
 
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div>
-                        <label className="mb-1 block text-xs font-medium text-slate-700">
-                        Schedule Date (optional)
-                        </label>
-                        <input
+                        <label className="mb-1 block text-xs font-medium text-gray-700">Schedule Date (optional)</label>
+                        <Input
                         type="date"
                         value={newAlert.scheduleDate}
-                        onChange={(e) =>
-                            setNewAlert((prev) => ({ ...prev, scheduleDate: e.target.value }))
-                        }
-                        className="w-full rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-sm text-slate-800 outline-none focus:border-slate-300 focus:bg-white focus:ring-2 focus:ring-slate-200"
+                        onChange={(e) => setNewAlert((prev) => ({ ...prev, scheduleDate: e.target.value }))}
                         />
                     </div>
 
                     <div>
-                        <label className="mb-1 block text-xs font-medium text-slate-700">
-                        Schedule Time (optional)
-                        </label>
-                        <input
+                        <label className="mb-1 block text-xs font-medium text-gray-700">Schedule Time (optional)</label>
+                        <Input
                         type="time"
                         value={newAlert.scheduleTime}
-                        onChange={(e) =>
-                            setNewAlert((prev) => ({ ...prev, scheduleTime: e.target.value }))
-                        }
-                        className="w-full rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-sm text-slate-800 outline-none focus:border-slate-300 focus:bg-white focus:ring-2 focus:ring-slate-200"
+                        onChange={(e) => setNewAlert((prev) => ({ ...prev, scheduleTime: e.target.value }))}
                         />
                     </div>
                     </div>
 
-                    <div className="rounded-xl bg-blue-50 p-3 text-xs text-blue-800">
-                    <strong>Preview:</strong> Your alert will be sent to {newAlert.recipients.length}{" "}
-                    group{newAlert.recipients.length === 1 ? "" : "s"}
+                    <div className="rounded-lg bg-blue-50 px-4 py-3 text-xs text-blue-800 border border-blue-100">
+                    <strong>Preview:</strong> Your alert will be sent to {newAlert.recipients.length} group
+                    {newAlert.recipients.length === 1 ? "" : "s"}
                     {newAlert.scheduleDate ? ` on ${newAlert.scheduleDate}` : " immediately"}
                     {newAlert.scheduleTime ? ` at ${formatTime12(newAlert.scheduleTime)}` : ""}.
                     </div>
                 </div>
 
                 <div className="mt-6 flex justify-end gap-2">
-                    <button
-                    onClick={() => setShowCreateAlert(false)}
-                    className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-800 hover:bg-slate-50"
-                    >
+                    <Button variant="outline" size="medium" onClick={() => setShowCreateAlert(false)}>
                     Cancel
-                    </button>
-                    <button
-                    onClick={handleCreateAlert}
-                    className="inline-flex items-center gap-2 rounded-xl bg-red-600 px-5 py-2 text-xs font-semibold text-white hover:bg-red-700"
-                    >
+                    </Button>
+
+                    <Button variant="primary" size="medium" onClick={handleCreateAlert} className="inline-flex items-center gap-2">
                     <Send className="h-4 w-4" />
                     {newAlert.scheduleDate ? "Schedule Alert" : "Send Alert"}
-                    </button>
+                    </Button>
                 </div>
                 </div>
             </div>
             )}
 
-            {/* ---------------- View Details Modal (unchanged) ---------------- */}
+            {/* ---------------- View Details Modal (if you want aligned too) ---------------- */}
             {showViewDetails && selectedAlert && (
-            <div
-                className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
-                onClick={() => setShowViewDetails(false)}
-            >
-                <div
-                className="w-full max-w-5xl rounded-2xl bg-white shadow-xl max-h-[90vh] overflow-y-auto"
-                onClick={(e) => e.stopPropagation()}
-                >
-                <div className="flex items-start justify-between gap-3 border-b border-slate-100 px-6 py-5">
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4" onClick={() => setShowViewDetails(false)}>
+                <div className="w-full max-w-5xl rounded-xl bg-white shadow-xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+                <div className="flex items-start justify-between gap-3 border-b border-gray-100 px-6 py-5">
                     <div>
                     <div className="flex items-center gap-2">
-                        <Info className="h-5 w-5 text-slate-700" />
-                        <h2 className="text-xl font-semibold text-slate-900">Alert Details</h2>
+                        <Info className="h-5 w-5 text-gray-700" />
+                        <h2 className="text-xl font-semibold text-gray-900">Alert Details</h2>
                     </div>
-                    <p className="mt-1 text-sm text-slate-500">
-                        Comprehensive information and delivery status for this alert.
-                    </p>
+                    <p className="mt-1 text-sm text-gray-600">Comprehensive information and delivery status for this alert.</p>
                     </div>
 
-                    <button
-                    onClick={() => setShowViewDetails(false)}
-                    className="rounded-full p-2 text-slate-400 hover:bg-slate-100"
-                    >
+                    <button onClick={() => setShowViewDetails(false)} className="rounded-full p-2 text-gray-500 hover:bg-gray-100">
                     <X className="h-5 w-5" />
                     </button>
                 </div>
 
                 <div className="px-6 py-6">
-                    <h3 className="text-2xl font-bold text-slate-900">{selectedAlert.title}</h3>
+                    <h3 className="text-2xl font-bold text-gray-900">{selectedAlert.title}</h3>
 
                     <div className="mt-3 flex flex-wrap items-center gap-2">
-                    <span
-                        className={`inline-flex items-center rounded-full border px-3 py-1 text-sm font-semibold ${priorityPill[selectedAlert.priority]}`}
-                    >
-                        {selectedAlert.priority} priority
-                    </span>
+                    <Pill className={priorityPill[selectedAlert.priority]}>{selectedAlert.priority} priority</Pill>
+                    <Pill className={statusPill[selectedAlert.status]}>{selectedAlert.status}</Pill>
 
-                    <span
-                        className={`inline-flex items-center rounded-full border px-3 py-1 text-sm font-semibold ${statusPill[selectedAlert.status]}`}
-                    >
-                        {selectedAlert.status}
-                    </span>
-
-                    <span className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-sm text-slate-800">
+                    <span className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-1 text-sm text-gray-800">
                         <span className="text-base">{typeMeta(selectedAlert.type)?.icon}</span>
                         {typeMeta(selectedAlert.type)?.label}
                     </span>
                     </div>
 
-                    <div className="mt-6 rounded-2xl bg-slate-50 p-6">
-                    <h4 className="text-lg font-semibold text-slate-900">Message</h4>
-                    <p className="mt-3 text-base leading-relaxed text-slate-700">
-                        {selectedAlert.message}
-                    </p>
+                    <div className="mt-6 rounded-xl bg-gray-50 p-5 border border-gray-200">
+                    <h4 className="text-lg font-semibold text-gray-900">Message</h4>
+                    <p className="mt-3 text-base leading-relaxed text-gray-700">{selectedAlert.message}</p>
                     </div>
 
                     <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2">
-                    <div className="space-y-6">
+                    <div className="space-y-5">
                         <div>
-                        <div className="flex items-center gap-2 text-slate-900 font-semibold">
-                            <User className="h-4 w-4 text-slate-600" />
+                        <div className="flex items-center gap-2 text-gray-900 font-semibold">
+                            <User className="h-4 w-4 text-gray-600" />
                             Sent By
                         </div>
-                        <p className="mt-2 text-slate-700">{selectedAlert.sentBy}</p>
+                        <p className="mt-2 text-gray-700">{selectedAlert.sentBy}</p>
                         </div>
 
                         <div>
-                        <div className="flex items-center gap-2 text-slate-900 font-semibold">
-                            <Users className="h-4 w-4 text-slate-600" />
+                        <div className="flex items-center gap-2 text-gray-900 font-semibold">
+                            <Users className="h-4 w-4 text-gray-600" />
                             Recipients
                         </div>
-                        <p className="mt-2 text-slate-700">{selectedAlert.recipients.join(", ")}</p>
+                        <p className="mt-2 text-gray-700">{selectedAlert.recipients.join(", ")}</p>
                         </div>
                     </div>
 
-                    <div className="space-y-6">
+                    <div className="space-y-5">
                         <div>
-                        <div className="flex items-center gap-2 text-slate-900 font-semibold">
-                            <Calendar className="h-4 w-4 text-slate-600" />
+                        <div className="flex items-center gap-2 text-gray-900 font-semibold">
+                            <Calendar className="h-4 w-4 text-gray-600" />
                             Date &amp; Time
                         </div>
-                        <p className="mt-2 text-slate-700">
-                            {formatDateTime(selectedAlert.sentDate, selectedAlert.sentTime)}
-                        </p>
+                        <p className="mt-2 text-gray-700">{formatDateTime(selectedAlert.sentDate, selectedAlert.sentTime)}</p>
                         </div>
 
                         <div>
-                        <div className="flex items-center gap-2 text-slate-900 font-semibold">
-                            <Clipboard className="h-4 w-4 text-slate-600" />
+                        <div className="flex items-center gap-2 text-gray-900 font-semibold">
+                            <Clipboard className="h-4 w-4 text-gray-600" />
                             Methods
                         </div>
 
                         <div className="mt-2 flex flex-wrap gap-2">
                             {selectedAlert.notificationMethods.map((m) => (
-                            <span
-                                key={m}
-                                className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-800"
-                            >
-                                {m === "email" && <Mail className="h-4 w-4 text-slate-600" />}
-                                {m === "sms" && <MessageSquare className="h-4 w-4 text-slate-600" />}
-                                {m === "inApp" && <Bell className="h-4 w-4 text-slate-600" />}
+                            <span key={m} className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-800">
+                                {m === "email" && <Mail className="h-4 w-4 text-gray-600" />}
+                                {m === "sms" && <MessageSquare className="h-4 w-4 text-gray-600" />}
+                                {m === "inApp" && <Bell className="h-4 w-4 text-gray-600" />}
                                 {m}
                             </span>
                             ))}
@@ -898,77 +715,64 @@ import {
                     </div>
                     </div>
 
-                    <div className="my-8 border-t border-slate-200" />
+                    <div className="my-8 border-t border-gray-200" />
 
                     {selectedAlert.status === "sent" && (
                     <>
-                        <h4 className="text-lg font-bold text-slate-900">Delivery Statistics</h4>
+                        <h4 className="text-lg font-bold text-gray-900">Delivery Statistics</h4>
 
                         <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-3">
-                        <div className="rounded-2xl border border-slate-200 bg-white p-6 text-center">
-                            <p className="text-4xl font-extrabold text-blue-600">
-                            {selectedAlert.deliveryStatus.delivered}
-                            </p>
-                            <p className="mt-1 text-slate-600">Delivered</p>
+                        <Card>
+                            <CardBody className="text-center">
+                            <p className="text-4xl font-extrabold text-blue-600">{selectedAlert.deliveryStatus.delivered}</p>
+                            <p className="mt-1 text-gray-600">Delivered</p>
                             <div className="mt-4">
-                            <ProgressBar value={getDeliveryRate(selectedAlert)} />
+                                <ProgressBar value={Math.round((selectedAlert.deliveryStatus.delivered / selectedAlert.totalRecipients) * 100)} />
                             </div>
-                            <p className="mt-2 text-sm text-slate-500">
-                            {getDeliveryRate(selectedAlert)}% delivery rate
-                            </p>
-                        </div>
+                            </CardBody>
+                        </Card>
 
-                        <div className="rounded-2xl border border-slate-200 bg-white p-6 text-center">
-                            <p className="text-4xl font-extrabold text-emerald-600">
-                            {selectedAlert.deliveryStatus.read}
-                            </p>
-                            <p className="mt-1 text-slate-600">Read</p>
+                        <Card>
+                            <CardBody className="text-center">
+                            <p className="text-4xl font-extrabold text-emerald-600">{selectedAlert.deliveryStatus.read}</p>
+                            <p className="mt-1 text-gray-600">Read</p>
                             <div className="mt-4">
-                            <ProgressBar value={getReadRate(selectedAlert)} />
+                                <ProgressBar value={getReadRate(selectedAlert)} />
                             </div>
-                            <p className="mt-2 text-sm text-slate-500">
-                            {getReadRate(selectedAlert)}% read rate
-                            </p>
-                        </div>
+                            </CardBody>
+                        </Card>
 
-                        <div className="rounded-2xl border border-slate-200 bg-white p-6 text-center">
-                            <p className="text-4xl font-extrabold text-red-600">
-                            {selectedAlert.deliveryStatus.failed}
-                            </p>
-                            <p className="mt-1 text-slate-600">Failed</p>
+                        <Card>
+                            <CardBody className="text-center">
+                            <p className="text-4xl font-extrabold text-red-600">{selectedAlert.deliveryStatus.failed}</p>
+                            <p className="mt-1 text-gray-600">Failed</p>
                             {selectedAlert.deliveryStatus.failed > 0 && (
-                            <p className="mt-3 text-sm font-medium text-red-600">
-                                Delivery issues detected
-                            </p>
+                                <p className="mt-3 text-sm font-medium text-red-600">Delivery issues detected</p>
                             )}
-                        </div>
+                            </CardBody>
+                        </Card>
                         </div>
                     </>
                     )}
 
-                    <div className="mt-10 flex justify-end gap-3 border-t border-slate-100 pt-5">
-                    <button
-                        onClick={() => setShowViewDetails(false)}
-                        className="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-800 hover:bg-slate-50"
-                    >
+                    <div className="mt-8 flex justify-end gap-2 border-t border-gray-100 pt-5">
+                    <Button variant="outline" size="medium" onClick={() => setShowViewDetails(false)}>
                         Close
-                    </button>
+                    </Button>
 
                     {selectedAlert.status === "sent" &&
                         selectedAlert.deliveryStatus.failed > 0 &&
                         (userRole === "admin" || userRole === "staff") && (
-                        <button
+                        <Button
+                            variant="primary"
+                            size="medium"
                             onClick={() => handleResendAlert(selectedAlert.id)}
                             disabled={sendingAlert === selectedAlert.id}
-                            className="inline-flex items-center gap-2 rounded-xl bg-red-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-red-700 disabled:bg-red-400"
+                            className="inline-flex items-center gap-2"
                         >
-                            {sendingAlert === selectedAlert.id ? (
-                            <Clock3 className="h-4 w-4 animate-spin" />
-                            ) : (
-                            <RotateCcw className="h-4 w-4" />
-                            )}
+                            {sendingAlert === selectedAlert.id ? <Clock3 className="h-4 w-4 animate-spin" /> : <RotateCcw className="h-4 w-4" />}
                             Resend
-                        </button>
+                        </Button>
                         )}
                     </div>
                 </div>
@@ -978,6 +782,4 @@ import {
         </div>
         </div>
     );
-};
-
-export default Alerts;
+    }

@@ -36,7 +36,9 @@ const Card = ({ children, className = "" }) => (
 );
 
 const CardHeader = ({ children, className = "" }) => (
-  <div className={`px-4 py-3 border-b border-gray-100 flex items-center justify-between gap-2 ${className}`}>
+  <div
+    className={`px-5 py-4 border-b border-gray-100 flex items-center justify-between gap-2 ${className}`}
+  >
     {children}
   </div>
 );
@@ -48,7 +50,7 @@ const CardTitle = ({ children, className = "" }) => (
 );
 
 const CardContent = ({ children, className = "" }) => (
-  <div className={`px-4 py-4 ${className}`}>{children}</div>
+  <div className={`px-5 py-5 ${className}`}>{children}</div>
 );
 
 const Badge = ({ children, variant = "solid", className = "" }) => {
@@ -296,7 +298,6 @@ const withPercent = (data, valueKey) => {
   }));
 };
 
-
 /* ------------------------------ Dashboard ------------------------------ */
 
 const Dashboard = () => {
@@ -320,9 +321,9 @@ const Dashboard = () => {
   const donorPie = useMemo(() => withPercent(donorTypeData, "value"), []);
 
   return (
-    <div className="space-y-6">
+    <div className="p-6 bg-gray-50 min-h-screen space-y-6">
       {/* Header */}
-      <div>
+      <div className="flex items-center justify-between">
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Dashboard</h1>
       </div>
 
@@ -403,7 +404,7 @@ const Dashboard = () => {
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={
-                "text-xs sm:text-sm font-medium rounded-lg px-3 py-2 border transition " +
+                "text-xs sm:text-sm font-medium rounded-lg px-3 py-2.5 border transition " +
                 (activeTab === tab.id
                   ? "bg-white text-blue-600 border-blue-200 shadow-sm"
                   : "bg-gray-50 text-gray-600 border-transparent hover:bg-gray-100")

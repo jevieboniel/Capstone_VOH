@@ -19,6 +19,37 @@
     ChevronRight,
     FileText,
     } from "lucide-react";
+    import Button from "../UI/Button";
+
+    /* ===========================
+    ✅ UI TOKENS (MATCH DASHBOARD)
+    =========================== */
+    const UI = {
+    page: "p-6 bg-gray-50 min-h-screen space-y-6",
+    container: "space-y-6",
+    card: "bg-white rounded-xl shadow-sm border border-gray-200",
+    cardPad: "p-5",
+    cardHeader: "px-5 py-4 border-b border-gray-100 flex items-center justify-between gap-2",
+    cardContent: "px-5 py-5",
+    btnPrimary:
+        "inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 text-white text-sm font-medium shadow-sm hover:bg-blue-700 transition px-4 py-2.5",
+    btnOutline:
+        "inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white text-gray-800 text-sm font-medium hover:bg-gray-50 transition px-4 py-2.5",
+    btnSmallOutline:
+        "inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white text-gray-700 text-xs font-medium hover:bg-gray-50 transition px-3 py-2",
+    iconBtn: "h-9 w-9 inline-flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-600",
+    input:
+        "w-full px-4 py-2.5 rounded-lg bg-gray-100 border border-transparent focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none text-sm",
+    select:
+        "w-full px-4 py-2.5 rounded-lg bg-gray-100 border border-transparent focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none text-sm",
+    textarea:
+        "w-full px-4 py-2.5 rounded-lg bg-gray-100 border border-transparent focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none text-sm min-h-[110px] resize-none",
+    modalOverlay: "fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4",
+    modalBox: "w-full bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden",
+    modalHeader: "px-5 py-4 border-b border-gray-100 flex items-center justify-between",
+    modalBody: "px-5 py-5",
+    modalFooter: "px-5 py-4 border-t border-gray-100 flex items-center justify-end gap-3",
+    };
 
     /* ----------------- Helpers (status + colors) ----------------- */
     const getStatusColor = (status) => {
@@ -154,11 +185,7 @@
     }
 
     function Badge({ className = "", children }) {
-    return (
-        <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${className}`}>
-        {children}
-        </span>
-    );
+    return <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${className}`}>{children}</span>;
     }
 
     /* ------------------------ Component -------------------------- */
@@ -178,9 +205,7 @@
     const MILESTONES_API = "http://localhost:5000/api/milestones";
 
     const fetchChildren = async () => {
-        const res = await fetch(CHILDREN_API, {
-        headers: { Authorization: `Bearer ${token}` },
-        });
+        const res = await fetch(CHILDREN_API, { headers: { Authorization: `Bearer ${token}` } });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(data?.error || "Failed to fetch children");
 
@@ -203,14 +228,11 @@
     };
 
     const fetchMilestones = async () => {
-        const res = await fetch(MILESTONES_API, {
-        headers: { Authorization: `Bearer ${token}` },
-        });
+        const res = await fetch(MILESTONES_API, { headers: { Authorization: `Bearer ${token}` } });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(data?.error || "Failed to fetch milestones");
 
         const list = Array.isArray(data) ? data : data.milestones || [];
-        // ✅ normalize milestones so stats match modal
         setMilestones(list.map(normalizeMilestone));
     };
 
@@ -229,7 +251,6 @@
     const handleAddMilestone = () => setOpenModal(true);
     const handleCloseModal = () => setOpenModal(false);
 
-    // Create milestone -> save to DB -> refresh
     const handleSaveMilestone = async (data) => {
         try {
         const payload = {
@@ -266,7 +287,6 @@
         }
     };
 
-    // Update milestone -> save to DB -> refresh
     const saveUpdate = async () => {
         if (!editingMilestone?.milestone || !editingMilestone?.category) return;
 
@@ -351,535 +371,525 @@
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 px-6 py-8 lg:px-10">
-        <div className="mx-auto max-w-6xl space-y-6">
-            {/* Header */}
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className={UI.page}>
+        {/* Header */}
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-                <h1 className="text-3xl font-bold text-gray-900">Development Tracking</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Development Tracking</h1>
             </div>
 
-            <button
+            <Button
                 onClick={handleAddMilestone}
-                className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white shadow hover:bg-blue-700"
+                variant="primary"
                 type="button"
-            >
-                <Plus className="h-4 w-4" />
+                className="px-5 py-2"
+                >
                 Add Milestone
-            </button>
-            </div>
+            </Button>
 
-            {/* Summary Statistics */}
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-4">
-            <div className="rounded-xl border bg-white p-6">
-                <div className="flex items-center justify-between">
+        </div>
+
+        {/* Summary Statistics */}
+        <div className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-4">
+            <div className={`${UI.card} ${UI.cardPad}`}>
+            <div className="flex items-center justify-between">
                 <div>
-                    <p className="text-sm font-medium text-gray-600">Total Children</p>
-                    <p className="text-3xl font-bold text-gray-900">{totals.totalChildren}</p>
-                    <p className="text-sm text-blue-600">With active milestones</p>
+                <p className="text-xs sm:text-sm font-medium text-gray-600">Total Children</p>
+                <p className="text-2xl sm:text-3xl font-bold text-gray-900">{totals.totalChildren}</p>
+                <p className="text-xs sm:text-sm text-blue-600">With active milestones</p>
                 </div>
                 <div className="rounded-full bg-blue-100 p-3">
-                    <User className="h-6 w-6 text-blue-600" />
-                </div>
+                <User className="h-6 w-6 text-blue-600" />
                 </div>
             </div>
+            </div>
 
-            <div className="rounded-xl border bg-white p-6">
-                <div className="flex items-center justify-between">
+            <div className={`${UI.card} ${UI.cardPad}`}>
+            <div className="flex items-center justify-between">
                 <div>
-                    <p className="text-sm font-medium text-gray-600">Total Milestones</p>
-                    <p className="text-3xl font-bold text-gray-900">{totals.totalMilestones}</p>
-                    <p className="text-sm text-gray-600">Being tracked</p>
+                <p className="text-xs sm:text-sm font-medium text-gray-600">Total Milestones</p>
+                <p className="text-2xl sm:text-3xl font-bold text-gray-900">{totals.totalMilestones}</p>
+                <p className="text-xs sm:text-sm text-gray-600">Being tracked</p>
                 </div>
                 <div className="rounded-full bg-purple-100 p-3">
-                    <Target className="h-6 w-6 text-purple-600" />
-                </div>
+                <Target className="h-6 w-6 text-purple-600" />
                 </div>
             </div>
+            </div>
 
-            <div className="rounded-xl border bg-white p-6">
-                <div className="flex items-center justify-between">
+            <div className={`${UI.card} ${UI.cardPad}`}>
+            <div className="flex items-center justify-between">
                 <div>
-                    <p className="text-sm font-medium text-gray-600">Completed</p>
-                    <p className="text-3xl font-bold text-gray-900">{totals.completed}</p>
-                    <p className="text-sm text-green-600">Achievements</p>
+                <p className="text-xs sm:text-sm font-medium text-gray-600">Completed</p>
+                <p className="text-2xl sm:text-3xl font-bold text-gray-900">{totals.completed}</p>
+                <p className="text-xs sm:text-sm text-green-600">Achievements</p>
                 </div>
                 <div className="rounded-full bg-green-100 p-3">
-                    <CheckCircle className="h-6 w-6 text-green-600" />
-                </div>
+                <CheckCircle className="h-6 w-6 text-green-600" />
                 </div>
             </div>
+            </div>
 
-            <div className="rounded-xl border bg-white p-6">
-                <div className="flex items-center justify-between">
+            <div className={`${UI.card} ${UI.cardPad}`}>
+            <div className="flex items-center justify-between">
                 <div>
-                    <p className="text-sm font-medium text-gray-600">At Risk</p>
-                    <p className="text-3xl font-bold text-gray-900">{totals.atRisk}</p>
-                    <p className="text-sm text-red-600">Need attention</p>
+                <p className="text-xs sm:text-sm font-medium text-gray-600">At Risk</p>
+                <p className="text-2xl sm:text-3xl font-bold text-gray-900">{totals.atRisk}</p>
+                <p className="text-xs sm:text-sm text-red-600">Need attention</p>
                 </div>
                 <div className="rounded-full bg-red-100 p-3">
-                    <AlertCircle className="h-6 w-6 text-red-600" />
-                </div>
+                <AlertCircle className="h-6 w-6 text-red-600" />
                 </div>
             </div>
             </div>
+        </div>
 
-            {/* Empty */}
-            {milestones.length === 0 && (
+        {/* Empty */}
+        {milestones.length === 0 && (
             <div className="rounded-2xl border border-dashed border-gray-300 bg-white px-6 py-10 text-center">
-                <p className="text-lg font-semibold text-gray-900">No milestones added yet</p>
-                <p className="mt-1 text-sm text-gray-600">
+            <p className="text-lg font-semibold text-gray-900">No milestones added yet</p>
+            <p className="mt-1 text-sm text-gray-600">
                 Click <span className="font-semibold">“Add Milestone”</span> to create a development goal for a child.
-                </p>
+            </p>
             </div>
-            )}
+        )}
 
-            {/* Children List */}
-            <div className="space-y-4">
+        {/* Children List */}
+        <div className="space-y-4">
             {childrenWithMilestones.map((child) => {
-                const childMilestones = milestones.filter((m) => Number(m.childId) === Number(child.id));
-                const stats = calculateChildStats(child.id, milestones);
-                const isExpanded = expandedChildren.has(child.id);
+            const childMilestones = milestones.filter((m) => Number(m.childId) === Number(child.id));
+            const stats = calculateChildStats(child.id, milestones);
+            const isExpanded = expandedChildren.has(child.id);
 
-                return (
-                <div key={child.id} className="overflow-hidden rounded-xl border bg-white">
-                    {/* Child Header */}
-                    <div
-                    className="cursor-pointer p-4 transition-colors hover:bg-gray-50"
+            return (
+                <div key={child.id} className={`${UI.card} overflow-hidden`}>
+                {/* Child Header */}
+                <div
+                    className="cursor-pointer px-5 py-4 transition-colors hover:bg-gray-50"
                     onClick={() => toggleChildExpansion(child.id)}
-                    >
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                        <button className="grid h-8 w-8 place-items-center rounded-md hover:bg-gray-100" type="button">
-                            {isExpanded ? <ChevronDown className="h-5 w-5" /> : <ChevronRight className="h-5 w-5" />}
+                >
+                    <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-4 min-w-0">
+                        <button className={UI.iconBtn} type="button">
+                        {isExpanded ? <ChevronDown className="h-5 w-5" /> : <ChevronRight className="h-5 w-5" />}
                         </button>
 
-                        {/* Avatar */}
                         {child.photo ? (
-                            <img src={child.photo} alt={child.name} className="h-12 w-12 rounded-full object-cover" />
+                        <img src={child.photo} alt={child.name} className="h-12 w-12 rounded-full object-cover" />
                         ) : (
-                            <div className="grid h-12 w-12 place-items-center rounded-full bg-gray-100 text-sm font-semibold text-gray-700">
+                        <div className="grid h-12 w-12 place-items-center rounded-full bg-gray-100 text-sm font-semibold text-gray-700">
                             {initials(child.name)}
-                            </div>
+                        </div>
                         )}
 
-                        <div>
-                            <h3 className="font-medium text-gray-900">{child.name}</h3>
-                            <p className="text-sm text-gray-600">
+                        <div className="min-w-0">
+                        <h3 className="font-medium text-gray-900 truncate">{child.name}</h3>
+                        <p className="text-sm text-gray-600 truncate">
                             Age {child.age} • {childMilestones.length} milestone{childMilestones.length !== 1 ? "s" : ""}
-                            </p>
+                        </p>
                         </div>
-                        </div>
+                    </div>
 
-                        <div className="flex items-center gap-6">
+                    <div className="flex items-center gap-6">
                         <div className="text-right">
-                            <p className="text-sm text-gray-600">Overall Progress</p>
-                            <p className="text-2xl font-bold text-gray-900">{stats.overall}%</p>
+                        <p className="text-sm text-gray-600">Overall Progress</p>
+                        <p className="text-2xl font-bold text-gray-900">{stats.overall}%</p>
                         </div>
 
-                        <div className="flex gap-2">
-                            <Badge className="bg-green-100 text-green-800">{stats.completedMilestones} Completed</Badge>
-                            <Badge className="bg-blue-100 text-blue-800">{stats.inProgressMilestones} In Progress</Badge>
-                            {stats.atRiskMilestones > 0 && (
+                        <div className="hidden lg:flex gap-2">
+                        <Badge className="bg-green-100 text-green-800">{stats.completedMilestones} Completed</Badge>
+                        <Badge className="bg-blue-100 text-blue-800">{stats.inProgressMilestones} In Progress</Badge>
+                        {stats.atRiskMilestones > 0 && (
                             <Badge className="bg-red-100 text-red-800">{stats.atRiskMilestones} At Risk</Badge>
-                            )}
-                        </div>
+                        )}
                         </div>
                     </div>
                     </div>
 
-                    {/* Expanded Content */}
-                    {isExpanded && (
-                    <div className="border-t bg-gray-50 p-4">
-                        {/* Development Areas */}
-                        <div className="mb-6">
+                    {/* badges for smaller screens */}
+                    <div className="mt-3 flex flex-wrap gap-2 lg:hidden">
+                    <Badge className="bg-green-100 text-green-800">{stats.completedMilestones} Completed</Badge>
+                    <Badge className="bg-blue-100 text-blue-800">{stats.inProgressMilestones} In Progress</Badge>
+                    {stats.atRiskMilestones > 0 && <Badge className="bg-red-100 text-red-800">{stats.atRiskMilestones} At Risk</Badge>}
+                    </div>
+                </div>
+
+                {/* Expanded Content */}
+                {isExpanded && (
+                    <div className="border-t bg-gray-50 px-5 py-5">
+                    {/* Development Areas */}
+                    <div className="mb-6">
                         <h4 className="mb-4 font-medium text-gray-900">Development Areas</h4>
 
                         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-                            {[
+                        {[
                             { name: "Physical", value: stats.physical },
                             { name: "Educational", value: stats.educational },
                             { name: "Social", value: stats.social },
                             { name: "Emotional", value: stats.emotional },
-                            ].map((area) => {
+                        ].map((area) => {
                             const meta = getCategoryMeta(area.name);
                             const Icon = meta.icon;
 
                             return (
-                                <div key={area.name} className="rounded-lg border bg-white p-4">
+                            <div key={area.name} className="rounded-lg border border-gray-200 bg-white p-4">
                                 <div className="mb-2 flex items-center gap-2">
-                                    <div className={`rounded ${meta.chipBg} p-1.5`}>
+                                <div className={`rounded ${meta.chipBg} p-1.5`}>
                                     <Icon className={`h-4 w-4 ${meta.chipIcon}`} />
-                                    </div>
-                                    <span className="text-sm font-medium text-gray-700">{meta.label}</span>
+                                </div>
+                                <span className="text-sm font-medium text-gray-700">{meta.label}</span>
                                 </div>
 
                                 <div className="space-y-1">
-                                    <div className="flex items-center justify-between">
+                                <div className="flex items-center justify-between">
                                     <span className="text-xs text-gray-600">Progress</span>
                                     <span className="text-sm font-bold text-gray-900">{area.value}%</span>
-                                    </div>
-                                    <ProgressBar value={area.value} height="h-2" />
                                 </div>
+                                <ProgressBar value={area.value} height="h-2" />
                                 </div>
+                            </div>
                             );
-                            })}
+                        })}
                         </div>
-                        </div>
+                    </div>
 
-                        {/* Active Milestones */}
-                        <div>
+                    {/* Active Milestones */}
+                    <div>
                         <h4 className="mb-4 font-medium text-gray-900">Active Milestones</h4>
 
                         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                            {childMilestones.map((m) => {
+                        {childMilestones.map((m) => {
                             const meta = getCategoryMeta(m.category);
                             const Icon = meta.icon;
 
                             return (
-                                <div key={m.id} className="rounded-lg border bg-white p-4">
-                                <div className="mb-3 flex items-start justify-between">
-                                    <div className="flex items-start gap-2">
+                            <div key={m.id} className="rounded-lg border border-gray-200 bg-white p-4">
+                                <div className="mb-3 flex items-start justify-between gap-3">
+                                <div className="flex items-start gap-2 min-w-0">
                                     <Icon className={`mt-0.5 h-4 w-4 ${meta.chipIcon}`} />
-                                    <div>
-                                        <h5 className="font-medium text-gray-900">{m.milestone}</h5>
-                                        <p className="mt-1 text-xs text-gray-600">{m.category}</p>
+                                    <div className="min-w-0">
+                                    <h5 className="font-medium text-gray-900 truncate">{m.milestone}</h5>
+                                    <p className="mt-1 text-xs text-gray-600">{m.category}</p>
                                     </div>
-                                    </div>
+                                </div>
 
-                                    <span
+                                <span
                                     className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium ${getStatusColor(
-                                        m.status
+                                    m.status
                                     )}`}
-                                    >
+                                >
                                     {getStatusIcon(m.status)}
                                     <span>{m.status}</span>
-                                    </span>
+                                </span>
                                 </div>
 
                                 <div className="space-y-2">
-                                    <div>
+                                <div>
                                     <div className="mb-1 flex items-center justify-between">
-                                        <span className="text-xs text-gray-600">Progress</span>
-                                        <span className="text-sm font-medium">{clamp(m.progress)}%</span>
+                                    <span className="text-xs text-gray-600">Progress</span>
+                                    <span className="text-sm font-medium">{clamp(m.progress)}%</span>
                                     </div>
                                     <ProgressBar value={m.progress} height="h-2" />
-                                    </div>
+                                </div>
 
-                                    {m.targetDate && (
+                                {m.targetDate && (
                                     <div className="flex items-center gap-2 text-xs text-gray-600">
-                                        <Calendar className="h-3 w-3" />
-                                        <span>Due: {formatDate(m.targetDate)}</span>
+                                    <Calendar className="h-3 w-3" />
+                                    <span>Due: {formatDate(m.targetDate)}</span>
                                     </div>
-                                    )}
+                                )}
 
-                                    {m.notes && <p className="rounded bg-gray-50 p-2 text-xs text-gray-700">{m.notes}</p>}
+                                {m.notes && <p className="rounded bg-gray-50 p-2 text-xs text-gray-700">{m.notes}</p>}
 
-                                    <div className="flex gap-2 pt-2">
-                                    <button
-                                        onClick={() => openDetails(m)}
-                                        className="inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50"
-                                        type="button"
-                                    >
-                                        <Eye className="h-3 w-3" />
-                                        Details
+                                <div className="flex gap-2 pt-2">
+                                    <button onClick={() => openDetails(m)} className={UI.btnSmallOutline} type="button">
+                                    <Eye className="h-3 w-3" />
+                                    Details
                                     </button>
 
-                                    <button
-                                        onClick={() => openUpdate(m)}
-                                        className="inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50"
-                                        type="button"
-                                    >
-                                        <Edit className="h-3 w-3" />
-                                        Update
+                                    <button onClick={() => openUpdate(m)} className={UI.btnSmallOutline} type="button">
+                                    <Edit className="h-3 w-3" />
+                                    Update
                                     </button>
-                                    </div>
                                 </div>
                                 </div>
-                            );
-                            })}
-
-                            {childMilestones.length === 0 && (
-                            <div className="rounded-lg border bg-white p-6 text-sm text-gray-600">
-                                No milestones for this child yet.
                             </div>
-                            )}
-                        </div>
+                            );
+                        })}
+
+                        {childMilestones.length === 0 && (
+                            <div className="rounded-lg border border-gray-200 bg-white p-6 text-sm text-gray-600">
+                            No milestones for this child yet.
+                            </div>
+                        )}
                         </div>
                     </div>
-                    )}
+                    </div>
+                )}
                 </div>
-                );
+            );
             })}
-            </div>
+        </div>
 
-            {/* Add Milestone Modal */}
-            {openModal && <AddMilestoneModal onClose={handleCloseModal} onSave={handleSaveMilestone} children={children} />}
+        {/* Add Milestone Modal */}
+        {openModal && <AddMilestoneModal onClose={handleCloseModal} onSave={handleSaveMilestone} children={children} />}
 
-            {/* Details Modal */}
-            {selectedMilestone && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-                <div className="w-full max-w-2xl overflow-hidden rounded-xl bg-white shadow-xl">
-                <div className="flex items-center justify-between border-b px-6 py-4">
-                    <div className="flex items-center gap-2">
+        {/* Details Modal */}
+        {selectedMilestone && (
+            <div className={UI.modalOverlay}>
+            <div className={`${UI.modalBox} max-w-2xl`}>
+                <div className={UI.modalHeader}>
+                <div className="flex items-center gap-2">
                     <FileText className="h-5 w-5" />
                     <h2 className="text-base font-semibold text-gray-900">Milestone Details</h2>
-                    </div>
-                    <button onClick={closeDetails} className="rounded-full p-2 text-gray-500 hover:bg-gray-100" type="button">
+                </div>
+                <button onClick={closeDetails} className={UI.iconBtn} type="button">
                     <X className="h-4 w-4" />
-                    </button>
+                </button>
                 </div>
 
-                <div className="space-y-4 px-6 py-5">
-                    <div className="flex items-start gap-4">
+                <div className={`${UI.modalBody} space-y-4`}>
+                <div className="flex items-start gap-4">
                     <div className="grid h-16 w-16 place-items-center rounded-full bg-gray-100 text-base font-semibold text-gray-700">
-                        {initials(selectedMilestone.child)}
+                    {initials(selectedMilestone.child)}
                     </div>
 
                     <div className="flex-1">
-                        <h3 className="font-medium text-gray-900">{selectedMilestone.child}</h3>
-                        <div className="mt-1 flex items-center gap-2 text-sm text-gray-600">
+                    <h3 className="font-medium text-gray-900">{selectedMilestone.child}</h3>
+                    <div className="mt-1 flex items-center gap-2 text-sm text-gray-600">
                         {(() => {
-                            const meta = getCategoryMeta(selectedMilestone.category);
-                            const Icon = meta.icon;
-                            return (
+                        const meta = getCategoryMeta(selectedMilestone.category);
+                        const Icon = meta.icon;
+                        return (
                             <>
-                                <Icon className={`h-4 w-4 ${meta.chipIcon}`} />
-                                <span>{selectedMilestone.category}</span>
+                            <Icon className={`h-4 w-4 ${meta.chipIcon}`} />
+                            <span>{selectedMilestone.category}</span>
                             </>
-                            );
+                        );
                         })()}
-                        </div>
+                    </div>
                     </div>
 
                     <span
-                        className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium ${getStatusColor(
+                    className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium ${getStatusColor(
                         selectedMilestone.status
-                        )}`}
+                    )}`}
                     >
-                        {getStatusIcon(selectedMilestone.status)}
-                        <span>{selectedMilestone.status}</span>
+                    {getStatusIcon(selectedMilestone.status)}
+                    <span>{selectedMilestone.status}</span>
                     </span>
-                    </div>
+                </div>
 
-                    <div className="h-px bg-gray-200" />
+                <div className="h-px bg-gray-200" />
 
-                    <div>
+                <div>
                     <h4 className="mb-2 font-medium text-gray-900">{selectedMilestone.milestone}</h4>
                     <p className="text-sm text-gray-700">{selectedMilestone.description || "—"}</p>
-                    </div>
+                </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-4">
                     <div>
-                        <p className="text-sm font-medium text-gray-600">Assigned By</p>
-                        <p className="text-sm text-gray-900">{selectedMilestone.assignedBy || "—"}</p>
-                    </div>
-                    <div>
-                        <p className="text-sm font-medium text-gray-600">Target Date</p>
-                        <p className="text-sm text-gray-900">
-                        {selectedMilestone.targetDate ? formatDate(selectedMilestone.targetDate) : "—"}
-                        </p>
+                    <p className="text-sm font-medium text-gray-600">Assigned By</p>
+                    <p className="text-sm text-gray-900">{selectedMilestone.assignedBy || "—"}</p>
                     </div>
                     <div>
-                        <p className="text-sm font-medium text-gray-600">Created Date</p>
-                        <p className="text-sm text-gray-900">
-                        {selectedMilestone.createdDate ? formatDate(selectedMilestone.createdDate) : "—"}
-                        </p>
+                    <p className="text-sm font-medium text-gray-600">Target Date</p>
+                    <p className="text-sm text-gray-900">{selectedMilestone.targetDate ? formatDate(selectedMilestone.targetDate) : "—"}</p>
                     </div>
                     <div>
-                        <p className="text-sm font-medium text-gray-600">Last Updated</p>
-                        <p className="text-sm text-gray-900">
-                        {selectedMilestone.lastUpdated ? formatDate(selectedMilestone.lastUpdated) : "—"}
-                        </p>
+                    <p className="text-sm font-medium text-gray-600">Created Date</p>
+                    <p className="text-sm text-gray-900">{selectedMilestone.createdDate ? formatDate(selectedMilestone.createdDate) : "—"}</p>
                     </div>
+                    <div>
+                    <p className="text-sm font-medium text-gray-600">Last Updated</p>
+                    <p className="text-sm text-gray-900">{selectedMilestone.lastUpdated ? formatDate(selectedMilestone.lastUpdated) : "—"}</p>
                     </div>
+                </div>
 
-                    <div>
+                <div>
                     <div className="mb-2 flex items-center justify-between">
-                        <p className="text-sm font-medium text-gray-600">Progress</p>
-                        <p className="text-lg font-bold text-gray-900">{clamp(selectedMilestone.progress)}%</p>
+                    <p className="text-sm font-medium text-gray-600">Progress</p>
+                    <p className="text-lg font-bold text-gray-900">{clamp(selectedMilestone.progress)}%</p>
                     </div>
                     <ProgressBar value={selectedMilestone.progress} height="h-3" />
-                    </div>
+                </div>
 
-                    {selectedMilestone.objectives?.length > 0 && (
+                {selectedMilestone.objectives?.length > 0 && (
                     <div>
-                        <p className="mb-2 text-sm font-medium text-gray-600">Objectives</p>
-                        <ul className="space-y-1">
+                    <p className="mb-2 text-sm font-medium text-gray-600">Objectives</p>
+                    <ul className="space-y-1">
                         {selectedMilestone.objectives.map((obj, idx) => (
-                            <li key={idx} className="flex items-start gap-2 text-sm text-gray-700">
+                        <li key={idx} className="flex items-start gap-2 text-sm text-gray-700">
                             <span className="text-blue-600">•</span>
                             <span>{obj}</span>
-                            </li>
+                        </li>
                         ))}
-                        </ul>
+                    </ul>
                     </div>
-                    )}
+                )}
 
-                    {selectedMilestone.notes && (
+                {selectedMilestone.notes && (
                     <div>
-                        <p className="mb-2 text-sm font-medium text-gray-600">Current Notes</p>
-                        <div className="rounded-lg bg-blue-50 p-3 text-sm text-gray-700">{selectedMilestone.notes}</div>
+                    <p className="mb-2 text-sm font-medium text-gray-600">Current Notes</p>
+                    <div className="rounded-lg bg-blue-50 p-3 text-sm text-gray-700">{selectedMilestone.notes}</div>
                     </div>
-                    )}
-                </div>
+                )}
                 </div>
             </div>
-            )}
+            </div>
+        )}
 
-            {/* Update Modal */}
-            {editingMilestone && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-                <div className="w-full max-w-xl overflow-hidden rounded-xl bg-white shadow-xl">
-                <div className="border-b px-6 py-4">
-                    <div className="flex items-center justify-between">
-                    <div>
-                        <div className="flex items-center gap-2">
-                        <Edit className="h-5 w-5" />
-                        <h2 className="text-base font-semibold text-gray-900">Update Milestone</h2>
-                        </div>
-                        <p className="mt-1 text-sm text-gray-600">Update progress, status, and notes for this milestone.</p>
+        {/* Update Modal */}
+        {editingMilestone && (
+            <div className={UI.modalOverlay}>
+            <div className={`${UI.modalBox} max-w-xl`}>
+                <div className={UI.modalHeader}>
+                <div>
+                    <div className="flex items-center gap-2">
+                    <Edit className="h-5 w-5" />
+                    <h2 className="text-base font-semibold text-gray-900">Update Milestone</h2>
                     </div>
-                    <button onClick={closeUpdate} className="rounded-full p-2 text-gray-500 hover:bg-gray-100" type="button">
-                        <X className="h-4 w-4" />
-                    </button>
-                    </div>
+                    <p className="mt-1 text-sm text-gray-600">Update progress, status, and notes for this milestone.</p>
+                </div>
+                <button onClick={closeUpdate} className={UI.iconBtn} type="button">
+                    <X className="h-4 w-4" />
+                </button>
                 </div>
 
-                <div className="max-h-[75vh] space-y-4 overflow-y-auto px-6 py-5">
-                    <div>
+                <div className="max-h-[75vh] overflow-y-auto px-5 py-5 space-y-4">
+                <div>
                     <p className="text-sm font-medium text-gray-600">Child</p>
                     <p className="text-sm text-gray-900">{editingMilestone.child}</p>
-                    </div>
+                </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                        <label className="text-sm font-medium text-gray-700">Category</label>
-                        <select
-                        className="w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                    <label className="text-sm font-medium text-gray-700">Category</label>
+                    <select
+                        className={UI.select}
                         value={editingMilestone.category}
                         onChange={(e) => setEditingMilestone((p) => ({ ...p, category: e.target.value }))}
-                        >
+                    >
                         <option value="Physical">Physical</option>
                         <option value="Educational">Educational</option>
                         <option value="Social">Social</option>
                         <option value="Emotional">Emotional</option>
-                        </select>
+                    </select>
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-sm font-medium text-gray-700">Status</label>
-                        <select
-                        className="w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                    <label className="text-sm font-medium text-gray-700">Status</label>
+                    <select
+                        className={UI.select}
                         value={editingMilestone.status}
                         onChange={(e) => setEditingMilestone((p) => ({ ...p, status: e.target.value }))}
-                        >
+                    >
                         <option value="Planned">Planned</option>
                         <option value="In Progress">In Progress</option>
                         <option value="At Risk">At Risk</option>
                         <option value="Completed">Completed</option>
-                        </select>
+                    </select>
                     </div>
-                    </div>
+                </div>
 
-                    <div className="space-y-2">
+                <div className="space-y-2">
                     <label className="text-sm font-medium text-gray-700">Milestone Title</label>
                     <input
-                        className="w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
-                        value={editingMilestone.milestone}
-                        onChange={(e) => setEditingMilestone((p) => ({ ...p, milestone: e.target.value }))}
-                        placeholder="Milestone title"
+                    className={UI.input}
+                    value={editingMilestone.milestone}
+                    onChange={(e) => setEditingMilestone((p) => ({ ...p, milestone: e.target.value }))}
+                    placeholder="Milestone title"
                     />
-                    </div>
+                </div>
 
-                    <div className="space-y-2">
+                <div className="space-y-2">
                     <label className="text-sm font-medium text-gray-700">Description</label>
                     <textarea
-                        className="w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
-                        rows={3}
-                        value={editingMilestone.description || ""}
-                        onChange={(e) => setEditingMilestone((p) => ({ ...p, description: e.target.value }))}
+                    className={UI.textarea}
+                    rows={3}
+                    value={editingMilestone.description || ""}
+                    onChange={(e) => setEditingMilestone((p) => ({ ...p, description: e.target.value }))}
                     />
-                    </div>
+                </div>
 
-                    <div className="space-y-2">
+                <div className="space-y-2">
                     <label className="text-sm font-medium text-gray-700">Progress: {clamp(editingMilestone.progress)}%</label>
                     <input
-                        type="range"
-                        min="0"
-                        max="100"
-                        value={clamp(editingMilestone.progress)}
-                        onChange={(e) => setEditingMilestone((p) => ({ ...p, progress: parseInt(e.target.value, 10) || 0 }))}
-                        className="w-full"
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={clamp(editingMilestone.progress)}
+                    onChange={(e) =>
+                        setEditingMilestone((p) => ({
+                        ...p,
+                        progress: parseInt(e.target.value, 10) || 0,
+                        }))
+                    }
+                    className="w-full"
                     />
                     <ProgressBar value={editingMilestone.progress} height="h-2" />
-                    </div>
+                </div>
 
-                    <div className="space-y-2">
+                <div className="space-y-2">
                     <label className="text-sm font-medium text-gray-700">Target Date</label>
                     <input
-                        type="date"
-                        className="w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
-                        value={editingMilestone.targetDate || ""}
-                        onChange={(e) => setEditingMilestone((p) => ({ ...p, targetDate: e.target.value }))}
+                    type="date"
+                    className={UI.input}
+                    value={editingMilestone.targetDate || ""}
+                    onChange={(e) => setEditingMilestone((p) => ({ ...p, targetDate: e.target.value }))}
                     />
-                    </div>
+                </div>
 
-                    <div className="space-y-2">
+                <div className="space-y-2">
                     <label className="text-sm font-medium text-gray-700">Objectives</label>
                     {(editingMilestone.objectives || []).map((obj, idx) => (
-                        <div key={idx} className="flex gap-2">
+                    <div key={idx} className="flex gap-2">
                         <input
-                            className="flex-1 rounded-md border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
-                            value={obj}
-                            onChange={(e) => updateEditingObjective(idx, e.target.value)}
-                            placeholder={`Objective ${idx + 1}`}
+                        className={UI.input}
+                        value={obj}
+                        onChange={(e) => updateEditingObjective(idx, e.target.value)}
+                        placeholder={`Objective ${idx + 1}`}
                         />
                         {(editingMilestone.objectives || []).length > 1 && (
-                            <button onClick={() => removeEditingObjective(idx)} className="rounded-md border px-3 hover:bg-gray-50" type="button">
+                        <button
+                            onClick={() => removeEditingObjective(idx)}
+                            className="h-10 w-10 inline-flex items-center justify-center rounded-lg border border-gray-300 hover:bg-gray-50"
+                            type="button"
+                        >
                             <X className="h-4 w-4" />
-                            </button>
+                        </button>
                         )}
-                        </div>
-                    ))}
-                    <button
-                        type="button"
-                        onClick={addEditingObjective}
-                        className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm hover:bg-gray-50"
-                    >
-                        <Plus className="h-4 w-4" />
-                        Add Objective
-                    </button>
                     </div>
+                    ))}
+                    <button type="button" onClick={addEditingObjective} className={UI.btnOutline}>
+                    <Plus className="h-4 w-4" />
+                    Add Objective
+                    </button>
+                </div>
 
-                    <div className="space-y-2">
+                <div className="space-y-2">
                     <label className="text-sm font-medium text-gray-700">Notes</label>
                     <textarea
-                        className="w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
-                        rows={3}
-                        value={editingMilestone.notes || ""}
-                        onChange={(e) => setEditingMilestone((p) => ({ ...p, notes: e.target.value }))}
+                    className={UI.textarea}
+                    rows={3}
+                    value={editingMilestone.notes || ""}
+                    onChange={(e) => setEditingMilestone((p) => ({ ...p, notes: e.target.value }))}
                     />
-                    </div>
+                </div>
                 </div>
 
-                <div className="flex justify-end gap-3 border-t px-6 py-4">
-                    <button onClick={closeUpdate} className="rounded-md border px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50" type="button">
+                <div className={UI.modalFooter}>
+                <button onClick={closeUpdate} className={UI.btnOutline} type="button">
                     Cancel
-                    </button>
-                    <button
-                    onClick={saveUpdate}
-                    className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-                    type="button"
-                    >
+                </button>
+                <button onClick={saveUpdate} className={UI.btnPrimary} type="button">
                     <Save className="h-4 w-4" />
                     Save Changes
-                    </button>
-                </div>
+                </button>
                 </div>
             </div>
-            )}
-        </div>
+            </div>
+        )}
         </div>
     );
     };
@@ -924,106 +934,110 @@
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4">
-        <div className="w-full max-w-2xl rounded-xl bg-white p-6 shadow-lg max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between mb-4">
-            <h2 className="text-xl font-semibold flex items-center gap-2">🎯 Add New Milestone</h2>
-            <button onClick={onClose} className="text-slate-500 hover:text-slate-700" type="button">
-                ✕
+        <div className={UI.modalOverlay}>
+        <div className={`${UI.modalBox} max-w-2xl`}>
+            <div className={UI.modalHeader}>
+            <h2 className="text-lg font-semibold flex items-center gap-2">
+                <Target className="h-5 w-5 text-purple-600" />
+                Add New Milestone
+            </h2>
+            <button onClick={onClose} className={UI.iconBtn} type="button">
+                <X className="h-4 w-4" />
             </button>
             </div>
 
+            <div className={`${UI.modalBody} space-y-4 max-h-[75vh] overflow-y-auto`}>
             {/* FIELDS */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-            <div>
-                <label className="text-sm font-medium">Child *</label>
-                <select
-                value={childId}
-                onChange={(e) => setChildId(e.target.value)}
-                className="w-full bg-slate-100 p-2 rounded-lg text-sm"
-                >
-                <option value="">Select child</option>
-                {children.map((c) => (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Child *</label>
+                <select value={childId} onChange={(e) => setChildId(e.target.value)} className={UI.select}>
+                    <option value="">Select child</option>
+                    {children.map((c) => (
                     <option key={c.id} value={c.id}>
-                    {c.fullName || c.name}
+                        {c.fullName || c.name}
                     </option>
+                    ))}
+                </select>
+                </div>
+
+                <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Category *</label>
+                <select value={category} onChange={(e) => setCategory(e.target.value)} className={UI.select}>
+                    <option value="">Select category</option>
+                    <option value="Physical">Physical</option>
+                    <option value="Educational">Educational</option>
+                    <option value="Social">Social</option>
+                    <option value="Emotional">Emotional</option>
+                </select>
+                </div>
+            </div>
+
+            <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Milestone Title *</label>
+                <input
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="e.g. Reading Level 3"
+                className={UI.input}
+                />
+            </div>
+
+            <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Description</label>
+                <textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Describe milestone..."
+                className={UI.textarea}
+                />
+            </div>
+
+            <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Target Date *</label>
+                <input type="date" value={targetDate} onChange={(e) => setTargetDate(e.target.value)} className={UI.input} />
+            </div>
+
+            <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Objectives</label>
+                {objectives.map((obj, i) => (
+                <input
+                    key={i}
+                    value={obj}
+                    onChange={(e) => updateObjective(e.target.value, i)}
+                    placeholder={`Objective ${i + 1}`}
+                    className={UI.input}
+                />
                 ))}
-                </select>
+                <button onClick={addObjective} className={UI.btnOutline} type="button">
+                <Plus className="h-4 w-4" />
+                Add Objective
+                </button>
             </div>
 
-            <div>
-                <label className="text-sm font-medium">Category *</label>
-                <select
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                className="w-full bg-slate-100 p-2 rounded-lg text-sm"
-                >
-                <option value="">Select category</option>
-                <option value="Physical">Physical</option>
-                <option value="Educational">Educational</option>
-                <option value="Social">Social</option>
-                <option value="Emotional">Emotional</option>
-                </select>
+            <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Initial Notes</label>
+                <textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Additional notes..." className={UI.textarea} />
             </div>
             </div>
 
-            <label className="text-sm font-medium">Milestone Title *</label>
-            <input
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="e.g. Reading Level 3"
-            className="w-full bg-slate-100 p-2 rounded-lg mb-4"
-            />
-
-            <label className="text-sm font-medium">Description</label>
-            <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="Describe milestone..."
-            className="w-full bg-slate-100 p-2 rounded-lg h-24 mb-4"
-            />
-
-            <label className="text-sm font-medium">Target Date *</label>
-            <input
-            type="date"
-            value={targetDate}
-            onChange={(e) => setTargetDate(e.target.value)}
-            className="w-full bg-slate-100 p-2 rounded-lg mb-4"
-            />
-
-            <label className="text-sm font-medium">Objectives</label>
-            {objectives.map((obj, i) => (
-            <input
-                key={i}
-                value={obj}
-                onChange={(e) => updateObjective(e.target.value, i)}
-                placeholder={`Objective ${i + 1}`}
-                className="w-full bg-slate-100 p-2 rounded-lg mb-2"
-            />
-            ))}
-            <button onClick={addObjective} className="border rounded-lg px-3 py-1 text-sm" type="button">
-            + Add Objective
-            </button>
-
-            <label className="text-sm font-medium mt-4 block">Initial Notes</label>
-            <textarea
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            placeholder="Additional notes..."
-            className="w-full bg-slate-100 p-2 rounded-lg h-20 mb-6"
-            />
-
-            <div className="flex justify-end gap-3">
-            <button onClick={onClose} className="px-4 py-2 border rounded-lg" type="button">
-                Cancel
-            </button>
-            <button
-                onClick={submitForm}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            <div className={UI.modalFooter}>
+            <Button
+                onClick={onClose}
+                variant="outline"
                 type="button"
-            >
-                💾 Create Milestone
-            </button>
+                className="px-5 py-2"
+                >
+                Cancel
+            </Button>
+            <Button
+                onClick={submitForm}
+                variant="primary"
+                type="button"
+                className="px-5 py-2"
+                >
+                Create Milestone
+            </Button>
             </div>
         </div>
         </div>

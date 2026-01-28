@@ -1,7 +1,7 @@
-import React, { useMemo, useState } from "react";
-import { auditLogger } from "../../utils/auditLogger";
-
-import {
+    import React, { useMemo, useState } from "react";
+    import { auditLogger } from "../../utils/auditLogger";
+    
+    import {
     DollarSign,
     Search,
     Download,
@@ -14,6 +14,7 @@ import {
     Bell,
     CheckCircle,
     } from "lucide-react";
+
     import {
     LineChart,
     Line,
@@ -27,65 +28,54 @@ import {
     Cell,
     } from "recharts";
 
-    /* ------------------------------ Tailwind-only UI ------------------------------ */
+    // ✅ Use your UI Button
+    import Button from "../UI/Button";
 
-    function Card({ className = "", children }) {
-    return (
-        <div className={`rounded-2xl border border-gray-200 bg-white shadow-sm ${className}`}>
-            {children}
-        </div>
-    );
-}
+    /* ------------------------------ Dashboard-like UI helpers ------------------------------ */
 
-    const CardHeader = ({ className = "", children }) => (
-    <div className={`px-6 pt-6 ${className}`}>{children}</div>
+    const Card = ({ children, className = "" }) => (
+    <div className={`bg-white rounded-xl shadow-sm border border-gray-200 ${className}`}>
+        {children}
+    </div>
     );
 
-    const CardTitle = ({ className = "", children }) => (
-    <div className={`text-base font-semibold text-gray-900 ${className}`}>{children}</div>
+    const CardHeader = ({ children, className = "" }) => (
+    <div className={`px-5 py-4 border-b border-gray-100 flex items-center justify-between gap-2 ${className}`}>
+        {children}
+    </div>
     );
 
-    const CardContent = ({ className = "", children }) => (
-    <div className={`px-6 pb-6 ${className}`}>{children}</div>
+    const CardTitle = ({ children, className = "" }) => (
+    <h2 className={`text-base sm:text-lg font-semibold text-gray-900 ${className}`}>{children}</h2>
+    );
+
+    const CardContent = ({ children, className = "" }) => (
+    <div className={`px-5 py-5 ${className}`}>{children}</div>
     );
 
     const Badge = ({ className = "", children }) => (
     <span
-        className={`inline-flex items-center rounded-full border border-gray-200 bg-white px-3 py-1 text-xs font-medium text-gray-700 ${className}`}
+        className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium bg-white text-gray-700 border-gray-300 ${className}`}
     >
         {children}
     </span>
     );
 
-    const Button = ({ className = "", variant = "solid", children, ...props }) => {
-    const base =
-        "inline-flex items-center justify-center rounded-xl px-5 py-2 text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-black/20 disabled:opacity-60 disabled:cursor-not-allowed";
-    const styles = {
-        solid: "bg-black text-white hover:bg-black/90",
-        outline: "border border-gray-200 bg-white text-gray-900 hover:bg-gray-50",
-    };
-    return (
-        <button className={`${base} ${styles[variant]} ${className}`} {...props}>
-        {children}
-        </button>
-    );
-    };
-
     const Input = ({ className = "", ...props }) => (
     <input
-        className={`h-11 w-full rounded-xl border border-gray-200 bg-white px-4 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-black/20 ${className}`}
+        className={`w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${className}`}
         {...props}
     />
     );
 
-    function GoalProgressBar({ value }) {
-    const clamped = Math.min(Math.max(value, 0), 100);
-    return (
-        <div className="h-4 w-full overflow-hidden rounded-full bg-gray-200">
-        <div className="h-full rounded-full bg-black transition-all" style={{ width: `${clamped}%` }} />
-        </div>
+    const Progress = ({ value = 0 }) => (
+    <div className="w-full h-2 rounded-full bg-gray-100 overflow-hidden">
+        <div
+        className="h-full rounded-full bg-blue-500 transition-all"
+        style={{ width: `${Math.min(Math.max(value, 0), 100)}%` }}
+        />
+    </div>
     );
-    }
 
     /* ------------------------------ Mock Data ------------------------------ */
 
@@ -178,14 +168,13 @@ import {
 
     /* ------------------------------ Helpers ------------------------------ */
 
-    const getStatusColor = (type) => {
+    const getTypeColor = (type) => {
     switch (type) {
         case "Monthly":
         return "bg-blue-100 text-blue-800 border-blue-200";
         case "Weekly":
         return "bg-green-100 text-green-800 border-green-200";
         case "One-time":
-        return "bg-gray-100 text-gray-800 border-gray-200";
         default:
         return "bg-gray-100 text-gray-800 border-gray-200";
     }
@@ -197,6 +186,11 @@ import {
     };
 
     const fmtPeso = (amount) => `₱${Number(amount).toLocaleString()}`;
+
+    // Map your UI Button variants to the design used across pages
+    const UiButton = ({ variant = "primary", size = "medium", className = "", ...props }) => (
+    <Button variant={variant} size={size} className={className} {...props} />
+    );
 
     /* ------------------------------ Component ------------------------------ */
 
@@ -241,7 +235,6 @@ import {
         a.click();
         URL.revokeObjectURL(url);
 
-        // Audit trail (now works because you have the file)
         if (currentUser) {
         auditLogger.logView(
             currentUser,
@@ -255,16 +248,18 @@ import {
 
     const OverviewView = () => (
         <div className="space-y-6">
-        {/* Recent Donations Received */}
+        {/* Recent Donations */}
         <Card className="border-blue-200 bg-blue-50">
-            <CardContent className="pt-6">
+            <CardContent>
             <div className="flex items-start gap-4">
                 <div className="shrink-0 rounded-full bg-blue-600 p-3">
-                <Bell className="h-6 w-6 text-white" />
+                <Bell className="h-5 w-5 text-white" />
                 </div>
 
                 <div className="flex-1">
-                <div className="text-base font-medium text-blue-900">Recent Donations Received</div>
+                <div className="text-sm sm:text-base font-semibold text-blue-900">
+                    Recent Donations Received
+                </div>
 
                 <div className="mt-4 space-y-3">
                     {mockDonations.slice(0, 3).map((donation) => (
@@ -274,7 +269,7 @@ import {
                         <span className="truncate text-gray-800">Anonymous Donor</span>
                         <Badge className="text-xs">{donation.method}</Badge>
                         </div>
-                        <span className="shrink-0 font-medium text-blue-900">
+                        <span className="shrink-0 font-semibold text-blue-900">
                         {formatCurrency(donation.amount, donation.currency)}
                         </span>
                     </div>
@@ -286,64 +281,64 @@ import {
         </Card>
 
         {/* Key Metrics */}
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
             <Card>
-            <CardContent className="pt-6">
-                <div className="flex items-center justify-between gap-4">
+            <CardContent>
+                <div className="flex items-center justify-between">
                 <div>
-                    <p className="text-sm font-medium text-gray-600">Total Donations</p>
-                    <p className="mt-1 text-4xl font-extrabold text-gray-900">{fmtPeso(totalDonations)}</p>
-                    <p className="mt-2 text-sm text-green-600">+15% from last month</p>
+                    <p className="text-xs sm:text-sm font-medium text-gray-600">Total Donations</p>
+                    <p className="text-2xl sm:text-3xl font-bold text-gray-900">{fmtPeso(totalDonations)}</p>
+                    <p className="text-xs sm:text-sm text-green-600">+15% from last month</p>
                 </div>
-                <div className="rounded-full bg-green-100 p-4">
-                    <DollarSign className="h-7 w-7 text-green-600" />
+                <div className="bg-green-100 p-2 sm:p-3 rounded-full">
+                    <DollarSign className="h-5 w-5 sm:h-6 sm:w-6 text-green-600" />
                 </div>
                 </div>
             </CardContent>
             </Card>
 
             <Card>
-            <CardContent className="pt-6">
-                <div className="flex items-center justify-between gap-4">
+            <CardContent>
+                <div className="flex items-center justify-between">
                 <div>
-                    <p className="text-sm font-medium text-gray-600">Total Transactions</p>
-                    <p className="mt-1 text-4xl font-extrabold text-gray-900">{totalTransactions}</p>
-                    <p className="mt-2 text-sm text-blue-600">{recurringDonors} recurring</p>
+                    <p className="text-xs sm:text-sm font-medium text-gray-600">Transactions</p>
+                    <p className="text-2xl sm:text-3xl font-bold text-gray-900">{totalTransactions}</p>
+                    <p className="text-xs sm:text-sm text-blue-600">{recurringDonors} recurring</p>
                 </div>
-                <div className="rounded-full bg-blue-100 p-4">
-                    <Users className="h-7 w-7 text-blue-600" />
+                <div className="bg-blue-100 p-2 sm:p-3 rounded-full">
+                    <Users className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600" />
                 </div>
                 </div>
             </CardContent>
             </Card>
 
             <Card>
-            <CardContent className="pt-6">
-                <div className="flex items-center justify-between gap-4">
+            <CardContent>
+                <div className="flex items-center justify-between">
                 <div>
-                    <p className="text-sm font-medium text-gray-600">Monthly Goal</p>
-                    <p className="mt-1 text-4xl font-extrabold text-gray-900">{fmtPeso(currentMonthTotal)}</p>
-                    <p className="mt-2 text-sm text-purple-600">{goalProgress.toFixed(0)}% of goal</p>
+                    <p className="text-xs sm:text-sm font-medium text-gray-600">Monthly Goal</p>
+                    <p className="text-2xl sm:text-3xl font-bold text-gray-900">{fmtPeso(currentMonthTotal)}</p>
+                    <p className="text-xs sm:text-sm text-purple-600">{goalProgress.toFixed(0)}% of goal</p>
                 </div>
-                <div className="rounded-full bg-purple-100 p-4">
-                    <Target className="h-7 w-7 text-purple-600" />
+                <div className="bg-purple-100 p-2 sm:p-3 rounded-full">
+                    <Target className="h-5 w-5 sm:h-6 sm:w-6 text-purple-600" />
                 </div>
                 </div>
             </CardContent>
             </Card>
 
             <Card>
-            <CardContent className="pt-6">
-                <div className="flex items-center justify-between gap-4">
+            <CardContent>
+                <div className="flex items-center justify-between">
                 <div>
-                    <p className="text-sm font-medium text-gray-600">Avg. Donation</p>
-                    <p className="mt-1 text-4xl font-extrabold text-gray-900">
+                    <p className="text-xs sm:text-sm font-medium text-gray-600">Avg Donation</p>
+                    <p className="text-2xl sm:text-3xl font-bold text-gray-900">
                     {fmtPeso(Math.round(totalDonations / mockDonations.length))}
                     </p>
-                    <p className="mt-2 text-sm text-orange-600">Per transaction</p>
+                    <p className="text-xs sm:text-sm text-orange-600">Per transaction</p>
                 </div>
-                <div className="rounded-full bg-orange-100 p-4">
-                    <Heart className="h-7 w-7 text-orange-600" />
+                <div className="bg-orange-100 p-2 sm:p-3 rounded-full">
+                    <Heart className="h-5 w-5 sm:h-6 sm:w-6 text-orange-600" />
                 </div>
                 </div>
             </CardContent>
@@ -352,27 +347,27 @@ import {
 
         {/* Monthly Goal Progress */}
         <Card>
-            <CardHeader className="pb-3">
-            <div className="flex items-center justify-between gap-4">
-                <CardTitle className="flex items-center gap-2">
+            <CardHeader>
+            <CardTitle className="flex items-center gap-2">
                 <Target className="h-5 w-5 text-gray-900" />
                 October 2025 Goal Progress
-                </CardTitle>
-                <div className="text-lg font-bold text-blue-600">
+            </CardTitle>
+
+            <div className="text-sm sm:text-base font-semibold text-blue-600">
                 {fmtPeso(currentMonthTotal)} / {fmtPeso(monthlyGoal)}
-                </div>
             </div>
             </CardHeader>
-            <CardContent className="pt-3">
-            <GoalProgressBar value={goalProgress} />
-            <p className="mt-4 text-sm text-gray-700">
-                {goalProgress.toFixed(0)}% complete • Goal exceeded by{" "}
+
+            <CardContent className="space-y-3">
+            <Progress value={goalProgress} />
+            <p className="text-xs sm:text-sm text-gray-600">
+                {goalProgress.toFixed(0)}% complete • Exceeded by{" "}
                 {fmtPeso(Math.max(currentMonthTotal - monthlyGoal, 0))}
             </p>
             </CardContent>
         </Card>
 
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Donation Trends */}
             <Card>
             <CardHeader>
@@ -382,7 +377,7 @@ import {
                 </CardTitle>
             </CardHeader>
             <CardContent>
-                <div className="h-[320px]">
+                <div className="h-[300px]">
                 <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={mockDonationTrends}>
                     <CartesianGrid strokeDasharray="3 3" />
@@ -394,14 +389,7 @@ import {
                         name === "amount" ? "Amount" : "Donors",
                         ]}
                     />
-                    <Line
-                        type="monotone"
-                        dataKey="amount"
-                        stroke="#2563eb"
-                        strokeWidth={3}
-                        dot={{ r: 4 }}
-                        activeDot={{ r: 6 }}
-                    />
+                    <Line type="monotone" dataKey="amount" stroke="#2563eb" strokeWidth={3} dot={{ r: 4 }} />
                     </LineChart>
                 </ResponsiveContainer>
                 </div>
@@ -417,15 +405,15 @@ import {
                 </CardTitle>
             </CardHeader>
             <CardContent>
-                <div className="h-[320px]">
+                <div className="h-[300px]">
                 <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                     <Pie
                         data={purposeData}
                         cx="50%"
-                        cy="45%"
-                        innerRadius={70}
-                        outerRadius={120}
+                        cy="50%"
+                        innerRadius={65}
+                        outerRadius={105}
                         paddingAngle={4}
                         dataKey="value"
                     >
@@ -443,7 +431,7 @@ import {
                     <div key={item.name} className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <div className="h-3 w-3 rounded-full" style={{ backgroundColor: item.color }} />
-                        <span className="text-sm text-gray-800">{item.name}</span>
+                        <span className="text-sm text-gray-700">{item.name}</span>
                     </div>
                     <span className="text-sm font-medium text-gray-900">{item.value}%</span>
                     </div>
@@ -457,27 +445,27 @@ import {
 
     const DonationsView = () => (
         <div className="space-y-6">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-            <h2 className="text-2xl font-bold text-gray-900">All Donations</h2>
-            <p className="text-gray-600">View and track all donation records</p>
+            <h2 className="text-xl font-semibold text-gray-900">All Donations</h2>
+            <p className="text-sm text-gray-600">View and track all donation records</p>
             </div>
 
-            <Button variant="outline" onClick={handleExportData}>
-            <Download className="mr-2 h-4 w-4" />
+            <UiButton variant="outline" size="medium" onClick={handleExportData} className="flex items-center gap-2">
+            <Download className="h-4 w-4" />
             Export
-            </Button>
+            </UiButton>
         </div>
 
         <Card>
-            <CardContent className="pt-6">
+            <CardContent>
             <div className="relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
                 placeholder="Search by purpose or payment method..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-11"
+                className="pl-10"
                 />
             </div>
             </CardContent>
@@ -486,7 +474,7 @@ import {
         <div className="space-y-4">
             {filteredDonations.map((donation) => (
             <Card key={donation.id}>
-                <CardContent className="pt-6">
+                <CardContent>
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-start gap-4 sm:items-center">
                     <div className="rounded-full bg-green-100 p-3">
@@ -498,8 +486,10 @@ import {
 
                         <div className="mt-1 flex flex-col gap-1 text-sm text-gray-600 sm:flex-row sm:items-center sm:gap-4">
                         <div className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4" />
+                            <Calendar className="h-4 w-4 text-gray-400" />
+                            <span>
                             {new Date(donation.date).toLocaleDateString()} {donation.time}
+                            </span>
                         </div>
                         <div className="truncate">Payment ID: {donation.paymentId}</div>
                         </div>
@@ -515,12 +505,9 @@ import {
                     <div className="text-xl font-bold text-gray-900">
                         {formatCurrency(donation.amount, donation.currency)}
                     </div>
+
                     <div className="mt-2 flex flex-wrap gap-2 sm:justify-end">
-                        <span
-                        className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium ${getStatusColor(
-                            donation.type
-                        )}`}
-                        >
+                        <span className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium ${getTypeColor(donation.type)}`}>
                         {donation.type}
                         </span>
                         <span className="inline-flex items-center rounded-full border border-green-200 bg-green-100 px-3 py-1 text-xs font-medium text-green-800">
@@ -537,29 +524,30 @@ import {
     );
 
     return (
-        <div className="space-y-6">
+        <div className="p-6 bg-gray-50 min-h-screen space-y-6">
         {/* Header */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-            <h1 className="text-4xl font-extrabold text-gray-900">Donation Management</h1>
-            <p className="mt-2 text-gray-600">
-                Track and analyze donations received through payment gateway
-            </p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Donation Management</h1>
+            <p className="mt-1 text-sm text-gray-600">Track and analyze donations received through payment gateway</p>
             </div>
 
             <div className="flex gap-2">
-            <Button
-                variant={activeView === "overview" ? "solid" : "outline"}
+            <UiButton
+                variant={activeView === "overview" ? "primary" : "outline"}
+                size="medium"
                 onClick={() => setActiveView("overview")}
             >
                 Overview
-            </Button>
-            <Button
-                variant={activeView === "donations" ? "solid" : "outline"}
+            </UiButton>
+
+            <UiButton
+                variant={activeView === "donations" ? "primary" : "outline"}
+                size="medium"
                 onClick={() => setActiveView("donations")}
             >
                 Donations
-            </Button>
+            </UiButton>
             </div>
         </div>
 
@@ -568,4 +556,4 @@ import {
         {activeView === "donations" && <DonationsView />}
         </div>
     );
-}
+    }

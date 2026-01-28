@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from "react";
-import {
+    // src/components/Modals/ChildrenModals.js
+    import React, { useEffect, useState } from "react";
+    import {
     X,
     Calendar,
     MapPin,
@@ -13,6 +14,8 @@ import {
     Pencil,
     UserPlus,
     } from "lucide-react";
+
+    import Button from "../UI/Button";
 
     /* ----------------- Badge Color Helpers ----------------- */
     export const getStatusColor = (status) => {
@@ -58,6 +61,37 @@ import {
     }
     };
 
+    /* ----------------- Dashboard-like Modal Shell ----------------- */
+    const ModalShell = ({ title, subtitle, onClose, children, maxWidth = "max-w-3xl" }) => {
+    return (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-3 md:p-4">
+        <div className={`w-full ${maxWidth} max-h-[90vh] bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col`}>
+            {/* Header */}
+            <div className="px-5 md:px-6 py-5 flex items-start justify-between gap-4">
+            <div className="min-w-0">
+                <h2 className="text-xl md:text-2xl font-bold text-gray-900">{title}</h2>
+                {subtitle ? <p className="text-sm text-gray-600 mt-1">{subtitle}</p> : null}
+            </div>
+
+            <button
+                onClick={onClose}
+                className="p-2 rounded-full hover:bg-gray-100 text-gray-500"
+                type="button"
+                aria-label="Close"
+            >
+                <X size={18} />
+            </button>
+            </div>
+
+            <div className="border-t" />
+
+            {/* Body */}
+            <div className="px-5 md:px-6 py-6 overflow-y-auto">{children}</div>
+        </div>
+        </div>
+    );
+    };
+
     /* ----------------- Small UI Helpers ----------------- */
     const Field = ({ label, children }) => (
     <div className="space-y-2">
@@ -70,7 +104,8 @@ import {
     <input
         {...props}
         className={
-        "w-full px-4 py-3 rounded-xl bg-gray-100 border border-transparent focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none text-sm " +
+        "w-full px-4 py-2.5 rounded-xl bg-gray-100 border border-transparent " +
+        "focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none text-sm " +
         (props.className || "")
         }
     />
@@ -80,7 +115,8 @@ import {
     <select
         {...props}
         className={
-        "w-full px-4 py-3 rounded-xl bg-gray-100 border border-transparent focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none text-sm " +
+        "w-full px-4 py-2.5 rounded-xl bg-gray-100 border border-transparent " +
+        "focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none text-sm " +
         (props.className || "")
         }
     />
@@ -90,7 +126,8 @@ import {
     <textarea
         {...props}
         className={
-        "w-full px-4 py-3 rounded-xl bg-gray-100 border border-transparent focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none text-sm min-h-[110px] resize-none " +
+        "w-full px-4 py-2.5 rounded-xl bg-gray-100 border border-transparent " +
+        "focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none text-sm min-h-[110px] resize-none " +
         (props.className || "")
         }
     />
@@ -130,13 +167,8 @@ import {
         lastCheckup: "",
     });
 
-    const handleChange = (e) => {
-        setFormData((p) => ({ ...p, [e.target.name]: e.target.value }));
-    };
-
-    const handleFileChange = (e) => {
-        setFormData((p) => ({ ...p, photo: e.target.files?.[0] || null }));
-    };
+    const handleChange = (e) => setFormData((p) => ({ ...p, [e.target.name]: e.target.value }));
+    const handleFileChange = (e) => setFormData((p) => ({ ...p, photo: e.target.files?.[0] || null }));
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -144,520 +176,477 @@ import {
     };
 
     return (
-        <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 p-3">
-        <div className="bg-white w-full max-w-3xl rounded-2xl p-6 max-h-[90vh] overflow-y-auto shadow-xl">
-            <div className="flex justify-between items-center mb-1">
-            <h2 className="text-xl font-bold">Add New Child</h2>
-            <button onClick={onClose} className="p-2 rounded-full hover:bg-gray-100" type="button">
-                <X size={18} />
-            </button>
-            </div>
-            <p className="text-gray-500 mb-4">
-            Fill in the information below to add a new child to the system.
-            </p>
-
-            <form onSubmit={handleSubmit} className="space-y-5">
+        <ModalShell
+        title="Add New Child"
+        subtitle="Fill in the information below to add a new child to the system."
+        onClose={onClose}
+        maxWidth="max-w-3xl"
+        >
+        <form onSubmit={handleSubmit} className="space-y-5">
             {/* Names */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Field label="First Name *">
+            <Field label="First Name *">
                 <Input name="firstName" value={formData.firstName} onChange={handleChange} required />
-                </Field>
-                <Field label="Middle Name">
+            </Field>
+            <Field label="Middle Name">
                 <Input name="middleName" value={formData.middleName} onChange={handleChange} />
-                </Field>
-                <Field label="Last Name *">
+            </Field>
+            <Field label="Last Name *">
                 <Input name="lastName" value={formData.lastName} onChange={handleChange} required />
-                </Field>
+            </Field>
             </div>
 
             {/* Age + Gender */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Field label="Age *">
+            <Field label="Age *">
                 <Input type="number" name="age" value={formData.age} onChange={handleChange} required />
-                </Field>
-                <Field label="Gender *">
+            </Field>
+            <Field label="Gender *">
                 <Select name="gender" value={formData.gender} onChange={handleChange} required>
-                    <option value="">Select gender</option>
-                    <option>Male</option>
-                    <option>Female</option>
+                <option value="">Select gender</option>
+                <option>Male</option>
+                <option>Female</option>
                 </Select>
-                </Field>
+            </Field>
             </div>
 
             {/* Admission + Last Checkup */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Field label="Admission Date">
+            <Field label="Admission Date">
                 <Input type="date" name="admissionDate" value={formData.admissionDate} onChange={handleChange} />
-                </Field>
-                <Field label="Last Check-up">
+            </Field>
+            <Field label="Last Check-up">
                 <Input name="lastCheckup" placeholder="MM/DD/YYYY" value={formData.lastCheckup} onChange={handleChange} />
-                </Field>
+            </Field>
             </div>
 
             {/* House + House Parent */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Field label="House *">
+            <Field label="House *">
                 <Select name="house" value={formData.house} onChange={handleChange} required>
-                    <option value="">Select house</option>
-                    <option>Sunshine House</option>
-                    <option>Rainbow House</option>
-                    <option>Hope House</option>
+                <option value="">Select house</option>
+                <option>Sunshine House</option>
+                <option>Rainbow House</option>
+                <option>Hope House</option>
                 </Select>
-                </Field>
+            </Field>
 
-                <Field label="House Parent *">
+            <Field label="House Parent *">
                 <Select name="houseParent" value={formData.houseParent} onChange={handleChange} required>
-                    <option value="">Select house parent</option>
-                    <option>David Thompson</option>
-                    <option>Emily Rodriguez</option>
-                    <option>Michael Chen</option>
+                <option value="">Select house parent</option>
+                <option>David Thompson</option>
+                <option>Emily Rodriguez</option>
+                <option>Michael Chen</option>
                 </Select>
-                </Field>
+            </Field>
             </div>
 
             {/* Health + Education */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Field label="Health Status">
+            <Field label="Health Status">
                 <Select name="healthStatus" value={formData.healthStatus} onChange={handleChange}>
-                    <option>Excellent</option>
-                    <option>Good</option>
-                    <option>Needs Check-up</option>
-                    <option>Requires Attention</option>
+                <option>Excellent</option>
+                <option>Good</option>
+                <option>Needs Check-up</option>
+                <option>Requires Attention</option>
                 </Select>
-                </Field>
+            </Field>
 
-                <Field label="Education Level *">
+            <Field label="Education Level *">
                 <Input
-                    name="educationLevel"
-                    value={formData.educationLevel}
-                    onChange={handleChange}
-                    placeholder="e.g. Grade 1, Pre-school"
-                    required
+                name="educationLevel"
+                value={formData.educationLevel}
+                onChange={handleChange}
+                placeholder="e.g. Grade 1, Pre-school"
+                required
                 />
-                </Field>
+            </Field>
             </div>
 
             {/* Emergency */}
             <Field label="Emergency Contact">
-                <Input name="emergencyContact" value={formData.emergencyContact} onChange={handleChange} />
+            <Input name="emergencyContact" value={formData.emergencyContact} onChange={handleChange} />
             </Field>
 
             {/* Case Type */}
             <Field label="Case Type *">
-                <Select name="caseType" value={formData.caseType} onChange={handleChange} required>
+            <Select name="caseType" value={formData.caseType} onChange={handleChange} required>
                 <option value="">Select case type</option>
                 <option>Orphan</option>
                 <option>Abandoned</option>
                 <option>Rescued</option>
-                </Select>
+            </Select>
             </Field>
 
             {/* Status + Adoption */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Field label="Status *">
+            <Field label="Status *">
                 <Select name="status" value={formData.status} onChange={handleChange}>
-                    <option>Active</option>
-                    <option>Inactive</option>
-                    <option>Transitioning</option>
-                    <option>Transferred</option>
-                    <option>Reintegrated</option>
+                <option>Active</option>
+                <option>Inactive</option>
+                <option>Transitioning</option>
+                <option>Transferred</option>
+                <option>Reintegrated</option>
                 </Select>
-                </Field>
+            </Field>
 
-                <Field label="Adoption Status *">
+            <Field label="Adoption Status *">
                 <Select name="adoptionStatus" value={formData.adoptionStatus} onChange={handleChange}>
-                    <option>Not Available for Adoption</option>
-                    <option>Open for Adoption</option>
-                    <option>Adopted</option>
+                <option>Not Available for Adoption</option>
+                <option>Open for Adoption</option>
+                <option>Adopted</option>
                 </Select>
-                </Field>
+            </Field>
             </div>
 
             {/* Photo */}
             <Field label="Profile Image / Photo">
-                <Input type="file" accept="image/*" onChange={handleFileChange} />
+            <Input type="file" accept="image/*" onChange={handleFileChange} />
             </Field>
 
             {/* Notes */}
             <Field label="Notes">
-                <Textarea name="notes" value={formData.notes} onChange={handleChange} />
+            <Textarea name="notes" value={formData.notes} onChange={handleChange} />
             </Field>
 
+            {/* Actions (use UI Button) */}
             <div className="flex justify-end gap-3 pt-2">
-                <button type="button" onClick={onClose} className="px-4 py-2 rounded-xl border border-gray-300">
+            <Button type="button" variant="outline" size="medium" onClick={onClose}>
                 Cancel
-                </button>
-                <button type="submit" className="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700">
+            </Button>
+            <Button type="submit" variant="primary" size="medium" className="flex items-center gap-2">
                 Add Child
-                </button>
+            </Button>
             </div>
-            </form>
-        </div>
-        </div>
+        </form>
+        </ModalShell>
     );
     };
 
     /* ===========================
-    EditProfileModal (MATCHES Add Modal fields)
+    EditProfileModal
     =========================== */
-        export const EditProfileModal = ({ child, onClose, onSave }) => {
-        const [form, setForm] = useState(null);
-        const [preview, setPreview] = useState(null);
+    export const EditProfileModal = ({ child, onClose, onSave }) => {
+    const [form, setForm] = useState(null);
+    const [preview, setPreview] = useState(null);
 
-        useEffect(() => {
-            if (!child) return;
+    useEffect(() => {
+        if (!child) return;
 
-            setForm({
-            firstName: child.firstName ?? child.first_name ?? "",
-            middleName: child.middleName ?? child.middle_name ?? "",
-            lastName: child.lastName ?? child.last_name ?? "",
-            age: child.age ?? "",
-            gender: child.gender ?? "",
-            admissionDate: child.admissionDate ?? child.admission_date ?? "",
-            house: child.house ?? "",
-            houseParent: child.houseParent ?? child.house_parent ?? "",
-            healthStatus: child.healthStatus ?? child.health_status ?? "Good",
-            educationLevel: child.educationLevel ?? child.education_level ?? "",
-            emergencyContact: child.emergencyContact ?? child.emergency_contact ?? "",
-            caseType: child.caseType ?? child.case_type ?? "",
-            status: child.status ?? "Active",
-            adoptionStatus: child.adoptionStatus ?? child.adoption_status ?? "Not Available for Adoption",
-            notes: child.notes ?? "",
-            lastCheckup: child.lastCheckup ?? child.last_checkup ?? "",
-            photo: null,
-            });
+        setForm({
+        firstName: child.firstName ?? child.first_name ?? "",
+        middleName: child.middleName ?? child.middle_name ?? "",
+        lastName: child.lastName ?? child.last_name ?? "",
+        age: child.age ?? "",
+        gender: child.gender ?? "",
+        admissionDate: child.admissionDate ?? child.admission_date ?? "",
+        house: child.house ?? "",
+        houseParent: child.houseParent ?? child.house_parent ?? "",
+        healthStatus: child.healthStatus ?? child.health_status ?? "Good",
+        educationLevel: child.educationLevel ?? child.education_level ?? "",
+        emergencyContact: child.emergencyContact ?? child.emergency_contact ?? "",
+        caseType: child.caseType ?? child.case_type ?? "",
+        status: child.status ?? "Active",
+        adoptionStatus: child.adoptionStatus ?? child.adoption_status ?? "Not Available for Adoption",
+        notes: child.notes ?? "",
+        lastCheckup: child.lastCheckup ?? child.last_checkup ?? "",
+        photo: null,
+        });
 
-            setPreview(null);
-        }, [child]);
+        setPreview(null);
+    }, [child]);
 
-        useEffect(() => {
-            // cleanup preview URL
-            return () => {
-            if (preview) URL.revokeObjectURL(preview);
-            };
-        }, [preview]);
-
-        if (!child || !form) return null;
-
-        const update = (key, value) => setForm((p) => ({ ...p, [key]: value }));
-
-        const handleFileChange = (e) => {
-            const file = e.target.files?.[0] || null;
-            update("photo", file);
-
-            if (preview) URL.revokeObjectURL(preview);
-            setPreview(file ? URL.createObjectURL(file) : null);
+    useEffect(() => {
+        return () => {
+        if (preview) URL.revokeObjectURL(preview);
         };
+    }, [preview]);
 
-        const handleSave = () => {
-            onSave({ ...child, ...form });
-            onClose();
-        };
+    if (!child || !form) return null;
 
-        const fullName = `${form.firstName} ${form.middleName ? form.middleName + " " : ""}${form.lastName}`.trim();
+    const update = (key, value) => setForm((p) => ({ ...p, [key]: value }));
 
-        const currentPhoto = preview || child.photoUrl || child.photo_url || child.photo || child.image || "https://i.pravatar.cc/100";
+    const handleFileChange = (e) => {
+        const file = e.target.files?.[0] || null;
+        update("photo", file);
 
-        return (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-3 md:p-4">
-            <div className="w-full max-w-3xl max-h-[90vh] bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col">
-                {/* Header */}
-                <div className="px-5 md:px-8 py-5 flex items-center justify-between">
-                <div className="flex items-center gap-3 min-w-0">
-                    <img
-                    src={currentPhoto}
-                    alt={fullName}
-                    className="w-12 h-12 rounded-full object-cover flex-shrink-0"
-                    />
-                    <div className="min-w-0">
-                    <h2 className="text-xl font-semibold text-gray-900 truncate">Edit Child</h2>
-                    <p className="text-sm text-gray-500 truncate">{fullName}</p>
-                    </div>
-                </div>
+        if (preview) URL.revokeObjectURL(preview);
+        setPreview(file ? URL.createObjectURL(file) : null);
+    };
 
-                <button
-                    onClick={onClose}
-                    className="p-2 rounded-full hover:bg-gray-100 text-gray-500"
-                    type="button"
-                    aria-label="Close"
-                >
-                    <X size={18} />
-                </button>
-                </div>
+    const handleSave = () => {
+        onSave({ ...child, ...form });
+        onClose();
+    };
 
-                {/* Body */}
-                <div className="px-5 md:px-8 pb-6 overflow-y-auto">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <Field label="First Name *">
-                    <Input value={form.firstName} onChange={(e) => update("firstName", e.target.value)} required />
-                    </Field>
+    const fullName = `${form.firstName} ${form.middleName ? form.middleName + " " : ""}${form.lastName}`.trim();
+    const currentPhoto =
+        preview ||
+        child.photoUrl ||
+        child.photo_url ||
+        child.photo ||
+        child.image ||
+        "https://i.pravatar.cc/100";
 
-                    <Field label="Middle Name">
-                    <Input value={form.middleName} onChange={(e) => update("middleName", e.target.value)} />
-                    </Field>
-
-                    <Field label="Last Name *">
-                    <Input value={form.lastName} onChange={(e) => update("lastName", e.target.value)} required />
-                    </Field>
-
-                    <Field label="Age *">
-                    <Input type="number" value={form.age} onChange={(e) => update("age", e.target.value)} required />
-                    </Field>
-
-                    <Field label="Gender *">
-                    <Select value={form.gender} onChange={(e) => update("gender", e.target.value)} required>
-                        <option value="">Select gender</option>
-                        <option>Male</option>
-                        <option>Female</option>
-                        <option>Other</option>
-                    </Select>
-                    </Field>
-
-                    <Field label="Admission Date">
-                    <Input type="date" value={form.admissionDate} onChange={(e) => update("admissionDate", e.target.value)} />
-                    </Field>
-
-                    <Field label="House *">
-                    <Select value={form.house} onChange={(e) => update("house", e.target.value)} required>
-                        <option value="">Select house</option>
-                        <option>Sunshine House</option>
-                        <option>Hope House</option>
-                        <option>Rainbow House</option>
-                    </Select>
-                    </Field>
-
-                    <Field label="House Parent *">
-                    <Select value={form.houseParent} onChange={(e) => update("houseParent", e.target.value)} required>
-                        <option value="">Select house parent</option>
-                        <option>David Thompson</option>
-                        <option>Emily Rodriguez</option>
-                        <option>Michael Chen</option>
-                    </Select>
-                    </Field>
-
-                    <Field label="Health Status">
-                    <Select value={form.healthStatus} onChange={(e) => update("healthStatus", e.target.value)}>
-                        <option>Excellent</option>
-                        <option>Good</option>
-                        <option>Needs Check-up</option>
-                        <option>Requires Attention</option>
-                    </Select>
-                    </Field>
-
-                    <Field label="Education Level *">
-                    <Input value={form.educationLevel} onChange={(e) => update("educationLevel", e.target.value)} required />
-                    </Field>
-
-                    <Field label="Emergency Contact">
-                    <Input value={form.emergencyContact} onChange={(e) => update("emergencyContact", e.target.value)} />
-                    </Field>
-
-                    <Field label="Case Type *">
-                    <Select value={form.caseType} onChange={(e) => update("caseType", e.target.value)} required>
-                        <option value="">Select case type</option>
-                        <option>Orphan</option>
-                        <option>Abandoned</option>
-                        <option>Rescued</option>
-                    </Select>
-                    </Field>
-
-                    <Field label="Last Check-up">
-                    <Input value={form.lastCheckup} onChange={(e) => update("lastCheckup", e.target.value)} placeholder="MM/DD/YYYY" />
-                    </Field>
-
-                    <Field label="Status *">
-                    <Select value={form.status} onChange={(e) => update("status", e.target.value)}>
-                        <option>Active</option>
-                        <option>Inactive</option>
-                        <option>Transitioning</option>
-                        <option>Transferred</option>
-                        <option>Reintegrated</option>
-                    </Select>
-                    </Field>
-
-                    <Field label="Adoption Status *">
-                    <Select value={form.adoptionStatus} onChange={(e) => update("adoptionStatus", e.target.value)}>
-                        <option>Not Available for Adoption</option>
-                        <option>Open for Adoption</option>
-                        <option>Adopted</option>
-                    </Select>
-                    </Field>
-
-                    <div className="md:col-span-3">
-                    <Field label="Profile Image / Photo">
-                        <Input type="file" accept="image/*" onChange={handleFileChange} />
-                        <p className="text-xs text-gray-500 mt-2">Leave empty if you don’t want to change the photo.</p>
-                    </Field>
-                    </div>
-
-                    <div className="md:col-span-3">
-                    <Field label="Notes">
-                        <Textarea value={form.notes} onChange={(e) => update("notes", e.target.value)} />
-                    </Field>
-                    </div>
-                </div>
-
-                <div className="mt-8 flex items-center justify-end gap-3">
-                    <button onClick={onClose} className="px-6 py-2.5 rounded-xl border border-gray-300 bg-white hover:bg-gray-50" type="button">
-                    Cancel
-                    </button>
-                    <button onClick={handleSave} className="px-6 py-2.5 rounded-xl bg-blue-600 text-white hover:bg-blue-700 inline-flex items-center gap-2" type="button">
-                    <FileText size={16} />
-                    Save Changes
-                    </button>
-                </div>
-                </div>
+    return (
+        <ModalShell title="Edit Child" subtitle={fullName} onClose={onClose} maxWidth="max-w-3xl">
+        <div className="flex items-center gap-3 mb-5">
+            <img src={currentPhoto} alt={fullName} className="w-12 h-12 rounded-full object-cover" />
+            <div className="min-w-0">
+            <p className="text-sm text-gray-600">Editing profile for</p>
+            <p className="text-base font-semibold text-gray-900 truncate">{fullName}</p>
             </div>
-            </div>
-        );
-};
+        </div>
 
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Field label="First Name *">
+            <Input value={form.firstName} onChange={(e) => update("firstName", e.target.value)} required />
+            </Field>
+            <Field label="Middle Name">
+            <Input value={form.middleName} onChange={(e) => update("middleName", e.target.value)} />
+            </Field>
+            <Field label="Last Name *">
+            <Input value={form.lastName} onChange={(e) => update("lastName", e.target.value)} required />
+            </Field>
+
+            <Field label="Age *">
+            <Input type="number" value={form.age} onChange={(e) => update("age", e.target.value)} required />
+            </Field>
+
+            <Field label="Gender *">
+            <Select value={form.gender} onChange={(e) => update("gender", e.target.value)} required>
+                <option value="">Select gender</option>
+                <option>Male</option>
+                <option>Female</option>
+                <option>Other</option>
+            </Select>
+            </Field>
+
+            <Field label="Admission Date">
+            <Input type="date" value={form.admissionDate} onChange={(e) => update("admissionDate", e.target.value)} />
+            </Field>
+
+            <Field label="House *">
+            <Select value={form.house} onChange={(e) => update("house", e.target.value)} required>
+                <option value="">Select house</option>
+                <option>Sunshine House</option>
+                <option>Hope House</option>
+                <option>Rainbow House</option>
+            </Select>
+            </Field>
+
+            <Field label="House Parent *">
+            <Select value={form.houseParent} onChange={(e) => update("houseParent", e.target.value)} required>
+                <option value="">Select house parent</option>
+                <option>David Thompson</option>
+                <option>Emily Rodriguez</option>
+                <option>Michael Chen</option>
+            </Select>
+            </Field>
+
+            <Field label="Health Status">
+            <Select value={form.healthStatus} onChange={(e) => update("healthStatus", e.target.value)}>
+                <option>Excellent</option>
+                <option>Good</option>
+                <option>Needs Check-up</option>
+                <option>Requires Attention</option>
+            </Select>
+            </Field>
+
+            <Field label="Education Level *">
+            <Input value={form.educationLevel} onChange={(e) => update("educationLevel", e.target.value)} required />
+            </Field>
+
+            <Field label="Emergency Contact">
+            <Input value={form.emergencyContact} onChange={(e) => update("emergencyContact", e.target.value)} />
+            </Field>
+
+            <Field label="Case Type *">
+            <Select value={form.caseType} onChange={(e) => update("caseType", e.target.value)} required>
+                <option value="">Select case type</option>
+                <option>Orphan</option>
+                <option>Abandoned</option>
+                <option>Rescued</option>
+            </Select>
+            </Field>
+
+            <Field label="Last Check-up">
+            <Input value={form.lastCheckup} onChange={(e) => update("lastCheckup", e.target.value)} placeholder="MM/DD/YYYY" />
+            </Field>
+
+            <Field label="Status *">
+            <Select value={form.status} onChange={(e) => update("status", e.target.value)}>
+                <option>Active</option>
+                <option>Inactive</option>
+                <option>Transitioning</option>
+                <option>Transferred</option>
+                <option>Reintegrated</option>
+            </Select>
+            </Field>
+
+            <Field label="Adoption Status *">
+            <Select value={form.adoptionStatus} onChange={(e) => update("adoptionStatus", e.target.value)}>
+                <option>Not Available for Adoption</option>
+                <option>Open for Adoption</option>
+                <option>Adopted</option>
+            </Select>
+            </Field>
+
+            <div className="md:col-span-3">
+            <Field label="Profile Image / Photo">
+                <Input type="file" accept="image/*" onChange={handleFileChange} />
+                <p className="text-xs text-gray-500 mt-2">Leave empty if you don’t want to change the photo.</p>
+            </Field>
+            </div>
+
+            <div className="md:col-span-3">
+            <Field label="Notes">
+                <Textarea value={form.notes} onChange={(e) => update("notes", e.target.value)} />
+            </Field>
+            </div>
+        </div>
+
+        <div className="mt-8 flex items-center justify-end gap-3">
+            <Button type="button" variant="outline" size="medium" onClick={onClose}>
+            Cancel
+            </Button>
+            <Button type="button" variant="primary" size="medium" onClick={handleSave} className="flex items-center gap-2">
+            <FileText size={16} />
+            Save Changes
+            </Button>
+        </div>
+        </ModalShell>
+    );
+    };
 
     /* ===========================
     ChildDetailModal
     =========================== */
-   export const ChildDetailModal = ({ child, onClose, onEdit, onViewDevelopment }) => {
-  if (!child) return null;
+    export const ChildDetailModal = ({ child, onClose, onEdit, onViewDevelopment }) => {
+    if (!child) return null;
 
-  const firstName = child.firstName ?? child.first_name ?? "";
-  const middleName = child.middleName ?? child.middle_name ?? "";
-  const lastName = child.lastName ?? child.last_name ?? "";
-  const fullName = `${firstName} ${middleName ? middleName + " " : ""}${lastName}`.trim();
+    const firstName = child.firstName ?? child.first_name ?? "";
+    const middleName = child.middleName ?? child.middle_name ?? "";
+    const lastName = child.lastName ?? child.last_name ?? "";
+    const fullName = `${firstName} ${middleName ? middleName + " " : ""}${lastName}`.trim();
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-3 md:p-4">
-      <div className="w-full max-w-3xl max-h-[85vh] bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col">
-        {/* Header */}
-        <div className="px-5 md:px-6 py-5 flex items-start justify-between">
-          <div className="flex items-center gap-4">
+    return (
+        <ModalShell title={fullName} subtitle={`${child.age} years old • ${child.gender}`} onClose={onClose} maxWidth="max-w-3xl">
+        {/* Header chips */}
+        <div className="flex items-start gap-4">
             <img
-              src={child.photoUrl || child.image}
-              alt={fullName}
-              className="w-14 h-14 rounded-full object-cover"
+            src={child.photoUrl || child.image}
+            alt={fullName}
+            className="w-14 h-14 rounded-full object-cover"
             />
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900">{fullName}</h2>
-              <p className="text-sm text-gray-600">
-                {child.age} years old • {child.gender}
-              </p>
 
-              <div className="flex flex-wrap gap-2 mt-3">
+            <div className="flex-1">
+            <div className="flex flex-wrap gap-2">
                 {child.status && (
-                  <span className={`text-xs px-3 py-1 rounded-full border ${getStatusColor(child.status)}`}>
+                <span className={`text-xs px-3 py-1 rounded-full border ${getStatusColor(child.status)}`}>
                     {child.status}
-                  </span>
+                </span>
                 )}
                 {child.healthStatus && (
-                  <span className={`text-xs px-3 py-1 rounded-full border ${getHealthStatusColor(child.healthStatus)}`}>
+                <span className={`text-xs px-3 py-1 rounded-full border ${getHealthStatusColor(child.healthStatus)}`}>
                     {child.healthStatus}
-                  </span>
+                </span>
                 )}
                 {child.adoptionStatus && (
-                  <span className={`text-xs px-3 py-1 rounded-full border ${getAdoptionStatusColor(child.adoptionStatus)}`}>
+                <span className={`text-xs px-3 py-1 rounded-full border ${getAdoptionStatusColor(child.adoptionStatus)}`}>
                     {child.adoptionStatus}
-                  </span>
+                </span>
                 )}
-              </div>
             </div>
-          </div>
-
-          <button
-            onClick={onClose}
-            className="p-2 rounded-full hover:bg-gray-100 text-gray-500"
-            type="button"
-            aria-label="Close"
-          >
-            <X size={18} />
-          </button>
+            </div>
         </div>
-
-        <div className="border-t" />
 
         {/* Body */}
-        <div className="px-5 md:px-6 py-6 overflow-y-auto">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-10 text-sm">
+        <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-10 text-sm">
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Basic Information</h3>
-              <div className="space-y-3 text-gray-700">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Basic Information</h3>
+            <div className="space-y-3 text-gray-700">
                 <div className="flex items-center gap-2">
-                  <Calendar size={16} className="text-gray-400" />
-                  <span>Admission Date: {child.admissionDate || "—"}</span>
+                <Calendar size={16} className="text-gray-400" />
+                <span>Admission Date: {child.admissionDate || "—"}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <MapPin size={16} className="text-gray-400" />
-                  <span>House: {child.house || "—"}</span>
+                <MapPin size={16} className="text-gray-400" />
+                <span>House: {child.house || "—"}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <User size={16} className="text-gray-400" />
-                  <span>House Parent: {child.houseParent || "—"}</span>
+                <User size={16} className="text-gray-400" />
+                <span>House Parent: {child.houseParent || "—"}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Phone size={16} className="text-gray-400" />
-                  <span>Emergency: {child.emergencyContact || "—"}</span>
+                <Phone size={16} className="text-gray-400" />
+                <span>Emergency: {child.emergencyContact || "—"}</span>
                 </div>
-              </div>
+            </div>
             </div>
 
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Health &amp; Education</h3>
-              <div className="space-y-3 text-gray-700">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Health &amp; Education</h3>
+            <div className="space-y-3 text-gray-700">
                 <div className="flex items-center gap-2">
-                  <Heart size={16} className="text-gray-400" />
-                  <span>Health Status: {child.healthStatus || "—"}</span>
+                <Heart size={16} className="text-gray-400" />
+                <span>Health Status: {child.healthStatus || "—"}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Calendar size={16} className="text-gray-400" />
-                  <span>Last Check-up: {child.lastCheckup || "—"}</span>
+                <Calendar size={16} className="text-gray-400" />
+                <span>Last Check-up: {child.lastCheckup || "—"}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <FileText size={16} className="text-gray-400" />
-                  <span>Education Level: {child.educationLevel || "—"}</span>
+                <FileText size={16} className="text-gray-400" />
+                <span>Education Level: {child.educationLevel || "—"}</span>
                 </div>
-              </div>
             </div>
-          </div>
+            </div>
+        </div>
 
-          <div className="mt-8">
+        {/* Notes */}
+        <div className="mt-8">
             <h3 className="text-lg font-semibold text-gray-900 mb-3">Notes</h3>
             <div className="p-4 bg-gray-50 rounded-xl text-gray-700">{child.notes || "—"}</div>
-          </div>
-
-          {/* Actions */}
-          <div className="mt-8 flex flex-wrap gap-3">
-            {/* ✅ UPDATED: Opens the Development modal */}
-            <button
-              onClick={() => onViewDevelopment?.(child)}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700"
-              type="button"
-            >
-              <LineChart size={16} />
-              View Development
-            </button>
-
-            <button className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border hover:bg-gray-50" type="button">
-              <Stethoscope size={16} />
-              Health Records
-            </button>
-
-            <button className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border hover:bg-gray-50" type="button">
-              <GraduationCap size={16} />
-              Education Records
-            </button>
-
-            <button
-              onClick={() => onEdit?.(child)}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border hover:bg-gray-50"
-              type="button"
-            >
-              <Pencil size={16} />
-              Edit Profile
-            </button>
-          </div>
         </div>
-      </div>
-    </div>
-  );
-};
+
+        {/* Actions (use UI Button for consistent sizes) */}
+        <div className="mt-8 flex flex-wrap gap-3">
+            <Button
+            type="button"
+            variant="primary"
+            size="medium"
+            onClick={() => onViewDevelopment?.(child)}
+            className="flex items-center gap-2"
+            >
+            <LineChart size={16} />
+            View Development
+            </Button>
+
+            <Button type="button" variant="outline" size="medium" className="flex items-center gap-2">
+            <Stethoscope size={16} />
+            Health Records
+            </Button>
+
+            <Button type="button" variant="outline" size="medium" className="flex items-center gap-2">
+            <GraduationCap size={16} />
+            Education Records
+            </Button>
+
+            <Button
+            type="button"
+            variant="outline"
+            size="medium"
+            onClick={() => onEdit?.(child)}
+            className="flex items-center gap-2"
+            >
+            <Pencil size={16} />
+            Edit Profile
+            </Button>
+        </div>
+        </ModalShell>
+    );
+    };
 
     /* ===========================
     ReintegrationModal
@@ -688,9 +677,7 @@ import {
 
     const update = (key, value) => setForm((p) => ({ ...p, [key]: value }));
 
-    const fullName = `${child.firstName ?? ""} ${(child.middleName ?? "") ? (child.middleName ?? "") + " " : ""}${
-        child.lastName ?? ""
-    }`.trim();
+    const fullName = `${child.firstName ?? ""} ${(child.middleName ?? "") ? (child.middleName ?? "") + " " : ""}${child.lastName ?? ""}`.trim();
 
     const handleComplete = () => {
         const reintegrationRecord = { ...form, createdAt: new Date().toISOString() };
@@ -704,143 +691,133 @@ import {
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-3 md:p-4">
-        <div className="w-full max-w-4xl max-h-[85vh] bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col">
-            <div className="px-5 md:px-8 py-5 flex items-start justify-between">
-            <div className="flex items-start gap-3">
-                <UserPlus className="text-green-600 mt-1" size={22} />
-                <div>
-                <h2 className="text-2xl font-bold text-gray-900">Child Reintegration</h2>
-                <p className="text-sm text-gray-600">Recording adoption/reintegration for {fullName}</p>
-                </div>
-            </div>
-
-            <button onClick={onClose} className="p-2 rounded-full hover:bg-gray-100 text-gray-500" type="button">
-                <X size={18} />
-            </button>
-            </div>
-
-            <div className="px-5 md:px-8 pb-8 space-y-8 overflow-y-auto">
-            <div className="rounded-2xl bg-blue-50 border border-blue-100 p-6">
-                <h3 className="text-blue-700 font-semibold mb-4">Child Information</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-800">
-                <div>
-                    <p className="mb-2">
-                    <span className="text-gray-600">Name:</span> {fullName}
-                    </p>
-                    <p>
-                    <span className="text-gray-600">Current House:</span> {child.house || "—"}
-                    </p>
-                </div>
-                <div>
-                    <p className="mb-2">
-                    <span className="text-gray-600">Age:</span> {child.age} years old
-                    </p>
-                    <p>
-                    <span className="text-gray-600">Adoption Status:</span> {child.adoptionStatus || "—"}
-                    </p>
-                </div>
-                </div>
-            </div>
-
+        <ModalShell
+        title="Child Reintegration"
+        subtitle={`Recording adoption/reintegration for ${fullName}`}
+        onClose={onClose}
+        maxWidth="max-w-4xl"
+        >
+        <div className="rounded-2xl bg-blue-50 border border-blue-100 p-6">
+            <h3 className="text-blue-700 font-semibold mb-4">Child Information</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-800">
             <div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-6">Adoptive Family Information</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Field label="Adoptive Parent(s) Names *">
-                    <Input value={form.adoptiveParents} onChange={(e) => update("adoptiveParents", e.target.value)} />
-                </Field>
-
-                <Field label="Relationship">
-                    <Select value={form.relationship} onChange={(e) => update("relationship", e.target.value)}>
-                    <option>Adoptive Parents</option>
-                    <option>Guardian</option>
-                    <option>Relative</option>
-                    <option>Foster Parent</option>
-                    </Select>
-                </Field>
-
-                <Field label="Contact Number *">
-                    <Input value={form.contactNumber} onChange={(e) => update("contactNumber", e.target.value)} />
-                </Field>
-
-                <Field label="Email Address *">
-                    <Input value={form.email} onChange={(e) => update("email", e.target.value)} />
-                </Field>
-
-                <div className="md:col-span-2">
-                    <Field label="Home Address *">
-                    <Input value={form.homeAddress} onChange={(e) => update("homeAddress", e.target.value)} />
-                    </Field>
-                </div>
-                </div>
+                <p className="mb-2">
+                <span className="text-gray-600">Name:</span> {fullName}
+                </p>
+                <p>
+                <span className="text-gray-600">Current House:</span> {child.house || "—"}
+                </p>
             </div>
-
-            <hr className="border-gray-200" />
-
             <div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-6">Legal &amp; Administrative Details</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Field label="Reintegration Date">
-                    <Input value={form.reintegrationDate} onChange={(e) => update("reintegrationDate", e.target.value)} />
-                </Field>
-
-                <Field label="Follow-up Schedule">
-                    <Select value={form.followUpSchedule} onChange={(e) => update("followUpSchedule", e.target.value)}>
-                    <option>1 month</option>
-                    <option>3 months</option>
-                    <option>6 months</option>
-                    <option>12 months</option>
-                    </Select>
-                </Field>
-
-                <Field label="Home Study Status">
-                    <Select value={form.homeStudyStatus} onChange={(e) => update("homeStudyStatus", e.target.value)}>
-                    <option>Completed</option>
-                    <option>In Progress</option>
-                    <option>Not Started</option>
-                    </Select>
-                </Field>
-
-                <Field label="Legal Status">
-                    <Select value={form.legalStatus} onChange={(e) => update("legalStatus", e.target.value)}>
-                    <option>Approved</option>
-                    <option>Pending</option>
-                    <option>Rejected</option>
-                    </Select>
-                </Field>
-
-                <Field label="Assigned Social Worker">
-                    <Input value={form.socialWorker} onChange={(e) => update("socialWorker", e.target.value)} />
-                </Field>
-
-                <Field label="Court Order Number">
-                    <Input value={form.courtOrderNumber} onChange={(e) => update("courtOrderNumber", e.target.value)} />
-                </Field>
-
-                <div className="md:col-span-2">
-                    <Field label="Additional Notes">
-                    <Textarea value={form.additionalNotes} onChange={(e) => update("additionalNotes", e.target.value)} />
-                    </Field>
-                </div>
-                </div>
-            </div>
-
-            <div className="pt-4 flex items-center justify-end gap-3">
-                <button onClick={onClose} className="px-6 py-2.5 rounded-xl border border-gray-300 bg-white" type="button">
-                Cancel
-                </button>
-
-                <button
-                onClick={handleComplete}
-                className="px-6 py-2.5 rounded-xl bg-green-600 text-white hover:bg-green-700 inline-flex items-center gap-2"
-                type="button"
-                >
-                <UserPlus size={18} />
-                Complete Reintegration
-                </button>
+                <p className="mb-2">
+                <span className="text-gray-600">Age:</span> {child.age} years old
+                </p>
+                <p>
+                <span className="text-gray-600">Adoption Status:</span> {child.adoptionStatus || "—"}
+                </p>
             </div>
             </div>
         </div>
+
+        <div className="mt-8">
+            <h3 className="text-xl font-semibold text-gray-900 mb-6">Adoptive Family Information</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Field label="Adoptive Parent(s) Names *">
+                <Input value={form.adoptiveParents} onChange={(e) => update("adoptiveParents", e.target.value)} />
+            </Field>
+
+            <Field label="Relationship">
+                <Select value={form.relationship} onChange={(e) => update("relationship", e.target.value)}>
+                <option>Adoptive Parents</option>
+                <option>Guardian</option>
+                <option>Relative</option>
+                <option>Foster Parent</option>
+                </Select>
+            </Field>
+
+            <Field label="Contact Number *">
+                <Input value={form.contactNumber} onChange={(e) => update("contactNumber", e.target.value)} />
+            </Field>
+
+            <Field label="Email Address *">
+                <Input value={form.email} onChange={(e) => update("email", e.target.value)} />
+            </Field>
+
+            <div className="md:col-span-2">
+                <Field label="Home Address *">
+                <Input value={form.homeAddress} onChange={(e) => update("homeAddress", e.target.value)} />
+                </Field>
+            </div>
+            </div>
         </div>
+
+        <hr className="my-8 border-gray-200" />
+
+        <div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-6">Legal &amp; Administrative Details</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Field label="Reintegration Date">
+                <Input value={form.reintegrationDate} onChange={(e) => update("reintegrationDate", e.target.value)} />
+            </Field>
+
+            <Field label="Follow-up Schedule">
+                <Select value={form.followUpSchedule} onChange={(e) => update("followUpSchedule", e.target.value)}>
+                <option>1 month</option>
+                <option>3 months</option>
+                <option>6 months</option>
+                <option>12 months</option>
+                </Select>
+            </Field>
+
+            <Field label="Home Study Status">
+                <Select value={form.homeStudyStatus} onChange={(e) => update("homeStudyStatus", e.target.value)}>
+                <option>Completed</option>
+                <option>In Progress</option>
+                <option>Not Started</option>
+                </Select>
+            </Field>
+
+            <Field label="Legal Status">
+                <Select value={form.legalStatus} onChange={(e) => update("legalStatus", e.target.value)}>
+                <option>Approved</option>
+                <option>Pending</option>
+                <option>Rejected</option>
+                </Select>
+            </Field>
+
+            <Field label="Assigned Social Worker">
+                <Input value={form.socialWorker} onChange={(e) => update("socialWorker", e.target.value)} />
+            </Field>
+
+            <Field label="Court Order Number">
+                <Input value={form.courtOrderNumber} onChange={(e) => update("courtOrderNumber", e.target.value)} />
+            </Field>
+
+            <div className="md:col-span-2">
+                <Field label="Additional Notes">
+                <Textarea value={form.additionalNotes} onChange={(e) => update("additionalNotes", e.target.value)} />
+                </Field>
+            </div>
+            </div>
+        </div>
+
+        {/* Actions */}
+        <div className="pt-4 flex items-center justify-end gap-3">
+            <Button type="button" variant="outline" size="medium" onClick={onClose}>
+            Cancel
+            </Button>
+
+            <Button
+            type="button"
+            variant="primary"
+            size="medium"
+            onClick={handleComplete}
+            className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
+            >
+            <UserPlus size={18} />
+            Complete Reintegration
+            </Button>
+        </div>
+        </ModalShell>
     );
-};
+    };

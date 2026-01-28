@@ -18,10 +18,9 @@ const FormModal = ({
 
   // Only reset when modal opens
   useEffect(() => {
-    if (isOpen) {
-      setFormData(initialData || {});
-    }
-  }, [isOpen]); // Simplified dependency array
+  setFormData(initialData || {});
+}, [initialData]);
+ // Simplified dependency array
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;

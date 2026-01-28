@@ -39,7 +39,7 @@ const Login = () => {
           {/* Circle Logo */}
           <div className="h-24 w-24 rounded-full bg-white shadow-lg overflow-hidden flex items-center justify-center">
             <img
-              src="/voh.jpg"
+              src="/voh.png"
               alt="Admin Logo"
               className="h-full w-full object-cover"
             />
