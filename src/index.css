@@ -20,3 +20,79 @@
     @apply w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent;
   }
 }
+/* ================= RGB Rounded Glow ================= */
+
+.rgb-glow {
+  position: relative;
+  border-radius: 28px;
+  isolation: isolate;
+}
+
+.rgb-glow::before {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  border-radius: inherit;
+  background: linear-gradient(
+    90deg,
+    #ff0080,
+    #00aaff,
+    #00ff88,
+    #ffee00,
+    #ff0080
+  );
+  background-size: 300% 300%;
+  filter: blur(14px);
+  opacity: 0.9;
+  z-index: -2;
+  animation: rgbMove 6s linear infinite;
+}
+
+.rgb-glow::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: #0f172a; /* slate-900 */
+  z-index: -1;
+}
+
+@keyframes rgbMove {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+/* ===== RGB Logo Ring ===== */
+
+.logo-rgb-ring {
+  position: relative;
+  border-radius: 9999px;
+  padding: 4px; /* thickness of ring */
+}
+
+.logo-rgb-ring::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    90deg,
+    #ff0080,
+    #00aaff,
+    #00ff88,
+    #ffee00,
+    #ff0080
+  );
+  background-size: 300% 300%;
+  animation: rgbMove 6s linear infinite;
+  z-index: -1;
+  filter: blur(6px);
+  opacity: 0.9;
+}
+
+@keyframes rgbMove {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+

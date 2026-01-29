@@ -167,11 +167,15 @@ const Children = () => {
   };
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen space-y-6">
+    <div className="p-6 bg-gray-50 dark:bg-gray-950 min-h-screen space-y-6 transition-colors duration-300">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Children Management</h1>
-          <p className="mt-1 text-sm text-gray-600">Manage child profiles, status, and reintegration details</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">
+            Children Management
+          </h1>
+          <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+            Manage child profiles, status, and reintegration details
+          </p>
         </div>
 
         <Button
@@ -187,13 +191,16 @@ const Children = () => {
       </div>
 
       {/* Search */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-4">
+      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 p-4 transition-colors duration-300">
         <div className="relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500" size={18} />
           <input
             type="text"
             placeholder="🔍 Search children by name, house, or education level..."
-            className="w-full pl-11 pr-4 h-12 border border-gray-300 rounded-xl bg-white shadow-sm outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+            className="w-full pl-11 pr-4 h-12 border border-gray-300 dark:border-gray-700 rounded-xl
+                       bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100
+                       placeholder:text-gray-400 dark:placeholder:text-gray-500
+                       shadow-sm outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm transition-colors duration-300"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -201,9 +208,9 @@ const Children = () => {
       </div>
 
       {filteredChildren.length === 0 && (
-        <div className="rounded-2xl border border-dashed border-gray-300 bg-white px-6 py-10 text-center shadow-sm">
-          <p className="text-lg font-semibold text-gray-900">No children found</p>
-          <p className="mt-1 text-sm text-gray-600">Click “Add Child” to create a record</p>
+        <div className="rounded-2xl border border-dashed border-gray-300 dark:border-gray-800 bg-white dark:bg-gray-900 px-6 py-10 text-center shadow-sm transition-colors duration-300">
+          <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">No children found</p>
+          <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">Click “Add Child” to create a record</p>
         </div>
       )}
 
@@ -217,18 +224,19 @@ const Children = () => {
           return (
             <div
               key={child.id}
-              className="bg-white rounded-2xl p-5 shadow-sm border border-gray-200 hover:shadow-md transition-shadow flex flex-col gap-3"
+              className="bg-white dark:bg-gray-900 rounded-2xl p-5 shadow-sm border border-gray-200 dark:border-gray-800
+                         hover:shadow-md transition-shadow flex flex-col gap-3"
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex gap-3 min-w-0">
                   <img
                     src={child.photoUrl || child.image}
                     alt={fullName}
-                    className="w-12 h-12 rounded-full object-cover border border-gray-200 shrink-0"
+                    className="w-12 h-12 rounded-full object-cover border border-gray-200 dark:border-gray-700 shrink-0"
                   />
                   <div className="min-w-0">
-                    <h2 className="font-semibold text-gray-900 truncate">{fullName}</h2>
-                    <p className="text-sm text-gray-500">
+                    <h2 className="font-semibold text-gray-900 dark:text-gray-100 truncate">{fullName}</h2>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
                       {child.age} years old • {child.gender}
                     </p>
                   </div>
@@ -236,7 +244,8 @@ const Children = () => {
 
                 <div className="flex gap-2 shrink-0">
                   <button
-                    className="p-2 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
+                    className="p-2 border border-gray-200 dark:border-gray-800 rounded-xl
+                               hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-gray-700 dark:text-gray-200"
                     onClick={() => setSelectedChild(child)}
                     type="button"
                     title="View"
@@ -245,7 +254,8 @@ const Children = () => {
                   </button>
 
                   <button
-                    className="p-2 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
+                    className="p-2 border border-gray-200 dark:border-gray-800 rounded-xl
+                               hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-gray-700 dark:text-gray-200"
                     onClick={() => setEditChild(child)}
                     type="button"
                     title="Edit"
@@ -254,7 +264,8 @@ const Children = () => {
                   </button>
 
                   <button
-                    className="p-2 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
+                    className="p-2 border border-gray-200 dark:border-gray-800 rounded-xl
+                               hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-gray-700 dark:text-gray-200"
                     onClick={() => setReintegrationChild(child)}
                     type="button"
                     title="Reintegration"
@@ -282,29 +293,31 @@ const Children = () => {
                 )}
               </div>
 
-              <div className="text-sm text-gray-600 space-y-2">
+              <div className="text-sm text-gray-600 dark:text-gray-300 space-y-2">
                 <p className="flex items-center gap-2">
-                  <MapPin size={14} className="text-gray-400" /> {child.house || "No house assigned"}
+                  <MapPin size={14} className="text-gray-400 dark:text-gray-500" />{" "}
+                  {child.house || "No house assigned"}
                 </p>
                 <p className="flex items-center gap-2">
-                  <User size={14} className="text-gray-400" /> {child.houseParent || "No house parent"}
+                  <User size={14} className="text-gray-400 dark:text-gray-500" />{" "}
+                  {child.houseParent || "No house parent"}
                 </p>
                 <p className="flex items-center gap-2">
-                  <Calendar size={14} className="text-gray-400" />
+                  <Calendar size={14} className="text-gray-400 dark:text-gray-500" />
                   <span>Admitted: {child.admissionDate || "—"}</span>
                 </p>
                 <p className="flex items-center gap-2">
-                  <FileText size={14} className="text-gray-400" />
+                  <FileText size={14} className="text-gray-400 dark:text-gray-500" />
                   <span>Education: {child.educationLevel || "—"}</span>
                 </p>
                 <p className="flex items-center gap-2">
-                  <Heart size={14} className="text-gray-400" />
+                  <Heart size={14} className="text-gray-400 dark:text-gray-500" />
                   <span>Health: {child.healthStatus || "—"}</span>
                 </p>
               </div>
 
               {child.notes && (
-                <div className="mt-3 p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-700">
+                <div className="mt-3 p-3 bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-xl text-sm text-gray-700 dark:text-gray-200 transition-colors duration-300">
                   {child.notes}
                 </div>
               )}

@@ -59,10 +59,10 @@ export const ROUTES = [
     showInNav: true,
   },
   {
-    path: '/settings',
-    name: 'Settings',
+    path: '/setting',
+    name: 'Setting',
     icon: 'Cog6ToothIcon', // settings cog
-    component: 'Settings',
+    component: 'Setting',
     showInNav: true,
   },
 ];

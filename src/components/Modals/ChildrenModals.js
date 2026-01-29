@@ -1,72 +1,78 @@
-import React, { useState } from "react";
-import {X} from "lucide-react";
-import Button from "../UI/Button";
-import EditProfileModal from "./EditProfileModal";
-import ChildDetailModal from "./ChildDetailModal";
-import ReintegrationModal from "./ReintegrationModal";
+    import React, { useState } from "react";
+    import { X } from "lucide-react";
+    import Button from "../UI/Button";
+    import EditProfileModal from "./EditProfileModal";
+    import ChildDetailModal from "./ChildDetailModal";
+    import ReintegrationModal from "./ReintegrationModal";
 
-export { EditProfileModal, ChildDetailModal, ReintegrationModal };
-
+    export { EditProfileModal, ChildDetailModal, ReintegrationModal };
 
     /* ----------------- Badge Color Helpers ----------------- */
+    /* ✅ Added dark variants so badges look good in dark mode */
     export const getStatusColor = (status) => {
     switch (status) {
         case "Active":
-        return "bg-green-100 text-green-800 border-green-200";
+        return "bg-green-100 text-green-800 border-green-200 dark:bg-green-950/30 dark:text-green-200 dark:border-green-900";
         case "Transitioning":
-        return "bg-yellow-100 text-yellow-800 border-yellow-200";
+        return "bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-950/30 dark:text-yellow-200 dark:border-yellow-900";
         case "Transferred":
-        return "bg-blue-100 text-blue-800 border-blue-200";
+        return "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-950/30 dark:text-blue-200 dark:border-blue-900";
         case "Reintegrated":
-        return "bg-purple-100 text-purple-800 border-purple-200";
+        return "bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-950/30 dark:text-purple-200 dark:border-purple-900";
         default:
-        return "bg-gray-100 text-gray-800 border-gray-200";
+        return "bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-800/60 dark:text-gray-200 dark:border-gray-700";
     }
     };
 
     export const getHealthStatusColor = (status) => {
     switch (status) {
         case "Excellent":
-        return "bg-green-100 text-green-800 border-green-200";
+        return "bg-green-100 text-green-800 border-green-200 dark:bg-green-950/30 dark:text-green-200 dark:border-green-900";
         case "Good":
-        return "bg-blue-100 text-blue-800 border-blue-200";
+        return "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-950/30 dark:text-blue-200 dark:border-blue-900";
         case "Needs Check-up":
-        return "bg-orange-100 text-orange-800 border-orange-200";
+        return "bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-950/30 dark:text-orange-200 dark:border-orange-900";
         case "Requires Attention":
-        return "bg-red-100 text-red-800 border-red-200";
+        return "bg-red-100 text-red-800 border-red-200 dark:bg-red-950/30 dark:text-red-200 dark:border-red-900";
         default:
-        return "bg-gray-100 text-gray-800 border-gray-200";
+        return "bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-800/60 dark:text-gray-200 dark:border-gray-700";
     }
     };
 
     export const getAdoptionStatusColor = (status) => {
     switch (status) {
         case "Open for Adoption":
-        return "bg-blue-100 text-blue-800 border-blue-200";
+        return "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-950/30 dark:text-blue-200 dark:border-blue-900";
         case "Adopted":
-        return "bg-green-100 text-green-800 border-green-200";
+        return "bg-green-100 text-green-800 border-green-200 dark:bg-green-950/30 dark:text-green-200 dark:border-green-900";
         case "Not Available for Adoption":
-        return "bg-gray-100 text-gray-800 border-gray-200";
+        return "bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-800/60 dark:text-gray-200 dark:border-gray-700";
         default:
-        return "bg-gray-100 text-gray-800 border-gray-200";
+        return "bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-800/60 dark:text-gray-200 dark:border-gray-700";
     }
     };
 
     /* ----------------- Dashboard-like Modal Shell ----------------- */
     const ModalShell = ({ title, subtitle, onClose, children, maxWidth = "max-w-3xl" }) => {
     return (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-3 md:p-4">
-        <div className={`w-full ${maxWidth} max-h-[90vh] bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col`}>
+        <div className="fixed inset-0 z-50 bg-black/50 dark:bg-black/70 flex items-center justify-center p-3 md:p-4">
+        <div
+            className={`w-full ${maxWidth} max-h-[90vh] bg-white dark:bg-gray-900 rounded-2xl shadow-xl overflow-hidden flex flex-col transition-colors duration-300`}
+        >
             {/* Header */}
             <div className="px-5 md:px-6 py-5 flex items-start justify-between gap-4">
             <div className="min-w-0">
-                <h2 className="text-xl md:text-2xl font-bold text-gray-900">{title}</h2>
-                {subtitle ? <p className="text-sm text-gray-600 mt-1">{subtitle}</p> : null}
+                <h2 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-gray-100">
+                {title}
+                </h2>
+                {subtitle ? (
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{subtitle}</p>
+                ) : null}
             </div>
 
             <button
                 onClick={onClose}
-                className="p-2 rounded-full hover:bg-gray-100 text-gray-500"
+                className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-300 transition-colors"
                 type="button"
                 aria-label="Close"
             >
@@ -74,7 +80,7 @@ export { EditProfileModal, ChildDetailModal, ReintegrationModal };
             </button>
             </div>
 
-            <div className="border-t" />
+            <div className="border-t border-gray-200 dark:border-gray-800" />
 
             {/* Body */}
             <div className="px-5 md:px-6 py-6 overflow-y-auto">{children}</div>
@@ -86,7 +92,7 @@ export { EditProfileModal, ChildDetailModal, ReintegrationModal };
     /* ----------------- Small UI Helpers ----------------- */
     const Field = ({ label, children }) => (
     <div className="space-y-2">
-        <label className="text-sm font-medium text-gray-700">{label}</label>
+        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{label}</label>
         {children}
     </div>
     );
@@ -95,8 +101,9 @@ export { EditProfileModal, ChildDetailModal, ReintegrationModal };
     <input
         {...props}
         className={
-        "w-full px-4 py-2.5 rounded-xl bg-gray-100 border border-transparent " +
-        "focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none text-sm " +
+        "w-full px-4 py-2.5 rounded-xl bg-gray-100 dark:bg-gray-950 border border-transparent " +
+        "focus:bg-white dark:focus:bg-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-500/30 " +
+        "outline-none text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 " +
         (props.className || "")
         }
     />
@@ -106,8 +113,9 @@ export { EditProfileModal, ChildDetailModal, ReintegrationModal };
     <select
         {...props}
         className={
-        "w-full px-4 py-2.5 rounded-xl bg-gray-100 border border-transparent " +
-        "focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none text-sm " +
+        "w-full px-4 py-2.5 rounded-xl bg-gray-100 dark:bg-gray-950 border border-transparent " +
+        "focus:bg-white dark:focus:bg-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-500/30 " +
+        "outline-none text-sm text-gray-900 dark:text-gray-100 " +
         (props.className || "")
         }
     />
@@ -117,13 +125,15 @@ export { EditProfileModal, ChildDetailModal, ReintegrationModal };
     <textarea
         {...props}
         className={
-        "w-full px-4 py-2.5 rounded-xl bg-gray-100 border border-transparent " +
-        "focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none text-sm min-h-[110px] resize-none " +
+        "w-full px-4 py-2.5 rounded-xl bg-gray-100 dark:bg-gray-950 border border-transparent " +
+        "focus:bg-white dark:focus:bg-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-500/30 " +
+        "outline-none text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 " +
+        "min-h-[110px] resize-none " +
         (props.className || "")
         }
     />
     );
-    
+
     /* ===========================
     AddChildModal
     =========================== */

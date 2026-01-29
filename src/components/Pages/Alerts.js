@@ -1,5 +1,5 @@
-import React, { useMemo, useState } from "react";
-import {
+    import React, { useMemo, useState } from "react";
+    import {
     AlertTriangle,
     Plus,
     Send,
@@ -60,61 +60,50 @@ import {
     /* ---------------- UI helpers ---------------- */
 
     const Card = ({ className = "", children }) => (
-    <div
-        className={`bg-white rounded-2xl shadow-sm border border-gray-100 ${className}`}
-    >
+    <div className={`bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 ${className}`}>
         {children}
     </div>
     );
 
-    const CardBody = ({ className = "", children }) => (
-    <div className={`p-5 sm:p-6 ${className}`}>{children}</div>
-    );
+    const CardBody = ({ className = "", children }) => <div className={`p-5 sm:p-6 ${className}`}>{children}</div>;
 
     const Input = ({ className = "", ...props }) => (
     <input
-        className={`h-11 w-full rounded-xl border border-gray-200 bg-gray-50 px-4 text-sm text-gray-900 placeholder:text-gray-400 outline-none focus:bg-white focus:border-blue-300 focus:ring-2 focus:ring-blue-100 ${className}`}
+        className={`h-11 w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-4 text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 outline-none focus:bg-white dark:focus:bg-gray-800 focus:border-blue-300 dark:focus:border-blue-500 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-500/30 ${className}`}
         {...props}
     />
     );
 
     const Select = ({ className = "", ...props }) => (
     <select
-        className={`h-11 w-full rounded-xl border border-gray-200 bg-gray-50 px-4 text-sm text-gray-900 outline-none focus:bg-white focus:border-blue-300 focus:ring-2 focus:ring-blue-100 ${className}`}
+        className={`h-11 w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-4 text-sm text-gray-900 dark:text-gray-100 outline-none focus:bg-white dark:focus:bg-gray-800 focus:border-blue-300 dark:focus:border-blue-500 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-500/30 ${className}`}
         {...props}
     />
     );
 
     const Pill = ({ className = "", children }) => (
-    <span
-        className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold ${className}`}
-    >
-        {children}
-    </span>
+    <span className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold ${className}`}>{children}</span>
     );
 
     /* Simple progress bar */
     const ProgressBar = ({ value }) => (
-    <div className="h-2 w-full rounded-full bg-gray-100 overflow-hidden">
-        <div
-        className="h-full bg-blue-600 transition-all rounded-full"
-        style={{ width: `${value}%` }}
-        />
+    <div className="h-2 w-full rounded-full bg-gray-100 dark:bg-gray-800 overflow-hidden">
+        <div className="h-full bg-blue-600 transition-all rounded-full" style={{ width: `${value}%` }} />
     </div>
     );
 
     /* ---------------- Your existing pills (kept) ---------------- */
 
     const priorityPill = {
-    high: "bg-red-50 text-red-700 border-red-200",
-    medium: "bg-yellow-50 text-yellow-800 border-yellow-200",
-    low: "bg-blue-50 text-blue-700 border-blue-200",
+    high: "bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-300 border-red-200 dark:border-red-500/20",
+    medium: "bg-yellow-50 dark:bg-yellow-500/10 text-yellow-800 dark:text-yellow-300 border-yellow-200 dark:border-yellow-500/20",
+    low: "bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-500/20",
     };
 
     const statusPill = {
-    sent: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    draft: "bg-gray-50 text-gray-700 border-gray-200",
-    scheduled: "bg-blue-50 text-blue-700 border-blue-200",
+    sent: "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-500/20",
+    draft: "bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-200 border-gray-200 dark:border-gray-700",
+    scheduled: "bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-500/20",
     };
 
     /* -------- date/time helpers (kept) -------- */
@@ -182,8 +171,7 @@ import {
             alert.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
             alert.message.toLowerCase().includes(searchTerm.toLowerCase());
             const matchesType = filterType === "all" || alert.type === filterType;
-            const matchesPriority =
-            filterPriority === "all" || alert.priority === filterPriority;
+            const matchesPriority = filterPriority === "all" || alert.priority === filterPriority;
             return matchesSearch && matchesType && matchesPriority;
         })
         .sort((a, b) => toTimestamp(b) - toTimestamp(a));
@@ -192,9 +180,7 @@ import {
     const toggleRecipient = (group) => {
         setNewAlert((prev) => ({
         ...prev,
-        recipients: prev.recipients.includes(group)
-            ? prev.recipients.filter((r) => r !== group)
-            : [...prev.recipients, group],
+        recipients: prev.recipients.includes(group) ? prev.recipients.filter((r) => r !== group) : [...prev.recipients, group],
         }));
     };
 
@@ -308,13 +294,7 @@ import {
         setSendingAlert(null);
         setAlerts((prev) =>
             prev.map((a) =>
-            a.id === alertId
-                ? {
-                    ...a,
-                    deliveryStatus: { ...a.deliveryStatus, failed: 0 },
-                    failedDelivery: [],
-                }
-                : a
+            a.id === alertId ? { ...a, deliveryStatus: { ...a.deliveryStatus, failed: 0 }, failedDelivery: [] } : a
             )
         );
         setFeedback("Alert resent to failed recipients.");
@@ -322,24 +302,19 @@ import {
     };
 
     const getReadRate = (alert) =>
-        !alert.deliveryStatus.delivered
-        ? 0
-        : Math.round((alert.deliveryStatus.read / alert.deliveryStatus.delivered) * 100);
+        !alert.deliveryStatus.delivered ? 0 : Math.round((alert.deliveryStatus.read / alert.deliveryStatus.delivered) * 100);
 
     const typeMeta = (type) => alertTypes.find((t) => t.value === type);
 
     return (
-        <div className="min-h-screen bg-gray-50 px-6 py-8 lg:px-10">
-        <div className="mx-auto max-w-6xl space-y-6">
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+        {/* ✅ aligned container sizing like your other pages */}
+        <div className="mx-auto w-full max-w-[1200px] p-4 sm:p-6 space-y-6">
             {/* Header */}
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
-                Alert Management
-                </h1>
-                <p className="text-sm sm:text-base text-gray-600">
-                Send and manage system alerts and notifications
-                </p>
+            <div className="min-w-0">
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">Alert Management</h1>
+                <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">Send and manage system alerts and notifications</p>
             </div>
 
             {(userRole === "admin" || userRole === "staff") && (
@@ -357,11 +332,11 @@ import {
 
             {/* Feedback */}
             {feedback && (
-            <div className="flex items-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 shadow-sm">
-                <CheckCircle className="h-4 w-4" />
+            <div className="flex items-center gap-2 rounded-2xl border border-emerald-200 dark:border-emerald-500/20 bg-emerald-50 dark:bg-emerald-500/10 px-4 py-3 text-sm text-emerald-800 dark:text-emerald-200 shadow-sm">
+                <CheckCircle className="h-4 w-4 shrink-0" />
                 <span className="min-w-0 flex-1">{feedback}</span>
                 <button
-                className="ml-auto rounded-lg px-2 py-1 text-xs font-medium text-emerald-800 hover:bg-emerald-100"
+                className="ml-auto rounded-lg px-2 py-1 text-xs font-medium text-emerald-800 dark:text-emerald-200 hover:bg-emerald-100 dark:hover:bg-emerald-500/10"
                 onClick={() => setFeedback("")}
                 type="button"
                 >
@@ -374,14 +349,9 @@ import {
             <Card>
             <CardBody>
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
-                <div className="relative flex-1">
+                <div className="relative flex-1 min-w-0">
                     <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                    <Input
-                    placeholder="Search alerts..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-11"
-                    />
+                    <Input placeholder="Search alerts..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-11" />
                 </div>
 
                 <div className="flex flex-col gap-3 sm:flex-row lg:w-[420px]">
@@ -394,10 +364,7 @@ import {
                     ))}
                     </Select>
 
-                    <Select
-                    value={filterPriority}
-                    onChange={(e) => setFilterPriority(e.target.value)}
-                    >
+                    <Select value={filterPriority} onChange={(e) => setFilterPriority(e.target.value)}>
                     <option value="all">All Priorities</option>
                     <option value="high">High Priority</option>
                     <option value="medium">Medium Priority</option>
@@ -414,38 +381,34 @@ import {
                 <Card key={alert.id}>
                 <CardBody>
                     <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                    <div className="flex flex-1 gap-4">
-                        <div className="mt-0.5 flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-red-50 ring-1 ring-red-100">
-                        <AlertTriangle className="h-5 w-5 text-red-600" />
+                    <div className="flex flex-1 gap-4 min-w-0">
+                        <div className="mt-0.5 flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-red-50 dark:bg-red-500/10 ring-1 ring-red-100 dark:ring-red-500/20">
+                        <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-300" />
                         </div>
 
                         <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">
-                            <h3 className="text-lg font-bold text-gray-900">
-                            {alert.title}
-                            </h3>
+                            <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">{alert.title}</h3>
 
                             <Pill className={priorityPill[alert.priority]}>{alert.priority}</Pill>
                             <Pill className={statusPill[alert.status]}>{alert.status}</Pill>
                         </div>
 
-                        <p className="mt-2 text-sm leading-relaxed text-gray-700">
-                            {alert.message}
-                        </p>
+                        <p className="mt-2 text-sm leading-relaxed text-gray-700 dark:text-gray-200">{alert.message}</p>
 
-                        <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-gray-600">
+                        <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-gray-600 dark:text-gray-400">
                             <span className="inline-flex items-center gap-2">
-                            <Users className="h-4 w-4 text-gray-500" />
+                            <Users className="h-4 w-4 text-gray-500 dark:text-gray-400" />
                             {alert.recipients.join(", ")}
                             </span>
 
                             <span className="inline-flex items-center gap-2">
-                            <Calendar className="h-4 w-4 text-gray-500" />
+                            <Calendar className="h-4 w-4 text-gray-500 dark:text-gray-400" />
                             {formatDateTime(alert.sentDate, alert.sentTime)}
                             </span>
 
                             <span className="inline-flex items-center gap-2">
-                            <Target className="h-4 w-4 text-gray-500" />
+                            <Target className="h-4 w-4 text-gray-500 dark:text-gray-400" />
                             {alert.readCount}/{alert.totalRecipients} read
                             </span>
                         </div>
@@ -463,22 +426,17 @@ import {
                         View Details
                         </Button>
 
-                        {alert.status === "draft" &&
-                        (userRole === "admin" || userRole === "staff") && (
-                            <Button
+                        {alert.status === "draft" && (userRole === "admin" || userRole === "staff") && (
+                        <Button
                             variant="primary"
                             size="medium"
                             onClick={() => handleSendDraftAlert(alert.id)}
                             disabled={sendingAlert === alert.id}
                             className="inline-flex items-center gap-2"
-                            >
-                            {sendingAlert === alert.id ? (
-                                <Clock3 className="h-4 w-4 animate-spin" />
-                            ) : (
-                                <Send className="h-4 w-4" />
-                            )}
+                        >
+                            {sendingAlert === alert.id ? <Clock3 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                             Send
-                            </Button>
+                        </Button>
                         )}
 
                         {alert.status === "sent" &&
@@ -491,11 +449,7 @@ import {
                             disabled={sendingAlert === alert.id}
                             className="inline-flex items-center gap-2"
                             >
-                            {sendingAlert === alert.id ? (
-                                <Clock3 className="h-4 w-4 animate-spin" />
-                            ) : (
-                                <RotateCcw className="h-4 w-4" />
-                            )}
+                            {sendingAlert === alert.id ? <Clock3 className="h-4 w-4 animate-spin" /> : <RotateCcw className="h-4 w-4" />}
                             Resend
                             </Button>
                         )}
@@ -506,7 +460,7 @@ import {
             ))}
 
             {filteredAlerts.length === 0 && (
-                <div className="rounded-2xl border border-dashed border-gray-300 bg-white p-10 text-center text-gray-600 shadow-sm">
+                <div className="rounded-2xl border border-dashed border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 p-10 text-center text-gray-600 dark:text-gray-400 shadow-sm">
                 <AlertTriangle className="mx-auto mb-3 h-8 w-8 text-gray-400" />
                 No alerts match your current search and filters.
                 </div>
@@ -520,56 +474,43 @@ import {
                 onClick={() => setShowCreateAlert(false)}
             >
                 <div
-                className="w-full max-w-xl rounded-2xl bg-white p-6 shadow-xl max-h-[90vh] overflow-y-auto border border-gray-100"
+                className="w-full max-w-xl rounded-2xl bg-white dark:bg-gray-900 p-6 shadow-xl max-h-[90vh] overflow-y-auto border border-gray-100 dark:border-gray-700"
                 onClick={(e) => e.stopPropagation()}
                 >
                 <div className="mb-4 flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                    <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-red-50 ring-1 ring-red-100">
-                        <Bell className="h-5 w-5 text-red-600" />
+                    <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-red-50 dark:bg-red-500/10 ring-1 ring-red-100 dark:ring-red-500/20">
+                        <Bell className="h-5 w-5 text-red-600 dark:text-red-300" />
                     </span>
-                    <h2 className="text-lg font-semibold text-gray-900">
-                        Create New Alert
-                    </h2>
+                    <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Create New Alert</h2>
                     </div>
                     <button
                     onClick={() => setShowCreateAlert(false)}
-                    className="rounded-xl p-2 text-gray-500 hover:bg-gray-100"
+                    className="rounded-xl p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800"
                     type="button"
                     >
                     <X className="h-4 w-4" />
                     </button>
                 </div>
 
-                <p className="mb-4 text-sm text-gray-600">
-                    Notify staff and house parents about important updates.
-                </p>
+                <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">Notify staff and house parents about important updates.</p>
 
                 <div className="space-y-4 text-sm">
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div>
-                        <label className="mb-1 block text-xs font-semibold text-gray-700">
+                        <label className="mb-1 block text-xs font-semibold text-gray-700 dark:text-gray-200">
                         Alert Title <span className="text-red-500">*</span>
                         </label>
                         <Input
                         value={newAlert.title}
-                        onChange={(e) =>
-                            setNewAlert((prev) => ({ ...prev, title: e.target.value }))
-                        }
+                        onChange={(e) => setNewAlert((prev) => ({ ...prev, title: e.target.value }))}
                         placeholder="Enter alert title"
                         />
                     </div>
 
                     <div>
-                        <label className="mb-1 block text-xs font-semibold text-gray-700">
-                        Alert Type
-                        </label>
-                        <Select
-                        value={newAlert.type}
-                        onChange={(e) =>
-                            setNewAlert((prev) => ({ ...prev, type: e.target.value }))
-                        }
-                        >
+                        <label className="mb-1 block text-xs font-semibold text-gray-700 dark:text-gray-200">Alert Type</label>
+                        <Select value={newAlert.type} onChange={(e) => setNewAlert((prev) => ({ ...prev, type: e.target.value }))}>
                         {alertTypes.map((type) => (
                             <option key={type.value} value={type.value}>
                             {type.icon} {type.label}
@@ -580,30 +521,21 @@ import {
                     </div>
 
                     <div>
-                    <label className="mb-1 block text-xs font-semibold text-gray-700">
+                    <label className="mb-1 block text-xs font-semibold text-gray-700 dark:text-gray-200">
                         Message <span className="text-red-500">*</span>
                     </label>
                     <textarea
                         rows={4}
                         value={newAlert.message}
-                        onChange={(e) =>
-                        setNewAlert((prev) => ({ ...prev, message: e.target.value }))
-                        }
-                        className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 outline-none focus:bg-white focus:border-blue-300 focus:ring-2 focus:ring-blue-100"
+                        onChange={(e) => setNewAlert((prev) => ({ ...prev, message: e.target.value }))}
+                        className="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-4 py-3 text-sm text-gray-900 dark:text-gray-100 outline-none focus:bg-white dark:focus:bg-gray-800 focus:border-blue-300 dark:focus:border-blue-500 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-500/30"
                         placeholder="Enter the alert message..."
                     />
                     </div>
 
                     <div>
-                    <label className="mb-1 block text-xs font-semibold text-gray-700">
-                        Priority Level
-                    </label>
-                    <Select
-                        value={newAlert.priority}
-                        onChange={(e) =>
-                        setNewAlert((prev) => ({ ...prev, priority: e.target.value }))
-                        }
-                    >
+                    <label className="mb-1 block text-xs font-semibold text-gray-700 dark:text-gray-200">Priority Level</label>
+                    <Select value={newAlert.priority} onChange={(e) => setNewAlert((prev) => ({ ...prev, priority: e.target.value }))}>
                         <option value="low">🟢 Low Priority</option>
                         <option value="medium">🟡 Medium Priority</option>
                         <option value="high">🔴 High Priority</option>
@@ -611,18 +543,13 @@ import {
                     </div>
 
                     <div>
-                    <label className="mb-2 block text-xs font-semibold text-gray-700">
+                    <label className="mb-2 block text-xs font-semibold text-gray-700 dark:text-gray-200">
                         Recipients <span className="text-red-500">*</span>{" "}
-                        <span className="font-normal text-gray-500">
-                        (select at least one)
-                        </span>
+                        <span className="font-normal text-gray-500 dark:text-gray-400">(select at least one)</span>
                     </label>
-                    <div className="grid max-h-32 grid-cols-2 gap-2 overflow-y-auto rounded-xl border border-gray-200 bg-gray-50 p-3">
+                    <div className="grid max-h-32 grid-cols-2 gap-2 overflow-y-auto rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-3">
                         {recipientGroups.map((group) => (
-                        <label
-                            key={group}
-                            className="flex cursor-pointer items-center gap-2 text-xs text-gray-700"
-                        >
+                        <label key={group} className="flex cursor-pointer items-center gap-2 text-xs text-gray-700 dark:text-gray-200">
                             <input
                             type="checkbox"
                             className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
@@ -633,17 +560,13 @@ import {
                         </label>
                         ))}
                     </div>
-                    <p className="mt-1 text-[11px] text-gray-600">
-                        Selected: {newAlert.recipients.length} groups
-                    </p>
+                    <p className="mt-1 text-[11px] text-gray-600 dark:text-gray-400">Selected: {newAlert.recipients.length} groups</p>
                     </div>
 
                     <div>
-                    <label className="mb-2 block text-xs font-semibold text-gray-700">
-                        Notification Methods
-                    </label>
+                    <label className="mb-2 block text-xs font-semibold text-gray-700 dark:text-gray-200">Notification Methods</label>
                     <div className="flex flex-wrap gap-4">
-                        <label className="flex cursor-pointer items-center gap-2 text-xs text-gray-700">
+                        <label className="flex cursor-pointer items-center gap-2 text-xs text-gray-700 dark:text-gray-200">
                         <input
                             type="checkbox"
                             className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
@@ -656,7 +579,7 @@ import {
                         </span>
                         </label>
 
-                        <label className="flex cursor-pointer items-center gap-2 text-xs text-gray-700">
+                        <label className="flex cursor-pointer items-center gap-2 text-xs text-gray-700 dark:text-gray-200">
                         <input
                             type="checkbox"
                             className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
@@ -669,7 +592,7 @@ import {
                         </span>
                         </label>
 
-                        <label className="flex cursor-pointer items-center gap-2 text-xs text-gray-700">
+                        <label className="flex cursor-pointer items-center gap-2 text-xs text-gray-700 dark:text-gray-200">
                         <input
                             type="checkbox"
                             className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
@@ -686,35 +609,26 @@ import {
 
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div>
-                        <label className="mb-1 block text-xs font-semibold text-gray-700">
-                        Schedule Date (optional)
-                        </label>
+                        <label className="mb-1 block text-xs font-semibold text-gray-700 dark:text-gray-200">Schedule Date (optional)</label>
                         <Input
                         type="date"
                         value={newAlert.scheduleDate}
-                        onChange={(e) =>
-                            setNewAlert((prev) => ({ ...prev, scheduleDate: e.target.value }))
-                        }
+                        onChange={(e) => setNewAlert((prev) => ({ ...prev, scheduleDate: e.target.value }))}
                         />
                     </div>
 
                     <div>
-                        <label className="mb-1 block text-xs font-semibold text-gray-700">
-                        Schedule Time (optional)
-                        </label>
+                        <label className="mb-1 block text-xs font-semibold text-gray-700 dark:text-gray-200">Schedule Time (optional)</label>
                         <Input
                         type="time"
                         value={newAlert.scheduleTime}
-                        onChange={(e) =>
-                            setNewAlert((prev) => ({ ...prev, scheduleTime: e.target.value }))
-                        }
+                        onChange={(e) => setNewAlert((prev) => ({ ...prev, scheduleTime: e.target.value }))}
                         />
                     </div>
                     </div>
 
-                    <div className="rounded-xl bg-blue-50 px-4 py-3 text-xs text-blue-800 border border-blue-100">
-                    <strong>Preview:</strong> Your alert will be sent to{" "}
-                    {newAlert.recipients.length} group
+                    <div className="rounded-xl bg-blue-50 dark:bg-blue-500/10 px-4 py-3 text-xs text-blue-800 dark:text-blue-200 border border-blue-100 dark:border-blue-500/20">
+                    <strong>Preview:</strong> Your alert will be sent to {newAlert.recipients.length} group
                     {newAlert.recipients.length === 1 ? "" : "s"}
                     {newAlert.scheduleDate ? ` on ${newAlert.scheduleDate}` : " immediately"}
                     {newAlert.scheduleTime ? ` at ${formatTime12(newAlert.scheduleTime)}` : ""}.
@@ -722,12 +636,7 @@ import {
                 </div>
 
                 <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-                    <Button
-                    variant="outline"
-                    size="medium"
-                    onClick={() => setShowCreateAlert(false)}
-                    className="w-full sm:w-auto"
-                    >
+                    <Button variant="outline" size="medium" onClick={() => setShowCreateAlert(false)} className="w-full sm:w-auto">
                     Cancel
                     </Button>
 
@@ -752,25 +661,21 @@ import {
                 onClick={() => setShowViewDetails(false)}
             >
                 <div
-                className="w-full max-w-5xl rounded-2xl bg-white shadow-xl max-h-[90vh] overflow-y-auto border border-gray-100"
+                className="w-full max-w-5xl rounded-2xl bg-white dark:bg-gray-900 shadow-xl max-h-[90vh] overflow-y-auto border border-gray-100 dark:border-gray-700"
                 onClick={(e) => e.stopPropagation()}
                 >
-                <div className="flex items-start justify-between gap-3 border-b border-gray-100 px-6 py-5">
-                    <div>
+                <div className="flex items-start justify-between gap-3 border-b border-gray-100 dark:border-gray-800 px-6 py-5">
+                    <div className="min-w-0">
                     <div className="flex items-center gap-2">
-                        <Info className="h-5 w-5 text-gray-700" />
-                        <h2 className="text-xl font-semibold text-gray-900">
-                        Alert Details
-                        </h2>
+                        <Info className="h-5 w-5 text-gray-700 dark:text-gray-200" />
+                        <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Alert Details</h2>
                     </div>
-                    <p className="mt-1 text-sm text-gray-600">
-                        Comprehensive information and delivery status for this alert.
-                    </p>
+                    <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">Comprehensive information and delivery status for this alert.</p>
                     </div>
 
                     <button
                     onClick={() => setShowViewDetails(false)}
-                    className="rounded-xl p-2 text-gray-500 hover:bg-gray-100"
+                    className="rounded-xl p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 shrink-0"
                     type="button"
                     >
                     <X className="h-5 w-5" />
@@ -778,68 +683,54 @@ import {
                 </div>
 
                 <div className="px-6 py-6">
-                    <h3 className="text-2xl font-bold text-gray-900">
-                    {selectedAlert.title}
-                    </h3>
+                    <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{selectedAlert.title}</h3>
 
                     <div className="mt-3 flex flex-wrap items-center gap-2">
-                    <Pill className={priorityPill[selectedAlert.priority]}>
-                        {selectedAlert.priority} priority
-                    </Pill>
-                    <Pill className={statusPill[selectedAlert.status]}>
-                        {selectedAlert.status}
-                    </Pill>
+                    <Pill className={priorityPill[selectedAlert.priority]}>{selectedAlert.priority} priority</Pill>
+                    <Pill className={statusPill[selectedAlert.status]}>{selectedAlert.status}</Pill>
 
-                    <span className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-1 text-sm text-gray-800">
-                        <span className="text-base">
-                        {typeMeta(selectedAlert.type)?.icon}
-                        </span>
+                    <span className="inline-flex items-center gap-2 rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-1 text-sm text-gray-800 dark:text-gray-200">
+                        <span className="text-base">{typeMeta(selectedAlert.type)?.icon}</span>
                         {typeMeta(selectedAlert.type)?.label}
                     </span>
                     </div>
 
-                    <div className="mt-6 rounded-2xl bg-gray-50 p-5 border border-gray-200">
-                    <h4 className="text-lg font-semibold text-gray-900">Message</h4>
-                    <p className="mt-3 text-base leading-relaxed text-gray-700">
-                        {selectedAlert.message}
-                    </p>
+                    <div className="mt-6 rounded-2xl bg-gray-50 dark:bg-gray-800 p-5 border border-gray-200 dark:border-gray-700">
+                    <h4 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Message</h4>
+                    <p className="mt-3 text-base leading-relaxed text-gray-700 dark:text-gray-200">{selectedAlert.message}</p>
                     </div>
 
                     <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2">
                     <div className="space-y-5">
                         <div>
-                        <div className="flex items-center gap-2 text-gray-900 font-semibold">
-                            <User className="h-4 w-4 text-gray-600" />
+                        <div className="flex items-center gap-2 text-gray-900 dark:text-gray-100 font-semibold">
+                            <User className="h-4 w-4 text-gray-600 dark:text-gray-300" />
                             Sent By
                         </div>
-                        <p className="mt-2 text-gray-700">{selectedAlert.sentBy}</p>
+                        <p className="mt-2 text-gray-700 dark:text-gray-200">{selectedAlert.sentBy}</p>
                         </div>
 
                         <div>
-                        <div className="flex items-center gap-2 text-gray-900 font-semibold">
-                            <Users className="h-4 w-4 text-gray-600" />
+                        <div className="flex items-center gap-2 text-gray-900 dark:text-gray-100 font-semibold">
+                            <Users className="h-4 w-4 text-gray-600 dark:text-gray-300" />
                             Recipients
                         </div>
-                        <p className="mt-2 text-gray-700">
-                            {selectedAlert.recipients.join(", ")}
-                        </p>
+                        <p className="mt-2 text-gray-700 dark:text-gray-200">{selectedAlert.recipients.join(", ")}</p>
                         </div>
                     </div>
 
                     <div className="space-y-5">
                         <div>
-                        <div className="flex items-center gap-2 text-gray-900 font-semibold">
-                            <Calendar className="h-4 w-4 text-gray-600" />
+                        <div className="flex items-center gap-2 text-gray-900 dark:text-gray-100 font-semibold">
+                            <Calendar className="h-4 w-4 text-gray-600 dark:text-gray-300" />
                             Date &amp; Time
                         </div>
-                        <p className="mt-2 text-gray-700">
-                            {formatDateTime(selectedAlert.sentDate, selectedAlert.sentTime)}
-                        </p>
+                        <p className="mt-2 text-gray-700 dark:text-gray-200">{formatDateTime(selectedAlert.sentDate, selectedAlert.sentTime)}</p>
                         </div>
 
                         <div>
-                        <div className="flex items-center gap-2 text-gray-900 font-semibold">
-                            <Clipboard className="h-4 w-4 text-gray-600" />
+                        <div className="flex items-center gap-2 text-gray-900 dark:text-gray-100 font-semibold">
+                            <Clipboard className="h-4 w-4 text-gray-600 dark:text-gray-300" />
                             Methods
                         </div>
 
@@ -847,11 +738,11 @@ import {
                             {selectedAlert.notificationMethods.map((m) => (
                             <span
                                 key={m}
-                                className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-800"
+                                className="inline-flex items-center gap-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm text-gray-800 dark:text-gray-200"
                             >
-                                {m === "email" && <Mail className="h-4 w-4 text-gray-600" />}
-                                {m === "sms" && <MessageSquare className="h-4 w-4 text-gray-600" />}
-                                {m === "inApp" && <Bell className="h-4 w-4 text-gray-600" />}
+                                {m === "email" && <Mail className="h-4 w-4 text-gray-600 dark:text-gray-300" />}
+                                {m === "sms" && <MessageSquare className="h-4 w-4 text-gray-600 dark:text-gray-300" />}
+                                {m === "inApp" && <Bell className="h-4 w-4 text-gray-600 dark:text-gray-300" />}
                                 {m}
                             </span>
                             ))}
@@ -860,39 +751,27 @@ import {
                     </div>
                     </div>
 
-                    <div className="my-8 border-t border-gray-200" />
+                    <div className="my-8 border-t border-gray-200 dark:border-gray-700" />
 
                     {selectedAlert.status === "sent" && (
                     <>
-                        <h4 className="text-lg font-bold text-gray-900">
-                        Delivery Statistics
-                        </h4>
+                        <h4 className="text-lg font-bold text-gray-900 dark:text-gray-100">Delivery Statistics</h4>
 
                         <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-3">
                         <Card>
                             <CardBody className="text-center">
-                            <p className="text-4xl font-extrabold text-blue-600">
-                                {selectedAlert.deliveryStatus.delivered}
-                            </p>
-                            <p className="mt-1 text-gray-600">Delivered</p>
+                            <p className="text-4xl font-extrabold text-blue-600">{selectedAlert.deliveryStatus.delivered}</p>
+                            <p className="mt-1 text-gray-600 dark:text-gray-400">Delivered</p>
                             <div className="mt-4">
-                                <ProgressBar
-                                value={Math.round(
-                                    (selectedAlert.deliveryStatus.delivered /
-                                    selectedAlert.totalRecipients) *
-                                    100
-                                )}
-                                />
+                                <ProgressBar value={Math.round((selectedAlert.deliveryStatus.delivered / selectedAlert.totalRecipients) * 100)} />
                             </div>
                             </CardBody>
                         </Card>
 
                         <Card>
                             <CardBody className="text-center">
-                            <p className="text-4xl font-extrabold text-emerald-600">
-                                {selectedAlert.deliveryStatus.read}
-                            </p>
-                            <p className="mt-1 text-gray-600">Read</p>
+                            <p className="text-4xl font-extrabold text-emerald-600">{selectedAlert.deliveryStatus.read}</p>
+                            <p className="mt-1 text-gray-600 dark:text-gray-400">Read</p>
                             <div className="mt-4">
                                 <ProgressBar value={getReadRate(selectedAlert)} />
                             </div>
@@ -901,14 +780,10 @@ import {
 
                         <Card>
                             <CardBody className="text-center">
-                            <p className="text-4xl font-extrabold text-red-600">
-                                {selectedAlert.deliveryStatus.failed}
-                            </p>
-                            <p className="mt-1 text-gray-600">Failed</p>
+                            <p className="text-4xl font-extrabold text-red-600">{selectedAlert.deliveryStatus.failed}</p>
+                            <p className="mt-1 text-gray-600 dark:text-gray-400">Failed</p>
                             {selectedAlert.deliveryStatus.failed > 0 && (
-                                <p className="mt-3 text-sm font-medium text-red-600">
-                                Delivery issues detected
-                                </p>
+                                <p className="mt-3 text-sm font-medium text-red-600 dark:text-red-300">Delivery issues detected</p>
                             )}
                             </CardBody>
                         </Card>
@@ -916,13 +791,8 @@ import {
                     </>
                     )}
 
-                    <div className="mt-8 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end border-t border-gray-100 pt-5">
-                    <Button
-                        variant="outline"
-                        size="medium"
-                        onClick={() => setShowViewDetails(false)}
-                        className="w-full sm:w-auto"
-                    >
+                    <div className="mt-8 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end border-t border-gray-100 dark:border-gray-800 pt-5">
+                    <Button variant="outline" size="medium" onClick={() => setShowViewDetails(false)} className="w-full sm:w-auto">
                         Close
                     </Button>
 
@@ -936,11 +806,7 @@ import {
                             disabled={sendingAlert === selectedAlert.id}
                             className="inline-flex w-full items-center justify-center gap-2 sm:w-auto"
                         >
-                            {sendingAlert === selectedAlert.id ? (
-                            <Clock3 className="h-4 w-4 animate-spin" />
-                            ) : (
-                            <RotateCcw className="h-4 w-4" />
-                            )}
+                            {sendingAlert === selectedAlert.id ? <Clock3 className="h-4 w-4 animate-spin" /> : <RotateCcw className="h-4 w-4" />}
                             Resend
                         </Button>
                         )}
@@ -952,4 +818,4 @@ import {
         </div>
         </div>
     );
-}
+    }

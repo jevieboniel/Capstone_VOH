@@ -25,7 +25,7 @@ const ConfirmationModal = ({
       size="sm"
     >
       <div className="space-y-4">
-        <p className="text-gray-600">{message}</p>
+        <p className="text-gray-600 dark:text-gray-300">{message}</p>
         
         <div className="flex justify-end space-x-3">
           <Button

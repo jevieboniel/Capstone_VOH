@@ -19,18 +19,14 @@ import {
 import { ChartContainer, BarChart, LineChart, AreaChart } from "../Charts";
 
 //  Recharts ONLY for the Pie charts
-import {
-  PieChart as RePieChart,
-  Pie,
-  Cell,
-  ResponsiveContainer,
-} from "recharts";
+import { PieChart as RePieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 
 /* ------------------- Tiny UI Helpers (no external UI lib) ------------------- */
 
 const Card = ({ children, className = "" }) => (
   <div
-    className={`bg-white rounded-2xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow ${className}`}
+    className={`bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800
+    hover:shadow-md transition-shadow ${className}`}
   >
     {children}
   </div>
@@ -38,14 +34,14 @@ const Card = ({ children, className = "" }) => (
 
 const CardHeader = ({ children, className = "" }) => (
   <div
-    className={`px-6 py-5 border-b border-gray-100 flex items-center justify-between gap-2 ${className}`}
+    className={`px-6 py-5 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between gap-2 ${className}`}
   >
     {children}
   </div>
 );
 
 const CardTitle = ({ children, className = "" }) => (
-  <h2 className={`text-base sm:text-lg font-semibold text-gray-900 ${className}`}>
+  <h2 className={`text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100 ${className}`}>
     {children}
   </h2>
 );
@@ -58,22 +54,25 @@ const Badge = ({ children, variant = "solid", className = "" }) => {
   const base =
     "inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold shadow-sm";
   const variants = {
-    solid: "bg-gray-900 text-white border-transparent",
-    outline: "bg-white text-gray-700 border-gray-300",
+    solid:
+      "bg-gray-900 text-white border-transparent dark:bg-gray-100 dark:text-gray-900",
+    outline:
+      "bg-white text-gray-700 border-gray-300 dark:bg-gray-900 dark:text-gray-200 dark:border-gray-700",
   };
   return <span className={`${base} ${variants[variant] || ""} ${className}`}>{children}</span>;
 };
 
 const Button = ({ children, variant = "solid", size = "md", className = "", ...props }) => {
   const base =
-    "inline-flex items-center justify-center rounded-xl font-semibold transition focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-60 disabled:cursor-not-allowed";
+    "inline-flex items-center justify-center rounded-xl font-semibold transition focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-60 disabled:cursor-not-allowed dark:focus:ring-offset-gray-950";
   const sizes = {
     sm: "text-xs px-3.5 py-2",
     md: "text-sm px-4.5 py-2.5",
   };
   const variants = {
     solid: "bg-blue-600 hover:bg-blue-700 text-white shadow-sm",
-    outline: "border border-gray-300 bg-white text-gray-800 hover:bg-gray-50",
+    outline:
+      "border border-gray-300 bg-white text-gray-800 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:hover:bg-gray-800",
     link: "text-blue-600 hover:text-blue-700 px-0 py-0",
   };
 
@@ -85,7 +84,9 @@ const Button = ({ children, variant = "solid", size = "md", className = "", ...p
 };
 
 const Progress = ({ value = 0, className = "" }) => (
-  <div className={`w-full h-3 rounded-full bg-gray-200 overflow-hidden shadow-inner ${className}`}>
+  <div
+    className={`w-full h-3 rounded-full bg-gray-200 dark:bg-gray-800 overflow-hidden shadow-inner ${className}`}
+  >
     <div
       className="h-full bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 rounded-full transition-all shadow-sm"
       style={{ width: `${Math.min(Math.max(value, 0), 100)}%` }}
@@ -238,13 +239,13 @@ const recentActivities = [
 const getPriorityColor = (priority) => {
   switch (priority) {
     case "high":
-      return "bg-red-100 text-red-800 border-red-200";
+      return "bg-red-100 text-red-800 border-red-200 dark:bg-red-950/40 dark:text-red-200 dark:border-red-900";
     case "medium":
-      return "bg-yellow-100 text-yellow-800 border-yellow-200";
+      return "bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-950/35 dark:text-yellow-200 dark:border-yellow-900";
     case "low":
-      return "bg-blue-100 text-blue-800 border-blue-200";
+      return "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-950/35 dark:text-blue-200 dark:border-blue-900";
     default:
-      return "bg-gray-100 text-gray-800 border-gray-200";
+      return "bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700";
   }
 };
 
@@ -259,9 +260,9 @@ const getActivityIcon = (type) => {
     case "milestone":
       return <TrendingUp className="h-4 w-4 text-purple-600" />;
     case "report":
-      return <FileText className="h-4 w-4 text-gray-600" />;
+      return <FileText className="h-4 w-4 text-gray-600 dark:text-gray-300" />;
     default:
-      return <Activity className="h-4 w-4 text-gray-600" />;
+      return <Activity className="h-4 w-4 text-gray-600 dark:text-gray-300" />;
   }
 };
 
@@ -323,26 +324,30 @@ const Dashboard = () => {
   const donorPie = useMemo(() => withPercent(donorTypeData, "value"), []);
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen space-y-6">
+    <div className="p-6 bg-gray-50 dark:bg-gray-950 min-h-screen space-y-6 transition-colors duration-300">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Dashboard</h1>
-          <p className="mt-1 text-sm text-gray-600">Quick insights across children, health, development, and donations</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">Dashboard</h1>
+          <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+            Quick insights across children, health, development, and donations
+          </p>
         </div>
       </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-        <Card className="border-l-4 border-l-blue-500">
+        <Card className="border-l-4 border-l-blue-500 dark:border-l-blue-400">
           <CardContent>
             <div className="flex items-center justify-between gap-4">
               <div className="min-w-0">
-                <p className="text-xs sm:text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                <p className="text-xs sm:text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
                   Total Children
                 </p>
-                <p className="text-2xl sm:text-3xl font-bold text-gray-900">{mockStats.totalChildren}</p>
-                <p className="text-xs sm:text-sm text-green-600 font-medium">+{mockStats.newAdmissions} new this month</p>
+                <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">{mockStats.totalChildren}</p>
+                <p className="text-xs sm:text-sm text-green-600 dark:text-green-400 font-medium">
+                  +{mockStats.newAdmissions} new this month
+                </p>
               </div>
               <div className="bg-gradient-to-br from-blue-500 to-indigo-600 p-3 sm:p-4 rounded-2xl shadow-sm flex-shrink-0">
                 <Users className="h-6 w-6 sm:h-7 sm:w-7 text-white" />
@@ -351,15 +356,15 @@ const Dashboard = () => {
           </CardContent>
         </Card>
 
-        <Card className="border-l-4 border-l-red-500">
+        <Card className="border-l-4 border-l-red-500 dark:border-l-red-400">
           <CardContent>
             <div className="flex items-center justify-between gap-4">
               <div className="min-w-0">
-                <p className="text-xs sm:text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                <p className="text-xs sm:text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
                   Health Alerts
                 </p>
-                <p className="text-2xl sm:text-3xl font-bold text-gray-900">{mockStats.healthChecksDue}</p>
-                <p className="text-xs sm:text-sm text-orange-600 font-medium">Check-ups due</p>
+                <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">{mockStats.healthChecksDue}</p>
+                <p className="text-xs sm:text-sm text-orange-600 dark:text-orange-400 font-medium">Check-ups due</p>
               </div>
               <div className="bg-gradient-to-br from-red-500 to-rose-600 p-3 sm:p-4 rounded-2xl shadow-sm flex-shrink-0">
                 <Heart className="h-6 w-6 sm:h-7 sm:w-7 text-white" />
@@ -368,17 +373,17 @@ const Dashboard = () => {
           </CardContent>
         </Card>
 
-        <Card className="border-l-4 border-l-green-500">
+        <Card className="border-l-4 border-l-green-500 dark:border-l-green-400">
           <CardContent>
             <div className="flex items-center justify-between gap-4">
               <div className="min-w-0">
-                <p className="text-xs sm:text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                <p className="text-xs sm:text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
                   Total Donations
                 </p>
-                <p className="text-2xl sm:text-3xl font-bold text-gray-900">
+                <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">
                   ${mockStats.totalDonations.toLocaleString()}
                 </p>
-                <p className="text-xs sm:text-sm text-green-600 font-medium">
+                <p className="text-xs sm:text-sm text-green-600 dark:text-green-400 font-medium">
                   ${mockStats.monthlyDonations.toLocaleString()} this month
                 </p>
               </div>
@@ -389,17 +394,19 @@ const Dashboard = () => {
           </CardContent>
         </Card>
 
-        <Card className="border-l-4 border-l-purple-500">
+        <Card className="border-l-4 border-l-purple-500 dark:border-l-purple-400">
           <CardContent>
             <div className="flex items-center justify-between gap-4">
               <div className="min-w-0">
-                <p className="text-xs sm:text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                <p className="text-xs sm:text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
                   Milestones
                 </p>
-                <p className="text-2xl sm:text-3xl font-bold text-gray-900">
+                <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">
                   {mockStats.completedMilestones}/{mockStats.developmentMilestones}
                 </p>
-                <p className="text-xs sm:text-sm text-purple-600 font-medium">{milestoneProgress.toFixed(0)}% completed</p>
+                <p className="text-xs sm:text-sm text-purple-600 dark:text-purple-400 font-medium">
+                  {milestoneProgress.toFixed(0)}% completed
+                </p>
               </div>
               <div className="bg-gradient-to-br from-purple-500 to-violet-600 p-3 sm:p-4 rounded-2xl shadow-sm flex-shrink-0">
                 <TrendingUp className="h-6 w-6 sm:h-7 sm:w-7 text-white" />
@@ -411,7 +418,7 @@ const Dashboard = () => {
 
       {/* Tabs */}
       <div className="w-full">
-        <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-2">
+        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-sm p-2 transition-colors">
           <div className="grid w-full grid-cols-2 lg:grid-cols-6 gap-2">
             {tabs.map((tab) => (
               <button
@@ -420,8 +427,10 @@ const Dashboard = () => {
                 className={
                   "text-xs sm:text-sm font-semibold rounded-xl px-3 py-2.5 border transition " +
                   (activeTab === tab.id
-                    ? "bg-gradient-to-br from-blue-50 to-indigo-50 text-blue-700 border-blue-200 shadow-sm"
-                    : "bg-white text-gray-600 border-transparent hover:bg-gray-50")
+                    ? "bg-gradient-to-br from-blue-50 to-indigo-50 text-blue-700 border-blue-200 shadow-sm " +
+                      "dark:from-blue-950/40 dark:to-indigo-950/40 dark:text-blue-200 dark:border-blue-900"
+                    : "bg-white text-gray-600 border-transparent hover:bg-gray-50 " +
+                      "dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800")
                 }
               >
                 {tab.label}
@@ -437,10 +446,10 @@ const Dashboard = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
             {/* Alerts */}
             <Card>
-              <CardHeader className="border-b border-gray-100">
+              <CardHeader className="border-b border-gray-100 dark:border-gray-800">
                 <CardTitle className="flex items-center gap-2">
-                  <div className="rounded-xl bg-orange-100 p-2">
-                    <AlertCircle className="h-5 w-5 text-orange-600" />
+                  <div className="rounded-xl bg-orange-100 dark:bg-orange-950/40 p-2">
+                    <AlertCircle className="h-5 w-5 text-orange-600 dark:text-orange-300" />
                   </div>
                   Alerts &amp; Reminders
                 </CardTitle>
@@ -449,17 +458,23 @@ const Dashboard = () => {
                 {mockAlerts.map((alert) => (
                   <div
                     key={alert.id}
-                    className="flex flex-col sm:flex-row sm:items-start gap-3 p-4 bg-gray-50 border border-gray-200 rounded-xl hover:bg-gray-50/60 transition"
+                    className="flex flex-col sm:flex-row sm:items-start gap-3 p-4
+                    bg-gray-50 dark:bg-gray-950/40 border border-gray-200 dark:border-gray-800 rounded-xl
+                    hover:bg-gray-50/60 dark:hover:bg-gray-800/40 transition"
                   >
                     <Badge className={`${getPriorityColor(alert.priority)} capitalize w-fit`}>
                       {alert.priority}
                     </Badge>
+
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-gray-900 text-sm sm:text-base">{alert.message}</p>
+                      <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm sm:text-base">
+                        {alert.message}
+                      </p>
                       <div className="flex items-center gap-2 mt-1">
                         <Calendar className="h-3 w-3 sm:h-4 sm:w-4 text-gray-400" />
-                        <span className="text-xs sm:text-sm text-gray-600">{alert.date}</span>
+                        <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">{alert.date}</span>
                       </div>
+
                       <div className="flex flex-wrap gap-1 mt-2">
                         {alert.children.slice(0, 3).map((child, index) => (
                           <Badge key={index} variant="outline" className="text-xs">
@@ -473,6 +488,7 @@ const Dashboard = () => {
                         )}
                       </div>
                     </div>
+
                     <Button size="sm" variant="outline">
                       View
                     </Button>
@@ -485,37 +501,46 @@ const Dashboard = () => {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <div className="rounded-xl bg-indigo-100 p-2">
-                    <BarChart3 className="h-5 w-5 text-indigo-600" />
+                  <div className="rounded-xl bg-indigo-100 dark:bg-indigo-950/40 p-2">
+                    <BarChart3 className="h-5 w-5 text-indigo-600 dark:text-indigo-300" />
                   </div>
                   Progress Metrics
                 </CardTitle>
               </CardHeader>
+
               <CardContent className="space-y-6">
                 <div>
                   <div className="flex justify-between items-center mb-2">
-                    <span className="text-sm font-semibold text-gray-800">Monthly Donation Goal</span>
-                    <span className="text-sm text-gray-600">
+                    <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">
+                      Monthly Donation Goal
+                    </span>
+                    <span className="text-sm text-gray-600 dark:text-gray-400">
                       ${mockStats.monthlyDonations.toLocaleString()} / ${mockStats.donationGoal.toLocaleString()}
                     </span>
                   </div>
                   <Progress value={donationProgress} />
-                  <p className="text-xs text-gray-500 mt-2">{donationProgress.toFixed(0)}% of goal reached</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                    {donationProgress.toFixed(0)}% of goal reached
+                  </p>
                 </div>
 
                 <div>
                   <div className="flex justify-between items-center mb-2">
-                    <span className="text-sm font-semibold text-gray-800">Development Milestones</span>
-                    <span className="text-sm text-gray-600">
+                    <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">
+                      Development Milestones
+                    </span>
+                    <span className="text-sm text-gray-600 dark:text-gray-400">
                       {mockStats.completedMilestones} / {mockStats.developmentMilestones}
                     </span>
                   </div>
                   <Progress value={milestoneProgress} />
-                  <p className="text-xs text-gray-500 mt-2">{milestoneProgress.toFixed(0)}% completed</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                    {milestoneProgress.toFixed(0)}% completed
+                  </p>
                 </div>
 
-                <div className="pt-4 border-t border-gray-100">
-                  <h4 className="font-semibold text-gray-900 mb-3">Quick Actions</h4>
+                <div className="pt-4 border-t border-gray-100 dark:border-gray-800">
+                  <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">Quick Actions</h4>
                   <div className="grid grid-cols-2 gap-2">
                     <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
                       Add Child
@@ -533,8 +558,8 @@ const Dashboard = () => {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <div className="rounded-xl bg-blue-100 p-2">
-                  <Activity className="h-5 w-5 text-blue-600" />
+                <div className="rounded-xl bg-blue-100 dark:bg-blue-950/40 p-2">
+                  <Activity className="h-5 w-5 text-blue-600 dark:text-blue-300" />
                 </div>
                 Recent Activities
               </CardTitle>
@@ -544,16 +569,17 @@ const Dashboard = () => {
                 {recentActivities.map((activity) => (
                   <div
                     key={activity.id}
-                    className="flex items-start gap-3 pb-4 border-b last:border-0 last:pb-0 border-gray-100"
+                    className="flex items-start gap-3 pb-4 border-b last:border-0 last:pb-0
+                    border-gray-100 dark:border-gray-800"
                   >
-                    <div className="p-2.5 bg-gray-100 rounded-full flex-shrink-0">
+                    <div className="p-2.5 bg-gray-100 dark:bg-gray-800 rounded-full flex-shrink-0">
                       {getActivityIcon(activity.type)}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-gray-900">{activity.action}</p>
-                      <p className="text-xs text-gray-600">by {activity.user}</p>
+                      <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{activity.action}</p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">by {activity.user}</p>
                     </div>
-                    <span className="text-xs text-gray-500 flex-shrink-0">{activity.time}</span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400 flex-shrink-0">{activity.time}</span>
                   </div>
                 ))}
               </div>
@@ -584,12 +610,13 @@ const Dashboard = () => {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <div className="rounded-xl bg-purple-100 p-2">
-                    <PieChartIcon className="h-5 w-5 text-purple-600" />
+                  <div className="rounded-xl bg-purple-100 dark:bg-purple-950/40 p-2">
+                    <PieChartIcon className="h-5 w-5 text-purple-600 dark:text-purple-300" />
                   </div>
                   Gender Distribution
                 </CardTitle>
               </CardHeader>
+
               <CardContent>
                 <div className="h-[300px]">
                   <ResponsiveContainer width="100%" height="100%">
@@ -612,12 +639,12 @@ const Dashboard = () => {
                   </ResponsiveContainer>
                 </div>
 
-                {/* Legend (bottom, centered, clean) */}
+                {/* Legend */}
                 <div className="mt-6 flex items-center justify-center gap-8">
                   {genderPie.map((entry) => (
                     <div key={entry.name} className="flex items-center gap-2">
                       <span className="inline-block h-3 w-3 rounded-full" style={{ backgroundColor: entry.color }} />
-                      <span className="text-sm text-gray-700">
+                      <span className="text-sm text-gray-700 dark:text-gray-300">
                         {entry.name}: {entry.value}
                       </span>
                     </div>
@@ -631,23 +658,27 @@ const Dashboard = () => {
               <CardHeader>
                 <CardTitle>Demographic Summary</CardTitle>
               </CardHeader>
+
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="p-4 bg-blue-50 border border-blue-100 rounded-xl">
-                    <p className="text-sm text-gray-600">Average Age</p>
-                    <p className="text-2xl font-bold text-blue-700">8.5 years</p>
+                  <div className="p-4 bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900 rounded-xl">
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Average Age</p>
+                    <p className="text-2xl font-bold text-blue-700 dark:text-blue-300">8.5 years</p>
                   </div>
-                  <div className="p-4 bg-green-50 border border-green-100 rounded-xl">
-                    <p className="text-sm text-gray-600">Most Common Grade</p>
-                    <p className="text-2xl font-bold text-green-700">Grade 3</p>
+
+                  <div className="p-4 bg-green-50 dark:bg-green-950/30 border border-green-100 dark:border-green-900 rounded-xl">
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Most Common Grade</p>
+                    <p className="text-2xl font-bold text-green-700 dark:text-green-300">Grade 3</p>
                   </div>
-                  <div className="p-4 bg-purple-50 border border-purple-100 rounded-xl">
-                    <p className="text-sm text-gray-600">Youngest Child</p>
-                    <p className="text-2xl font-bold text-purple-700">6 months</p>
+
+                  <div className="p-4 bg-purple-50 dark:bg-purple-950/30 border border-purple-100 dark:border-purple-900 rounded-xl">
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Youngest Child</p>
+                    <p className="text-2xl font-bold text-purple-700 dark:text-purple-300">6 months</p>
                   </div>
-                  <div className="p-4 bg-orange-50 border border-orange-100 rounded-xl">
-                    <p className="text-sm text-gray-600">Oldest Child</p>
-                    <p className="text-2xl font-bold text-orange-700">17 years</p>
+
+                  <div className="p-4 bg-orange-50 dark:bg-orange-950/25 border border-orange-100 dark:border-orange-900 rounded-xl">
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Oldest Child</p>
+                    <p className="text-2xl font-bold text-orange-700 dark:text-orange-300">17 years</p>
                   </div>
                 </div>
               </CardContent>
@@ -685,15 +716,20 @@ const Dashboard = () => {
               <CardHeader>
                 <CardTitle>Educational Performance Summary</CardTitle>
               </CardHeader>
+
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                   {subjectPerformanceData.map((subject) => (
-                    <div key={subject.subject} className="p-4 border border-gray-200 rounded-xl bg-white hover:bg-gray-50 transition">
-                      <h4 className="font-semibold text-gray-900 mb-2">{subject.subject}</h4>
-                      <p className="text-2xl font-bold text-blue-700 mb-1">{subject.avgScore}%</p>
+                    <div
+                      key={subject.subject}
+                      className="p-4 border border-gray-200 dark:border-gray-800 rounded-xl
+                      bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
+                    >
+                      <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">{subject.subject}</h4>
+                      <p className="text-2xl font-bold text-blue-700 dark:text-blue-300 mb-1">{subject.avgScore}%</p>
                       <div className="flex items-center gap-1 text-sm">
-                        <TrendingUp className="h-3 w-3 text-green-600" />
-                        <span className="text-green-700 font-medium">+{subject.improvement}%</span>
+                        <TrendingUp className="h-3 w-3 text-green-600 dark:text-green-400" />
+                        <span className="text-green-700 dark:text-green-300 font-medium">+{subject.improvement}%</span>
                       </div>
                     </div>
                   ))}
@@ -711,18 +747,21 @@ const Dashboard = () => {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <div className="rounded-xl bg-purple-100 p-2">
-                    <Award className="h-5 w-5 text-purple-600" />
+                  <div className="rounded-xl bg-purple-100 dark:bg-purple-950/40 p-2">
+                    <Award className="h-5 w-5 text-purple-600 dark:text-purple-300" />
                   </div>
                   Development Progress by Category
                 </CardTitle>
               </CardHeader>
+
               <CardContent className="space-y-4">
                 {developmentProgressData.map((category) => (
                   <div key={category.category}>
                     <div className="flex justify-between items-center mb-2">
-                      <span className="text-sm font-semibold text-gray-800">{category.category}</span>
-                      <span className="text-sm text-gray-600">{category.progress}%</span>
+                      <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">
+                        {category.category}
+                      </span>
+                      <span className="text-sm text-gray-600 dark:text-gray-400">{category.progress}%</span>
                     </div>
                     <Progress value={category.progress} />
                   </div>
@@ -746,22 +785,25 @@ const Dashboard = () => {
               <CardHeader>
                 <CardTitle>Development Insights</CardTitle>
               </CardHeader>
+
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="p-4 bg-purple-50 border border-purple-100 rounded-xl">
-                    <p className="text-sm text-gray-600 mb-2">Overall Progress</p>
-                    <p className="text-3xl font-bold text-purple-700 mb-1">82.6%</p>
-                    <p className="text-xs text-gray-600">Average across all categories</p>
+                  <div className="p-4 bg-purple-50 dark:bg-purple-950/30 border border-purple-100 dark:border-purple-900 rounded-xl">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Overall Progress</p>
+                    <p className="text-3xl font-bold text-purple-700 dark:text-purple-300 mb-1">82.6%</p>
+                    <p className="text-xs text-gray-600 dark:text-gray-400">Average across all categories</p>
                   </div>
-                  <div className="p-4 bg-green-50 border border-green-100 rounded-xl">
-                    <p className="text-sm text-gray-600 mb-2">Highest Category</p>
-                    <p className="text-2xl font-bold text-green-700 mb-1">Social (88%)</p>
-                    <p className="text-xs text-gray-600">Best performing area</p>
+
+                  <div className="p-4 bg-green-50 dark:bg-green-950/30 border border-green-100 dark:border-green-900 rounded-xl">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Highest Category</p>
+                    <p className="text-2xl font-bold text-green-700 dark:text-green-300 mb-1">Social (88%)</p>
+                    <p className="text-xs text-gray-600 dark:text-gray-400">Best performing area</p>
                   </div>
-                  <div className="p-4 bg-orange-50 border border-orange-100 rounded-xl">
-                    <p className="text-sm text-gray-600 mb-2">Needs Focus</p>
-                    <p className="text-2xl font-bold text-orange-700 mb-1">Cognitive (78%)</p>
-                    <p className="text-xs text-gray-600">Area for improvement</p>
+
+                  <div className="p-4 bg-orange-50 dark:bg-orange-950/25 border border-orange-100 dark:border-orange-900 rounded-xl">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Needs Focus</p>
+                    <p className="text-2xl font-bold text-orange-700 dark:text-orange-300 mb-1">Cognitive (78%)</p>
+                    <p className="text-xs text-gray-600 dark:text-gray-400">Area for improvement</p>
                   </div>
                 </div>
               </CardContent>
@@ -774,16 +816,17 @@ const Dashboard = () => {
       {activeTab === "health" && (
         <div className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/*  Health Status Overview */}
+            {/* Health Status Overview */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <div className="rounded-xl bg-red-100 p-2">
-                    <Stethoscope className="h-5 w-5 text-red-600" />
+                  <div className="rounded-xl bg-red-100 dark:bg-red-950/35 p-2">
+                    <Stethoscope className="h-5 w-5 text-red-600 dark:text-red-300" />
                   </div>
                   Health Status Overview
                 </CardTitle>
               </CardHeader>
+
               <CardContent>
                 <div className="h-[300px]">
                   <ResponsiveContainer width="100%" height="100%">
@@ -811,7 +854,7 @@ const Dashboard = () => {
                   {healthPie.map((entry) => (
                     <div key={entry.status} className="flex items-center gap-3">
                       <span className="inline-block h-3 w-3 rounded-full" style={{ backgroundColor: entry.color }} />
-                      <span className="text-sm text-gray-700">
+                      <span className="text-sm text-gray-700 dark:text-gray-300">
                         {entry.status}: {entry.count}
                       </span>
                     </div>
@@ -836,27 +879,31 @@ const Dashboard = () => {
               <CardHeader>
                 <CardTitle>Health Summary</CardTitle>
               </CardHeader>
+
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <div className="p-4 bg-green-50 border border-green-100 rounded-xl">
-                    <p className="text-sm text-gray-600">Healthy Children</p>
-                    <p className="text-2xl font-bold text-green-700">38/45</p>
-                    <p className="text-xs text-gray-600">84% of total</p>
+                  <div className="p-4 bg-green-50 dark:bg-green-950/30 border border-green-100 dark:border-green-900 rounded-xl">
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Healthy Children</p>
+                    <p className="text-2xl font-bold text-green-700 dark:text-green-300">38/45</p>
+                    <p className="text-xs text-gray-600 dark:text-gray-400">84% of total</p>
                   </div>
-                  <div className="p-4 bg-blue-50 border border-blue-100 rounded-xl">
-                    <p className="text-sm text-gray-600">Vaccination Rate</p>
-                    <p className="text-2xl font-bold text-blue-700">94%</p>
-                    <p className="text-xs text-gray-600">Above target</p>
+
+                  <div className="p-4 bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900 rounded-xl">
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Vaccination Rate</p>
+                    <p className="text-2xl font-bold text-blue-700 dark:text-blue-300">94%</p>
+                    <p className="text-xs text-gray-600 dark:text-gray-400">Above target</p>
                   </div>
-                  <div className="p-4 bg-orange-50 border border-orange-100 rounded-xl">
-                    <p className="text-sm text-gray-600">Pending Check-ups</p>
-                    <p className="text-2xl font-bold text-orange-700">8</p>
-                    <p className="text-xs text-gray-600">Due this month</p>
+
+                  <div className="p-4 bg-orange-50 dark:bg-orange-950/25 border border-orange-100 dark:border-orange-900 rounded-xl">
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Pending Check-ups</p>
+                    <p className="text-2xl font-bold text-orange-700 dark:text-orange-300">8</p>
+                    <p className="text-xs text-gray-600 dark:text-gray-400">Due this month</p>
                   </div>
-                  <div className="p-4 bg-red-50 border border-red-100 rounded-xl">
-                    <p className="text-sm text-gray-600">Requires Attention</p>
-                    <p className="text-2xl font-bold text-red-700">2</p>
-                    <p className="text-xs text-gray-600">Immediate care needed</p>
+
+                  <div className="p-4 bg-red-50 dark:bg-red-950/35 border border-red-100 dark:border-red-900 rounded-xl">
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Requires Attention</p>
+                    <p className="text-2xl font-bold text-red-700 dark:text-red-300">2</p>
+                    <p className="text-xs text-gray-600 dark:text-gray-400">Immediate care needed</p>
                   </div>
                 </div>
               </CardContent>
@@ -889,12 +936,13 @@ const Dashboard = () => {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <div className="rounded-xl bg-blue-100 p-2">
-                    <Users className="h-5 w-5 text-blue-600" />
+                  <div className="rounded-xl bg-blue-100 dark:bg-blue-950/40 p-2">
+                    <Users className="h-5 w-5 text-blue-600 dark:text-blue-300" />
                   </div>
                   Donor Type Distribution
                 </CardTitle>
               </CardHeader>
+
               <CardContent>
                 <div className="h-[300px]">
                   <ResponsiveContainer width="100%" height="100%">
@@ -907,7 +955,6 @@ const Dashboard = () => {
                         cy="50%"
                         outerRadius={80}
                         labelLine={false}
-                        // label (shows percent outside)
                         label={(props) => {
                           const { cx, cy, midAngle, outerRadius, payload } = props;
                           const radius = outerRadius + 22;
@@ -935,15 +982,15 @@ const Dashboard = () => {
                   </ResponsiveContainer>
                 </div>
 
-                {/* Legend list with percent on right */}
+                {/* Legend list */}
                 <div className="mt-6 space-y-3">
                   {donorPie.map((entry) => (
                     <div key={entry.type} className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <span className="inline-block h-3 w-3 rounded-full" style={{ backgroundColor: entry.color }} />
-                        <span className="text-sm text-gray-700">{entry.type}</span>
+                        <span className="text-sm text-gray-700 dark:text-gray-300">{entry.type}</span>
                       </div>
-                      <span className="text-sm font-semibold text-gray-900">{entry.value}%</span>
+                      <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">{entry.value}%</span>
                     </div>
                   ))}
                 </div>
@@ -952,37 +999,37 @@ const Dashboard = () => {
 
             {/* Donation Overview Cards */}
             <div className="lg:col-span-2">
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">Donation Overview</h2>
+              <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 p-6 hover:shadow-md transition-shadow">
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Donation Overview</h2>
 
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <div className="p-4 bg-green-50 border border-green-100 rounded-xl">
-                    <p className="text-sm text-gray-600">Total This Year</p>
-                    <p className="text-2xl font-bold text-green-700">$86,000</p>
-                    <p className="text-xs text-gray-600">Up 12% from last year</p>
+                  <div className="p-4 bg-green-50 dark:bg-green-950/30 border border-green-100 dark:border-green-900 rounded-xl">
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Total This Year</p>
+                    <p className="text-2xl font-bold text-green-700 dark:text-green-300">$86,000</p>
+                    <p className="text-xs text-gray-600 dark:text-gray-400">Up 12% from last year</p>
                   </div>
 
-                  <div className="p-4 bg-blue-50 border border-blue-100 rounded-xl">
-                    <p className="text-sm text-gray-600">Average Donation</p>
-                    <p className="text-2xl font-bold text-blue-700">$285</p>
-                    <p className="text-xs text-gray-600">Per donor</p>
+                  <div className="p-4 bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900 rounded-xl">
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Average Donation</p>
+                    <p className="text-2xl font-bold text-blue-700 dark:text-blue-300">$285</p>
+                    <p className="text-xs text-gray-600 dark:text-gray-400">Per donor</p>
                   </div>
 
-                  <div className="p-4 bg-purple-50 border border-purple-100 rounded-xl">
-                    <p className="text-sm text-gray-600">Total Donors</p>
-                    <p className="text-2xl font-bold text-purple-700">318</p>
-                    <p className="text-xs text-gray-600">Active donors</p>
+                  <div className="p-4 bg-purple-50 dark:bg-purple-950/30 border border-purple-100 dark:border-purple-900 rounded-xl">
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Total Donors</p>
+                    <p className="text-2xl font-bold text-purple-700 dark:text-purple-300">318</p>
+                    <p className="text-xs text-gray-600 dark:text-gray-400">Active donors</p>
                   </div>
 
-                  <div className="p-4 bg-orange-50 border border-orange-100 rounded-xl">
-                    <p className="text-sm text-gray-600">Monthly Goal</p>
-                    <p className="text-2xl font-bold text-orange-700">75%</p>
-                    <p className="text-xs text-gray-600">$15K / $20K</p>
+                  <div className="p-4 bg-orange-50 dark:bg-orange-950/25 border border-orange-100 dark:border-orange-900 rounded-xl">
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Monthly Goal</p>
+                    <p className="text-2xl font-bold text-orange-700 dark:text-orange-300">75%</p>
+                    <p className="text-xs text-gray-600 dark:text-gray-400">$15K / $20K</p>
                   </div>
                 </div>
 
-                <div className="mt-4 p-4 bg-blue-50 border border-blue-100 rounded-xl">
-                  <p className="text-sm text-gray-700">
+                <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900 rounded-xl">
+                  <p className="text-sm text-gray-700 dark:text-gray-200">
                     <strong>Note:</strong> For detailed donation analytics including donor management, transaction
                     history, and detailed reports, please visit the Donation Management module.
                   </p>

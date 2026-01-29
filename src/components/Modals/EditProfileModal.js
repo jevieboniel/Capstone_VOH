@@ -1,23 +1,29 @@
-// src/components/Modals/EditProfileModal.js
-import React, { useEffect, useState } from "react";
-import { X, FileText } from "lucide-react";
-import Button from "../UI/Button";
+    // src/components/Modals/EditProfileModal.js
+    import React, { useEffect, useState } from "react";
+    import { X, FileText } from "lucide-react";
+    import Button from "../UI/Button";
 
-/* ----------------- Dashboard-like Modal Shell ----------------- */
-const ModalShell = ({ title, subtitle, onClose, children, maxWidth = "max-w-3xl" }) => {
+    /* ----------------- Dashboard-like Modal Shell ----------------- */
+    const ModalShell = ({ title, subtitle, onClose, children, maxWidth = "max-w-3xl" }) => {
     return (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-3 md:p-4">
-        <div className={`w-full ${maxWidth} max-h-[90vh] bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col`}>
+        <div className="fixed inset-0 z-50 bg-black/50 dark:bg-black/70 flex items-center justify-center p-3 md:p-4">
+        <div
+            className={`w-full ${maxWidth} max-h-[90vh] bg-white dark:bg-gray-900 rounded-2xl shadow-xl overflow-hidden flex flex-col transition-colors duration-300`}
+        >
             {/* Header */}
             <div className="px-5 md:px-6 py-5 flex items-start justify-between gap-4">
             <div className="min-w-0">
-                <h2 className="text-xl md:text-2xl font-bold text-gray-900">{title}</h2>
-                {subtitle ? <p className="text-sm text-gray-600 mt-1">{subtitle}</p> : null}
+                <h2 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-gray-100">
+                {title}
+                </h2>
+                {subtitle ? (
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{subtitle}</p>
+                ) : null}
             </div>
 
             <button
                 onClick={onClose}
-                className="p-2 rounded-full hover:bg-gray-100 text-gray-500"
+                className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-300 transition-colors"
                 type="button"
                 aria-label="Close"
             >
@@ -25,7 +31,7 @@ const ModalShell = ({ title, subtitle, onClose, children, maxWidth = "max-w-3xl"
             </button>
             </div>
 
-            <div className="border-t" />
+            <div className="border-t border-gray-200 dark:border-gray-800" />
 
             {/* Body */}
             <div className="px-5 md:px-6 py-6 overflow-y-auto">{children}</div>
@@ -37,7 +43,7 @@ const ModalShell = ({ title, subtitle, onClose, children, maxWidth = "max-w-3xl"
     /* ----------------- Small UI Helpers ----------------- */
     const Field = ({ label, children }) => (
     <div className="space-y-2">
-        <label className="text-sm font-medium text-gray-700">{label}</label>
+        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{label}</label>
         {children}
     </div>
     );
@@ -46,8 +52,9 @@ const ModalShell = ({ title, subtitle, onClose, children, maxWidth = "max-w-3xl"
     <input
         {...props}
         className={
-        "w-full px-4 py-2.5 rounded-xl bg-gray-100 border border-transparent " +
-        "focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none text-sm " +
+        "w-full px-4 py-2.5 rounded-xl bg-gray-100 dark:bg-gray-950 border border-transparent " +
+        "focus:bg-white dark:focus:bg-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-500/30 " +
+        "outline-none text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 " +
         (props.className || "")
         }
     />
@@ -57,8 +64,9 @@ const ModalShell = ({ title, subtitle, onClose, children, maxWidth = "max-w-3xl"
     <select
         {...props}
         className={
-        "w-full px-4 py-2.5 rounded-xl bg-gray-100 border border-transparent " +
-        "focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none text-sm " +
+        "w-full px-4 py-2.5 rounded-xl bg-gray-100 dark:bg-gray-950 border border-transparent " +
+        "focus:bg-white dark:focus:bg-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-500/30 " +
+        "outline-none text-sm text-gray-900 dark:text-gray-100 " +
         (props.className || "")
         }
     />
@@ -68,8 +76,10 @@ const ModalShell = ({ title, subtitle, onClose, children, maxWidth = "max-w-3xl"
     <textarea
         {...props}
         className={
-        "w-full px-4 py-2.5 rounded-xl bg-gray-100 border border-transparent " +
-        "focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none text-sm min-h-[110px] resize-none " +
+        "w-full px-4 py-2.5 rounded-xl bg-gray-100 dark:bg-gray-950 border border-transparent " +
+        "focus:bg-white dark:focus:bg-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-500/30 " +
+        "outline-none text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 " +
+        "min-h-[110px] resize-none " +
         (props.className || "")
         }
     />
@@ -143,10 +153,14 @@ const ModalShell = ({ title, subtitle, onClose, children, maxWidth = "max-w-3xl"
     return (
         <ModalShell title="Edit Child" subtitle={fullName} onClose={onClose} maxWidth="max-w-3xl">
         <div className="flex items-center gap-3 mb-5">
-            <img src={currentPhoto} alt={fullName} className="w-12 h-12 rounded-full object-cover" />
+            <img
+            src={currentPhoto}
+            alt={fullName}
+            className="w-12 h-12 rounded-full object-cover border border-gray-200 dark:border-gray-800"
+            />
             <div className="min-w-0">
-            <p className="text-sm text-gray-600">Editing profile for</p>
-            <p className="text-base font-semibold text-gray-900 truncate">{fullName}</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Editing profile for</p>
+            <p className="text-base font-semibold text-gray-900 dark:text-gray-100 truncate">{fullName}</p>
             </div>
         </div>
 
@@ -154,9 +168,11 @@ const ModalShell = ({ title, subtitle, onClose, children, maxWidth = "max-w-3xl"
             <Field label="First Name *">
             <Input value={form.firstName} onChange={(e) => update("firstName", e.target.value)} required />
             </Field>
+
             <Field label="Middle Name">
             <Input value={form.middleName} onChange={(e) => update("middleName", e.target.value)} />
             </Field>
+
             <Field label="Last Name *">
             <Input value={form.lastName} onChange={(e) => update("lastName", e.target.value)} required />
             </Field>
@@ -247,7 +263,9 @@ const ModalShell = ({ title, subtitle, onClose, children, maxWidth = "max-w-3xl"
             <div className="md:col-span-3">
             <Field label="Profile Image / Photo">
                 <Input type="file" accept="image/*" onChange={handleFileChange} />
-                <p className="text-xs text-gray-500 mt-2">Leave empty if you don’t want to change the photo.</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                Leave empty if you don’t want to change the photo.
+                </p>
             </Field>
             </div>
 
@@ -262,13 +280,19 @@ const ModalShell = ({ title, subtitle, onClose, children, maxWidth = "max-w-3xl"
             <Button type="button" variant="outline" size="medium" onClick={onClose}>
             Cancel
             </Button>
-            <Button type="button" variant="primary" size="medium" onClick={handleSave} className="flex items-center gap-2">
+            <Button
+            type="button"
+            variant="primary"
+            size="medium"
+            onClick={handleSave}
+            className="flex items-center gap-2"
+            >
             <FileText size={16} />
             Save Changes
             </Button>
         </div>
         </ModalShell>
     );
-};
+    };
 
-export default EditProfileModal;
+    export default EditProfileModal;

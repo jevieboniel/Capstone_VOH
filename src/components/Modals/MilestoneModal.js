@@ -1,13 +1,13 @@
-// Milestonemodal.jsx
-import React, { useState } from "react";
-import { Plus, Target, X } from "lucide-react";
-import Button from "../UI/Button";
-import { UI } from "../UI/uiTokens";
+    // Milestonemodal.jsx
+    import React, { useEffect, useMemo, useState } from "react";
+    import { Plus, Target, X, Trash2 } from "lucide-react";
+    import Button from "../UI/Button";
+    import { UI } from "../UI/uiTokens";
 
     /* ==========================================================
     AddMilestoneModal (DB Children dropdown)
     ========================================================== */
-    const Milestonemodal = ({ onClose, onSave, children = [] }) => {
+    const Milestonemodal = ({ onClose, onSave, children: childrenList = [] }) => {
     const [childId, setChildId] = useState("");
     const [category, setCategory] = useState("");
     const [title, setTitle] = useState("");
@@ -16,29 +16,72 @@ import { UI } from "../UI/uiTokens";
     const [notes, setNotes] = useState("");
     const [objectives, setObjectives] = useState([""]);
 
-    const addObjective = () => setObjectives([...objectives, ""]);
+    // optional: keep dropdown alphabetical
+    const sortedChildren = useMemo(() => {
+        return [...childrenList].sort((a, b) => {
+        const an = (a.fullName || a.name || "").toLowerCase();
+        const bn = (b.fullName || b.name || "").toLowerCase();
+        return an.localeCompare(bn);
+        });
+    }, [childrenList]);
+
+    const resetForm = () => {
+        setChildId("");
+        setCategory("");
+        setTitle("");
+        setDescription("");
+        setTargetDate("");
+        setNotes("");
+        setObjectives([""]);
+    };
+
+    // reset when modal mounts (useful if it stays mounted in DOM sometimes)
+    useEffect(() => {
+        resetForm();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    const addObjective = () => setObjectives((prev) => [...prev, ""]);
 
     const updateObjective = (value, index) => {
-        const list = [...objectives];
-        list[index] = value;
-        setObjectives(list);
+        setObjectives((prev) => prev.map((o, i) => (i === index ? value : o)));
+    };
+
+    const removeObjective = (index) => {
+        setObjectives((prev) => {
+        const next = prev.filter((_, i) => i !== index);
+        return next.length ? next : [""];
+        });
+    };
+
+    const closeAndReset = () => {
+        resetForm();
+        onClose?.();
     };
 
     const submitForm = () => {
-        if (!childId || !category || !title || !targetDate) {
-        alert("Please fill required fields");
+        if (!childId || !category || !title.trim() || !targetDate) {
+        alert("Please fill required fields (Child, Category, Milestone Title, Target Date).");
         return;
         }
 
-        onSave({
+        // ✅ Clean objectives: remove empty items & trim
+        const cleanedObjectives = (objectives || [])
+        .map((x) => String(x || "").trim())
+        .filter(Boolean);
+
+        onSave?.({
         childId: Number(childId),
         category,
-        title,
-        description,
+        title: title.trim(),
+        description: String(description || "").trim(),
         targetDate,
-        objectives,
-        notes,
+        objectives: cleanedObjectives,
+        notes: String(notes || "").trim(),
         });
+
+        // optional: if parent doesn't unmount immediately, keep it clean
+        resetForm();
     };
 
     return (
@@ -49,7 +92,8 @@ import { UI } from "../UI/uiTokens";
                 <Target className="h-5 w-5 text-purple-600" />
                 Add New Milestone
             </h2>
-            <button onClick={onClose} className={UI.iconBtn} type="button">
+
+            <button onClick={closeAndReset} className={UI.iconBtn} type="button" aria-label="Close">
                 <X className="h-4 w-4" />
             </button>
             </div>
@@ -61,7 +105,7 @@ import { UI } from "../UI/uiTokens";
                 <label className="text-sm font-medium text-gray-700">Child *</label>
                 <select value={childId} onChange={(e) => setChildId(e.target.value)} className={UI.select}>
                     <option value="">Select child</option>
-                    {children.map((c) => (
+                    {sortedChildren.map((c) => (
                     <option key={c.id} value={c.id}>
                         {c.fullName || c.name}
                     </option>
@@ -103,20 +147,44 @@ import { UI } from "../UI/uiTokens";
 
             <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">Target Date *</label>
-                <input type="date" value={targetDate} onChange={(e) => setTargetDate(e.target.value)} className={UI.input} />
+                <input
+                type="date"
+                value={targetDate}
+                onChange={(e) => setTargetDate(e.target.value)}
+                className={UI.input}
+                />
             </div>
 
+            {/* Objectives */}
             <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">Objectives</label>
+
+                <div className="space-y-2">
                 {objectives.map((obj, i) => (
-                <input
-                    key={i}
-                    value={obj}
-                    onChange={(e) => updateObjective(e.target.value, i)}
-                    placeholder={`Objective ${i + 1}`}
-                    className={UI.input}
-                />
+                    <div key={i} className="flex gap-2">
+                    <input
+                        value={obj}
+                        onChange={(e) => updateObjective(e.target.value, i)}
+                        placeholder={`Objective ${i + 1}`}
+                        className={UI.input}
+                    />
+
+                    {/* ✅ remove button */}
+                    {objectives.length > 1 && (
+                        <button
+                        type="button"
+                        onClick={() => removeObjective(i)}
+                        className="h-10 w-10 inline-flex items-center justify-center rounded-lg border border-gray-300 hover:bg-gray-50"
+                        aria-label="Remove objective"
+                        title="Remove"
+                        >
+                        <Trash2 className="h-4 w-4 text-gray-700" />
+                        </button>
+                    )}
+                    </div>
                 ))}
+                </div>
+
                 <button onClick={addObjective} className={UI.btnOutline} type="button">
                 <Plus className="h-4 w-4" />
                 Add Objective
@@ -135,7 +203,7 @@ import { UI } from "../UI/uiTokens";
             </div>
 
             <div className={UI.modalFooter}>
-            <Button onClick={onClose} variant="outline" type="button" className="px-5 py-2">
+            <Button onClick={closeAndReset} variant="outline" type="button" className="px-5 py-2">
                 Cancel
             </Button>
             <Button onClick={submitForm} variant="primary" type="button" className="px-5 py-2">
@@ -145,6 +213,6 @@ import { UI } from "../UI/uiTokens";
         </div>
         </div>
     );
-};
+    };
 
-export default Milestonemodal;
+    export default Milestonemodal;

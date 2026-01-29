@@ -1,6 +1,6 @@
-// src/components/Modals/ChildDetailModal.js
-import React from "react";
-import {
+    // src/components/Modals/ChildDetailModal.js
+    import React from "react";
+    import {
     X,
     Calendar,
     MapPin,
@@ -13,68 +13,73 @@ import {
     GraduationCap,
     Pencil,
     } from "lucide-react";
-
     import Button from "../UI/Button";
 
     /* ----------------- Badge Color Helpers ----------------- */
     export const getStatusColor = (status) => {
     switch (status) {
         case "Active":
-        return "bg-green-100 text-green-800 border-green-200";
+        return "bg-green-100 text-green-800 border-green-200 dark:bg-green-950/40 dark:text-green-200 dark:border-green-900";
         case "Transitioning":
-        return "bg-yellow-100 text-yellow-800 border-yellow-200";
+        return "bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-950/40 dark:text-yellow-200 dark:border-yellow-900";
         case "Transferred":
-        return "bg-blue-100 text-blue-800 border-blue-200";
+        return "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-950/40 dark:text-blue-200 dark:border-blue-900";
         case "Reintegrated":
-        return "bg-purple-100 text-purple-800 border-purple-200";
+        return "bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-950/40 dark:text-purple-200 dark:border-purple-900";
         default:
-        return "bg-gray-100 text-gray-800 border-gray-200";
+        return "bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-800 dark:text-gray-100 dark:border-gray-700";
     }
     };
 
     export const getHealthStatusColor = (status) => {
     switch (status) {
         case "Excellent":
-        return "bg-green-100 text-green-800 border-green-200";
+        return "bg-green-100 text-green-800 border-green-200 dark:bg-green-950/40 dark:text-green-200 dark:border-green-900";
         case "Good":
-        return "bg-blue-100 text-blue-800 border-blue-200";
+        return "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-950/40 dark:text-blue-200 dark:border-blue-900";
         case "Needs Check-up":
-        return "bg-orange-100 text-orange-800 border-orange-200";
+        return "bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-950/40 dark:text-orange-200 dark:border-orange-900";
         case "Requires Attention":
-        return "bg-red-100 text-red-800 border-red-200";
+        return "bg-red-100 text-red-800 border-red-200 dark:bg-red-950/40 dark:text-red-200 dark:border-red-900";
         default:
-        return "bg-gray-100 text-gray-800 border-gray-200";
+        return "bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-800 dark:text-gray-100 dark:border-gray-700";
     }
     };
 
     export const getAdoptionStatusColor = (status) => {
     switch (status) {
         case "Open for Adoption":
-        return "bg-blue-100 text-blue-800 border-blue-200";
+        return "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-950/40 dark:text-blue-200 dark:border-blue-900";
         case "Adopted":
-        return "bg-green-100 text-green-800 border-green-200";
+        return "bg-green-100 text-green-800 border-green-200 dark:bg-green-950/40 dark:text-green-200 dark:border-green-900";
         case "Not Available for Adoption":
-        return "bg-gray-100 text-gray-800 border-gray-200";
+        return "bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-800 dark:text-gray-100 dark:border-gray-700";
         default:
-        return "bg-gray-100 text-gray-800 border-gray-200";
+        return "bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-800 dark:text-gray-100 dark:border-gray-700";
     }
     };
 
     /* ----------------- Dashboard-like Modal Shell ----------------- */
     const ModalShell = ({ title, subtitle, onClose, children, maxWidth = "max-w-3xl" }) => {
     return (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-3 md:p-4">
-        <div className={`w-full ${maxWidth} max-h-[90vh] bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col`}>
+        <div className="fixed inset-0 z-50 bg-black/50 dark:bg-black/70 flex items-center justify-center p-3 md:p-4">
+        <div
+            className={`w-full ${maxWidth} max-h-[90vh] bg-white dark:bg-gray-900 rounded-2xl shadow-xl overflow-hidden flex flex-col transition-colors duration-300`}
+        >
             {/* Header */}
             <div className="px-5 md:px-6 py-5 flex items-start justify-between gap-4">
             <div className="min-w-0">
-                <h2 className="text-xl md:text-2xl font-bold text-gray-900">{title}</h2>
-                {subtitle ? <p className="text-sm text-gray-600 mt-1">{subtitle}</p> : null}
+                <h2 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-gray-100">
+                {title}
+                </h2>
+                {subtitle ? (
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{subtitle}</p>
+                ) : null}
             </div>
 
             <button
                 onClick={onClose}
-                className="p-2 rounded-full hover:bg-gray-100 text-gray-500"
+                className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-300 transition-colors"
                 type="button"
                 aria-label="Close"
             >
@@ -82,7 +87,7 @@ import {
             </button>
             </div>
 
-            <div className="border-t" />
+            <div className="border-t border-gray-200 dark:border-gray-800" />
 
             {/* Body */}
             <div className="px-5 md:px-6 py-6 overflow-y-auto">{children}</div>
@@ -103,13 +108,18 @@ import {
     const fullName = `${firstName} ${middleName ? middleName + " " : ""}${lastName}`.trim();
 
     return (
-        <ModalShell title={fullName} subtitle={`${child.age} years old • ${child.gender}`} onClose={onClose} maxWidth="max-w-3xl">
+        <ModalShell
+        title={fullName}
+        subtitle={`${child.age} years old • ${child.gender}`}
+        onClose={onClose}
+        maxWidth="max-w-3xl"
+        >
         {/* Header chips */}
         <div className="flex items-start gap-4">
             <img
             src={child.photoUrl || child.image}
             alt={fullName}
-            className="w-14 h-14 rounded-full object-cover"
+            className="w-14 h-14 rounded-full object-cover border border-gray-200 dark:border-gray-800"
             />
 
             <div className="flex-1">
@@ -136,40 +146,46 @@ import {
         {/* Body */}
         <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-10 text-sm">
             <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Basic Information</h3>
-            <div className="space-y-3 text-gray-700">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+                Basic Information
+            </h3>
+
+            <div className="space-y-3 text-gray-700 dark:text-gray-300">
                 <div className="flex items-center gap-2">
-                <Calendar size={16} className="text-gray-400" />
+                <Calendar size={16} className="text-gray-400 dark:text-gray-500" />
                 <span>Admission Date: {child.admissionDate || "—"}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                <MapPin size={16} className="text-gray-400" />
+                <MapPin size={16} className="text-gray-400 dark:text-gray-500" />
                 <span>House: {child.house || "—"}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                <User size={16} className="text-gray-400" />
+                <User size={16} className="text-gray-400 dark:text-gray-500" />
                 <span>House Parent: {child.houseParent || "—"}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                <Phone size={16} className="text-gray-400" />
+                <Phone size={16} className="text-gray-400 dark:text-gray-500" />
                 <span>Emergency: {child.emergencyContact || "—"}</span>
                 </div>
             </div>
             </div>
 
             <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Health &amp; Education</h3>
-            <div className="space-y-3 text-gray-700">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+                Health &amp; Education
+            </h3>
+
+            <div className="space-y-3 text-gray-700 dark:text-gray-300">
                 <div className="flex items-center gap-2">
-                <Heart size={16} className="text-gray-400" />
+                <Heart size={16} className="text-gray-400 dark:text-gray-500" />
                 <span>Health Status: {child.healthStatus || "—"}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                <Calendar size={16} className="text-gray-400" />
+                <Calendar size={16} className="text-gray-400 dark:text-gray-500" />
                 <span>Last Check-up: {child.lastCheckup || "—"}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                <FileText size={16} className="text-gray-400" />
+                <FileText size={16} className="text-gray-400 dark:text-gray-500" />
                 <span>Education Level: {child.educationLevel || "—"}</span>
                 </div>
             </div>
@@ -178,11 +194,13 @@ import {
 
         {/* Notes */}
         <div className="mt-8">
-            <h3 className="text-lg font-semibold text-gray-900 mb-3">Notes</h3>
-            <div className="p-4 bg-gray-50 rounded-xl text-gray-700">{child.notes || "—"}</div>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">Notes</h3>
+            <div className="p-4 bg-gray-50 dark:bg-gray-950/40 border border-gray-200 dark:border-gray-800 rounded-xl text-gray-700 dark:text-gray-300">
+            {child.notes || "—"}
+            </div>
         </div>
 
-        {/* Actions (use UI Button for consistent sizes) */}
+        {/* Actions */}
         <div className="mt-8 flex flex-wrap gap-3">
             <Button
             type="button"
@@ -218,6 +236,6 @@ import {
         </div>
         </ModalShell>
     );
-};
+    };
 
-export default ChildDetailModal;
+    export default ChildDetailModal;

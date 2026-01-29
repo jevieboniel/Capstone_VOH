@@ -11,6 +11,7 @@ import Development from './Pages/Development';
 import Alerts from './Pages/Alerts';
 import Donations from './Pages/Donations';
 import Reports from './Pages/Reports';
+import Setting from './Pages/Setting';
 
 
 // Placeholder components for other routes
@@ -27,6 +28,7 @@ const componentMap = {
   Donations,
   Reports,
   Users,
+  Setting,
   Settings,
   Profile
 };

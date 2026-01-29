@@ -11,6 +11,8 @@ const PieChart = ({
   cx = "50%",
   cy = "50%",
 }) => {
+  const isDark = document.documentElement.classList.contains("dark");
+
   return (
     <RePieChart>
       <Pie
@@ -21,7 +23,8 @@ const PieChart = ({
         label={
           showLabels
             ? labelFormatter ||
-              (({ [nameKey]: nm, percent }) => `${nm} ${(percent * 100).toFixed(0)}%`)
+              (({ [nameKey]: nm, percent }) =>
+                `${nm} ${(percent * 100).toFixed(0)}%`)
             : false
         }
         outerRadius={outerRadius}
@@ -31,7 +34,21 @@ const PieChart = ({
           <Cell key={`cell-${index}`} fill={entry.color} />
         ))}
       </Pie>
-      <Tooltip />
+
+      <Tooltip
+        contentStyle={{
+          backgroundColor: isDark ? "#1f2937" : "#ffffff",
+          border: isDark ? "1px solid #374151" : "1px solid #e5e7eb",
+          borderRadius: "12px",
+          color: isDark ? "#f3f4f6" : "#111827",
+        }}
+        itemStyle={{
+          color: isDark ? "#f3f4f6" : "#111827",
+        }}
+        labelStyle={{
+          color: isDark ? "#9ca3af" : "#374151",
+        }}
+      />
     </RePieChart>
   );
 };

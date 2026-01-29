@@ -82,15 +82,15 @@ const Modal = ({
         <div 
           className={`relative w-full ${sizeClasses[size]} ${getAnimationClasses()}`}
         >
-          <div className="bg-white rounded-lg shadow-xl overflow-hidden">
+          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl overflow-hidden">
             {/* Header */}
             {title && (
-              <div className="flex items-center justify-between p-6 border-b border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+              <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{title}</h3>
                 {showCloseButton && (
                   <button
                     onClick={onClose}
-                    className="text-gray-400 hover:text-gray-600 transition-colors duration-200 transform hover:scale-110"
+                    className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors duration-200 transform hover:scale-110"
                   >
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -101,7 +101,7 @@ const Modal = ({
             )}
             
             {/* Content */}
-            <div className="p-6">
+            <div className="p-6 text-gray-900 dark:text-gray-100">
               {children}
             </div>
           </div>
