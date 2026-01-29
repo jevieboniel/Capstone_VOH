@@ -171,36 +171,39 @@ const Children = () => {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Children Management</h1>
+          <p className="mt-1 text-sm text-gray-600">Manage child profiles, status, and reintegration details</p>
         </div>
 
         <Button
-  onClick={() => setShowModal(true)}
-  variant="primary"
-  type="button"
-  className="w-full sm:w-[110px] h-[40px] rounded-xl">
-  <div className="flex flex-col items-center justify-center gap-1">
-    <span className="text-sm font-medium">Add Child</span>
-  </div>
-</Button>
-
-
+          onClick={() => setShowModal(true)}
+          variant="primary"
+          type="button"
+          className="w-full sm:w-[140px] h-[44px] rounded-xl shadow-sm"
+        >
+          <div className="flex items-center justify-center gap-2">
+            <span className="text-sm font-semibold">Add Child</span>
+          </div>
+        </Button>
       </div>
 
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-        <input
-          type="text"
-          placeholder="Search children by name, house, or education level..."
-          className="w-full pl-10 pr-4 py-2 border rounded-lg bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
+      {/* Search */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-4">
+        <div className="relative">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+          <input
+            type="text"
+            placeholder="🔍 Search children by name, house, or education level..."
+            className="w-full pl-11 pr-4 h-12 border border-gray-300 rounded-xl bg-white shadow-sm outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
       </div>
 
       {filteredChildren.length === 0 && (
-        <div className="text-center text-gray-400 mt-20">
-          <p className="text-lg font-semibold">No children found</p>
-          <p className="text-sm">Click “Add Child” to create a record</p>
+        <div className="rounded-2xl border border-dashed border-gray-300 bg-white px-6 py-10 text-center shadow-sm">
+          <p className="text-lg font-semibold text-gray-900">No children found</p>
+          <p className="mt-1 text-sm text-gray-600">Click “Add Child” to create a record</p>
         </div>
       )}
 
@@ -212,28 +215,50 @@ const Children = () => {
           const fullName = `${firstName} ${middleName ? middleName + " " : ""}${lastName}`.trim();
 
           return (
-            <div key={child.id} className="bg-white rounded-xl p-5 shadow-sm border border-gray-100 flex flex-col gap-3">
+            <div
+              key={child.id}
+              className="bg-white rounded-2xl p-5 shadow-sm border border-gray-200 hover:shadow-md transition-shadow flex flex-col gap-3"
+            >
               <div className="flex items-start justify-between gap-3">
-                <div className="flex gap-3">
-                  <img src={child.photoUrl || child.image} alt={fullName} className="w-12 h-12 rounded-full object-cover" />
-                  <div>
-                    <h2 className="font-semibold text-gray-900">{fullName}</h2>
+                <div className="flex gap-3 min-w-0">
+                  <img
+                    src={child.photoUrl || child.image}
+                    alt={fullName}
+                    className="w-12 h-12 rounded-full object-cover border border-gray-200 shrink-0"
+                  />
+                  <div className="min-w-0">
+                    <h2 className="font-semibold text-gray-900 truncate">{fullName}</h2>
                     <p className="text-sm text-gray-500">
                       {child.age} years old • {child.gender}
                     </p>
                   </div>
                 </div>
 
-                <div className="flex gap-2">
-                  <button className="p-2 border rounded-lg hover:bg-gray-50" onClick={() => setSelectedChild(child)} type="button">
+                <div className="flex gap-2 shrink-0">
+                  <button
+                    className="p-2 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
+                    onClick={() => setSelectedChild(child)}
+                    type="button"
+                    title="View"
+                  >
                     <Eye size={16} />
                   </button>
 
-                  <button className="p-2 border rounded-lg hover:bg-gray-50" onClick={() => setEditChild(child)} type="button">
+                  <button
+                    className="p-2 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
+                    onClick={() => setEditChild(child)}
+                    type="button"
+                    title="Edit"
+                  >
                     <Pencil size={16} />
                   </button>
 
-                  <button className="p-2 border rounded-lg hover:bg-gray-50" onClick={() => setReintegrationChild(child)} type="button">
+                  <button
+                    className="p-2 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
+                    onClick={() => setReintegrationChild(child)}
+                    type="button"
+                    title="Reintegration"
+                  >
                     <UserPlus size={16} />
                   </button>
                 </div>
@@ -241,7 +266,9 @@ const Children = () => {
 
               <div className="flex flex-wrap gap-2 my-2">
                 {child.status && (
-                  <span className={`text-xs px-3 py-1 rounded-full border ${getStatusColor(child.status)}`}>{child.status}</span>
+                  <span className={`text-xs px-3 py-1 rounded-full border ${getStatusColor(child.status)}`}>
+                    {child.status}
+                  </span>
                 )}
                 {child.healthStatus && (
                   <span className={`text-xs px-3 py-1 rounded-full border ${getHealthStatusColor(child.healthStatus)}`}>
@@ -276,7 +303,11 @@ const Children = () => {
                 </p>
               </div>
 
-              {child.notes && <div className="mt-3 p-3 bg-gray-50 rounded-lg text-sm text-gray-700">{child.notes}</div>}
+              {child.notes && (
+                <div className="mt-3 p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-700">
+                  {child.notes}
+                </div>
+              )}
             </div>
           );
         })}

@@ -1,5 +1,5 @@
-    import React, { useMemo, useState, useEffect } from "react";
-    import {
+import React, { useMemo, useState, useEffect } from "react";
+import {
     Target,
     Calendar,
     CheckCircle,
@@ -21,7 +21,6 @@
     import UpdateMilestoneModal from "../Modals/UpdateMilestoneModal";
     import MilestoneDetailsModal from "../Modals/MilestoneDetailsModal";
 
-    
     /* ----------------- Helpers (status + colors) ----------------- */
     const getStatusColor = (status) => {
     switch (status) {
@@ -144,19 +143,29 @@
         emotional: avg(byCat("Emotional")),
     };
     };
+    /* ------------------------ UI Components -------------------------- */
+    const Card = ({ children, className = "" }) => (
+    <div className={`bg-white rounded-2xl shadow-sm border border-gray-200 ${className}`}>{children}</div>
+    );
 
-    /* ------------------------ UI Pieces -------------------------- */
+    const CardContent = ({ children, className = "" }) => <div className={`px-5 py-5 ${className}`}>{children}</div>;
+
+    const Badge = ({ className = "", children }) => (
+    <span className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold ${className}`}>
+        {children}
+    </span>
+    );
+
     function ProgressBar({ value, height = "h-2" }) {
     const v = clamp(Number(value || 0));
     return (
         <div className={`w-full overflow-hidden rounded-full bg-gray-200 ${height}`}>
-        <div className="h-full bg-gray-900" style={{ width: `${v}%` }} />
+        <div
+            className="h-full rounded-full bg-gradient-to-r from-purple-500 via-violet-500 to-indigo-500 transition-all shadow-sm"
+            style={{ width: `${v}%` }}
+        />
         </div>
     );
-    }
-
-    function Badge({ className = "", children }) {
-    return <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${className}`}>{children}</span>;
     }
 
     /* ------------------------ Component -------------------------- */
@@ -342,87 +351,96 @@
     };
 
     return (
-        <div className={UI.page}>
+        <div className="p-6 bg-gray-50 min-h-screen space-y-6">
         {/* Header */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Development Tracking</h1>
+            <p className="mt-1 text-sm text-gray-600">Track milestones and monitor each child’s progress</p>
             </div>
 
-            <Button
-                onClick={handleAddMilestone}
-                variant="primary"
-                type="button"
-                className="px-5 py-2"
-                >
-                Add Milestone
+            <Button onClick={handleAddMilestone} variant="primary" type="button" className="px-6 py-2.5">
+            Add Milestone
             </Button>
-
         </div>
 
         {/* Summary Statistics */}
         <div className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-4">
-            <div className={`${UI.card} ${UI.cardPad}`}>
-            <div className="flex items-center justify-between">
-                <div>
-                <p className="text-xs sm:text-sm font-medium text-gray-600">Total Children</p>
-                <p className="text-2xl sm:text-3xl font-bold text-gray-900">{totals.totalChildren}</p>
-                <p className="text-xs sm:text-sm text-blue-600">With active milestones</p>
+            <Card className="hover:shadow-lg transition-shadow duration-200 border-l-4 border-l-blue-500">
+            <CardContent className="p-5">
+                <div className="flex items-center justify-between">
+                <div className="flex-1">
+                    <p className="text-xs sm:text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                    Total Children
+                    </p>
+                    <p className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">{totals.totalChildren}</p>
+                    <p className="text-xs sm:text-sm text-blue-600 font-medium">With active milestones</p>
                 </div>
-                <div className="rounded-full bg-blue-100 p-3">
-                <User className="h-6 w-6 text-blue-600" />
+                <div className="bg-gradient-to-br from-blue-500 to-indigo-600 p-3 sm:p-4 rounded-2xl shadow-lg">
+                    <User className="h-6 w-6 sm:h-7 sm:w-7 text-white" />
                 </div>
-            </div>
-            </div>
+                </div>
+            </CardContent>
+            </Card>
 
-            <div className={`${UI.card} ${UI.cardPad}`}>
-            <div className="flex items-center justify-between">
-                <div>
-                <p className="text-xs sm:text-sm font-medium text-gray-600">Total Milestones</p>
-                <p className="text-2xl sm:text-3xl font-bold text-gray-900">{totals.totalMilestones}</p>
-                <p className="text-xs sm:text-sm text-gray-600">Being tracked</p>
+            <Card className="hover:shadow-lg transition-shadow duration-200 border-l-4 border-l-purple-500">
+            <CardContent className="p-5">
+                <div className="flex items-center justify-between">
+                <div className="flex-1">
+                    <p className="text-xs sm:text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                    Total Milestones
+                    </p>
+                    <p className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">{totals.totalMilestones}</p>
+                    <p className="text-xs sm:text-sm text-gray-600 font-medium">Being tracked</p>
                 </div>
-                <div className="rounded-full bg-purple-100 p-3">
-                <Target className="h-6 w-6 text-purple-600" />
+                <div className="bg-gradient-to-br from-purple-500 to-violet-600 p-3 sm:p-4 rounded-2xl shadow-lg">
+                    <Target className="h-6 w-6 sm:h-7 sm:w-7 text-white" />
                 </div>
-            </div>
-            </div>
+                </div>
+            </CardContent>
+            </Card>
 
-            <div className={`${UI.card} ${UI.cardPad}`}>
-            <div className="flex items-center justify-between">
-                <div>
-                <p className="text-xs sm:text-sm font-medium text-gray-600">Completed</p>
-                <p className="text-2xl sm:text-3xl font-bold text-gray-900">{totals.completed}</p>
-                <p className="text-xs sm:text-sm text-green-600">Achievements</p>
+            <Card className="hover:shadow-lg transition-shadow duration-200 border-l-4 border-l-green-500">
+            <CardContent className="p-5">
+                <div className="flex items-center justify-between">
+                <div className="flex-1">
+                    <p className="text-xs sm:text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">Completed</p>
+                    <p className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">{totals.completed}</p>
+                    <p className="text-xs sm:text-sm text-green-600 font-medium">Achievements</p>
                 </div>
-                <div className="rounded-full bg-green-100 p-3">
-                <CheckCircle className="h-6 w-6 text-green-600" />
+                <div className="bg-gradient-to-br from-green-500 to-emerald-600 p-3 sm:p-4 rounded-2xl shadow-lg">
+                    <CheckCircle className="h-6 w-6 sm:h-7 sm:w-7 text-white" />
                 </div>
-            </div>
-            </div>
+                </div>
+            </CardContent>
+            </Card>
 
-            <div className={`${UI.card} ${UI.cardPad}`}>
-            <div className="flex items-center justify-between">
-                <div>
-                <p className="text-xs sm:text-sm font-medium text-gray-600">At Risk</p>
-                <p className="text-2xl sm:text-3xl font-bold text-gray-900">{totals.atRisk}</p>
-                <p className="text-xs sm:text-sm text-red-600">Need attention</p>
+            <Card className="hover:shadow-lg transition-shadow duration-200 border-l-4 border-l-red-500">
+            <CardContent className="p-5">
+                <div className="flex items-center justify-between">
+                <div className="flex-1">
+                    <p className="text-xs sm:text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">At Risk</p>
+                    <p className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">{totals.atRisk}</p>
+                    <p className="text-xs sm:text-sm text-red-600 font-medium">Need attention</p>
                 </div>
-                <div className="rounded-full bg-red-100 p-3">
-                <AlertCircle className="h-6 w-6 text-red-600" />
+                <div className="bg-gradient-to-br from-red-500 to-rose-600 p-3 sm:p-4 rounded-2xl shadow-lg">
+                    <AlertCircle className="h-6 w-6 sm:h-7 sm:w-7 text-white" />
                 </div>
-            </div>
-            </div>
+                </div>
+            </CardContent>
+            </Card>
         </div>
 
         {/* Empty */}
         {milestones.length === 0 && (
-            <div className="rounded-2xl border border-dashed border-gray-300 bg-white px-6 py-10 text-center">
-            <p className="text-lg font-semibold text-gray-900">No milestones added yet</p>
-            <p className="mt-1 text-sm text-gray-600">
+            <Card className="border-dashed">
+            <CardContent className="px-6 py-10 text-center">
+                <p className="text-lg font-semibold text-gray-900">No milestones added yet</p>
+                <p className="mt-1 text-sm text-gray-600">
                 Click <span className="font-semibold">“Add Milestone”</span> to create a development goal for a child.
-            </p>
-            </div>
+                </p>
+            </CardContent>
+            </Card>
         )}
 
         {/* Children List */}
@@ -433,7 +451,7 @@
             const isExpanded = expandedChildren.has(child.id);
 
             return (
-                <div key={child.id} className={`${UI.card} overflow-hidden`}>
+                <Card key={child.id} className="overflow-hidden hover:shadow-md transition-shadow duration-200">
                 {/* Child Header */}
                 <div
                     className="cursor-pointer px-5 py-4 transition-colors hover:bg-gray-50"
@@ -441,7 +459,10 @@
                 >
                     <div className="flex items-center justify-between gap-4">
                     <div className="flex items-center gap-4 min-w-0">
-                        <button className={UI.iconBtn} type="button">
+                        <button
+                        className="shrink-0 rounded-xl border border-gray-200 bg-white p-2 hover:bg-gray-50"
+                        type="button"
+                        >
                         {isExpanded ? <ChevronDown className="h-5 w-5" /> : <ChevronRight className="h-5 w-5" />}
                         </button>
 
@@ -454,7 +475,7 @@
                         )}
 
                         <div className="min-w-0">
-                        <h3 className="font-medium text-gray-900 truncate">{child.name}</h3>
+                        <h3 className="font-semibold text-gray-900 truncate">{child.name}</h3>
                         <p className="text-sm text-gray-600 truncate">
                             Age {child.age} • {childMilestones.length} milestone{childMilestones.length !== 1 ? "s" : ""}
                         </p>
@@ -487,10 +508,13 @@
 
                 {/* Expanded Content */}
                 {isExpanded && (
-                    <div className="border-t bg-gray-50 px-5 py-5">
+                    <div className="border-t bg-gradient-to-br from-gray-50 via-white to-gray-50 px-5 py-5">
                     {/* Development Areas */}
                     <div className="mb-6">
-                        <h4 className="mb-4 font-medium text-gray-900">Development Areas</h4>
+                        <div className="flex items-center justify-between mb-4">
+                        <h4 className="font-semibold text-gray-900">Development Areas</h4>
+                        <span className="text-xs text-gray-500">Average progress per category</span>
+                        </div>
 
                         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
                         {[
@@ -503,12 +527,12 @@
                             const Icon = meta.icon;
 
                             return (
-                            <div key={area.name} className="rounded-lg border border-gray-200 bg-white p-4">
+                            <div key={area.name} className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
                                 <div className="mb-2 flex items-center gap-2">
-                                <div className={`rounded ${meta.chipBg} p-1.5`}>
+                                <div className={`rounded-xl ${meta.chipBg} p-2`}>
                                     <Icon className={`h-4 w-4 ${meta.chipIcon}`} />
                                 </div>
-                                <span className="text-sm font-medium text-gray-700">{meta.label}</span>
+                                <span className="text-sm font-semibold text-gray-700">{meta.label}</span>
                                 </div>
 
                                 <div className="space-y-1">
@@ -526,7 +550,10 @@
 
                     {/* Active Milestones */}
                     <div>
-                        <h4 className="mb-4 font-medium text-gray-900">Active Milestones</h4>
+                        <div className="flex items-center justify-between mb-4">
+                        <h4 className="font-semibold text-gray-900">Active Milestones</h4>
+                        <span className="text-xs text-gray-500">{childMilestones.length} total</span>
+                        </div>
 
                         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                         {childMilestones.map((m) => {
@@ -534,18 +561,20 @@
                             const Icon = meta.icon;
 
                             return (
-                            <div key={m.id} className="rounded-lg border border-gray-200 bg-white p-4">
+                            <div key={m.id} className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm hover:shadow-md transition-shadow">
                                 <div className="mb-3 flex items-start justify-between gap-3">
                                 <div className="flex items-start gap-2 min-w-0">
-                                    <Icon className={`mt-0.5 h-4 w-4 ${meta.chipIcon}`} />
+                                    <div className={`mt-0.5 rounded-xl ${meta.chipBg} p-2`}>
+                                    <Icon className={`h-4 w-4 ${meta.chipIcon}`} />
+                                    </div>
                                     <div className="min-w-0">
-                                    <h5 className="font-medium text-gray-900 truncate">{m.milestone}</h5>
+                                    <h5 className="font-semibold text-gray-900 truncate">{m.milestone}</h5>
                                     <p className="mt-1 text-xs text-gray-600">{m.category}</p>
                                     </div>
                                 </div>
-                                
+
                                 <span
-                                    className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium ${getStatusColor(
+                                    className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold ${getStatusColor(
                                     m.status
                                     )}`}
                                 >
@@ -558,7 +587,7 @@
                                 <div>
                                     <div className="mb-1 flex items-center justify-between">
                                     <span className="text-xs text-gray-600">Progress</span>
-                                    <span className="text-sm font-medium">{clamp(m.progress)}%</span>
+                                    <span className="text-sm font-semibold">{clamp(m.progress)}%</span>
                                     </div>
                                     <ProgressBar value={m.progress} height="h-2" />
                                 </div>
@@ -570,7 +599,11 @@
                                     </div>
                                 )}
 
-                                {m.notes && <p className="rounded bg-gray-50 p-2 text-xs text-gray-700">{m.notes}</p>}
+                                {m.notes && (
+                                    <p className="rounded-xl bg-gray-50 border border-gray-200 p-3 text-xs text-gray-700">
+                                    {m.notes}
+                                    </p>
+                                )}
 
                                 <div className="flex gap-2 pt-2">
                                     <button onClick={() => openDetails(m)} className={UI.btnSmallOutline} type="button">
@@ -589,7 +622,7 @@
                         })}
 
                         {childMilestones.length === 0 && (
-                            <div className="rounded-lg border border-gray-200 bg-white p-6 text-sm text-gray-600">
+                            <div className="rounded-2xl border border-gray-200 bg-white p-6 text-sm text-gray-600 shadow-sm">
                             No milestones for this child yet.
                             </div>
                         )}
@@ -597,22 +630,19 @@
                     </div>
                     </div>
                 )}
-                </div>
+                </Card>
             );
             })}
         </div>
 
         {/* Add Milestone Modal */}
-        {openModal && <Milestonemodal 
-        onClose={handleCloseModal} 
-        onSave={handleSaveMilestone} 
-        children={children}
-        />
-        }
+        {openModal && (
+            <Milestonemodal onClose={handleCloseModal} onSave={handleSaveMilestone} children={children} />
+        )}
 
         {/* Details Modal */}
         {selectedMilestone && (
-        <MilestoneDetailsModal
+            <MilestoneDetailsModal
             UI={UI}
             selectedMilestone={selectedMilestone}
             closeDetails={closeDetails}
@@ -623,7 +653,7 @@
             formatDate={formatDate}
             clamp={clamp}
             ProgressBar={ProgressBar}
-        />
+            />
         )}
 
         {/* Update Modal */}
@@ -638,10 +668,9 @@
             updateEditingObjective={updateEditingObjective}
             addEditingObjective={addEditingObjective}
             removeEditingObjective={removeEditingObjective}
-            />
+        />
         </div>
     );
-    };
+};
 
-    export default Development;
-
+export default Development;

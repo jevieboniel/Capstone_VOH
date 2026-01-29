@@ -26,7 +26,6 @@ import {
   BookOpen,
 } from "lucide-react";
 
-// ✅ use your common button
 import Button from "../UI/Button";
 
 /* ---------------- Mock Data ---------------- */
@@ -380,31 +379,31 @@ const generateAllReports = () => {
 const getCategoryColor = (category) => {
   switch (category) {
     case "Children":
-      return "bg-blue-100 text-blue-800 border-blue-200";
+      return "bg-blue-50 text-blue-700 border-blue-100";
     case "Development":
-      return "bg-purple-100 text-purple-800 border-purple-200";
+      return "bg-purple-50 text-purple-700 border-purple-100";
     case "Financial":
-      return "bg-emerald-100 text-emerald-800 border-emerald-200";
+      return "bg-emerald-50 text-emerald-700 border-emerald-100";
     case "Houses":
-      return "bg-orange-100 text-orange-800 border-orange-200";
+      return "bg-orange-50 text-orange-700 border-orange-100";
     case "System":
     default:
-      return "bg-gray-100 text-gray-800 border-gray-200";
+      return "bg-gray-50 text-gray-700 border-gray-200";
   }
 };
 
 const getSeverityColor = (severity) => {
   switch (severity) {
     case "info":
-      return "bg-blue-100 text-blue-800 border-blue-200";
+      return "bg-blue-50 text-blue-700 border-blue-100";
     case "warning":
-      return "bg-yellow-100 text-yellow-800 border-yellow-200";
+      return "bg-yellow-50 text-yellow-800 border-yellow-100";
     case "error":
-      return "bg-red-100 text-red-800 border-red-200";
+      return "bg-red-50 text-red-700 border-red-100";
     case "critical":
-      return "bg-red-200 text-red-900 border-red-300";
+      return "bg-red-100 text-red-800 border-red-200";
     default:
-      return "bg-gray-100 text-gray-800 border-gray-200";
+      return "bg-gray-50 text-gray-700 border-gray-200";
   }
 };
 
@@ -428,46 +427,58 @@ const getActionIcon = (action) => {
 const getRoleColor = (role) => {
   switch (role) {
     case "admin":
-      return "bg-red-100 text-red-800 border-red-200";
+      return "bg-red-50 text-red-700 border-red-100";
     case "staff":
-      return "bg-blue-100 text-blue-800 border-blue-200";
+      return "bg-blue-50 text-blue-700 border-blue-100";
     case "social_worker":
-      return "bg-emerald-100 text-emerald-800 border-emerald-200";
+      return "bg-emerald-50 text-emerald-700 border-emerald-100";
     case "house_parent":
-      return "bg-purple-100 text-purple-800 border-purple-200";
+      return "bg-purple-50 text-purple-700 border-purple-100";
     default:
-      return "bg-gray-100 text-gray-800 border-gray-200";
+      return "bg-gray-50 text-gray-700 border-gray-200";
   }
 };
 
 /* Input key propagation fix */
 const stopKeys = (e) => e.stopPropagation();
 
-/* ---------------- Small UI helpers (Dashboard style) ---------------- */
+/* ---------------- Small UI helpers ---------------- */
 
 const Card = ({ children, className = "" }) => (
-  <div className={`bg-white rounded-xl shadow-sm border border-gray-200 ${className}`}>{children}</div>
+  <div className={`bg-white rounded-2xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow ${className}`}>
+    {children}
+  </div>
 );
 
-
-const CardContent = ({ children, className = "" }) => <div className={`px-5 py-5 ${className}`}>{children}</div>;
+const CardContent = ({ children, className = "" }) => (
+  <div className={`px-6 py-6 ${className}`}>{children}</div>
+);
 
 const Input = ({ className = "", ...props }) => (
   <input
-    className={`w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-gray-900 placeholder:text-gray-400 outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${className}`}
+    className={`w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-300 transition ${className}`}
     {...props}
   />
 );
 
 const Select = ({ className = "", ...props }) => (
   <select
-    className={`w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${className}`}
+    className={`w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-300 transition ${className}`}
     {...props}
   />
 );
 
 const Pill = ({ children, className = "" }) => (
-  <span className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium ${className}`}>{children}</span>
+  <span className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold shadow-sm ${className}`}>
+    {children}
+  </span>
+);
+
+// eslint-disable-next-line no-unused-vars
+const CardAlt = ({ children, className = "" }) => (
+  <div className={`bg-white rounded-xl shadow-sm border border-gray-200 ${className}`}>
+    {children}
+  </div>
 );
 
 /* ---------------- Views ---------------- */
@@ -502,7 +513,7 @@ const ReportsView = memo(function ReportsView({
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div className="relative">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+              <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
               <Input
                 placeholder="Search reports..."
                 value={searchTerm}
@@ -510,7 +521,7 @@ const ReportsView = memo(function ReportsView({
                 onKeyDownCapture={stopKeys}
                 onKeyUpCapture={stopKeys}
                 onKeyPressCapture={stopKeys}
-                className="pl-10"
+                className="pl-11"
                 autoComplete="off"
                 spellCheck={false}
               />
@@ -543,12 +554,12 @@ const ReportsView = memo(function ReportsView({
                     key={category}
                     type="button"
                     onClick={() => setSelectedCategory(isActive ? "all" : category)}
-                    className={`rounded-xl border bg-white p-3 text-center text-xs shadow-sm transition hover:bg-gray-50 ${
+                    className={`rounded-2xl border bg-white p-4 text-center text-xs shadow-sm transition hover:bg-gray-50 ${
                       isActive ? "border-blue-500 ring-2 ring-blue-100" : "border-gray-200"
                     }`}
                   >
-                    <p className="text-gray-600">{category}</p>
-                    <p className="mt-1 text-lg font-semibold text-gray-900">{count}</p>
+                    <p className="text-gray-600 font-medium">{category}</p>
+                    <p className="mt-1 text-xl font-bold text-gray-900">{count}</p>
                   </button>
                 );
               })}
@@ -564,20 +575,20 @@ const ReportsView = memo(function ReportsView({
               <CardContent>
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                   <div className="flex flex-1 gap-4">
-                    <div className="mt-1 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-blue-50">
-                      <Icon className="h-5 w-5 text-blue-600" />
+                    <div className="mt-1 flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl bg-blue-50 border border-blue-100">
+                      <Icon className="h-5 w-5 text-blue-700" />
                     </div>
 
                     <div className="min-w-0 flex-1">
                       <h3 className="truncate text-sm font-semibold text-gray-900">{report.title}</h3>
                       <p className="mt-1 text-xs text-gray-600">{report.description}</p>
 
-                      <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px]">
-                        <span className={`inline-flex items-center rounded-full border px-2 py-0.5 font-medium ${getCategoryColor(report.category)}`}>
+                      <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px]">
+                        <span className={`inline-flex items-center rounded-full border px-2.5 py-1 font-semibold ${getCategoryColor(report.category)}`}>
                           {report.category}
                         </span>
 
-                        <span className="inline-flex items-center rounded-full border border-gray-200 bg-gray-50 px-2 py-0.5 text-gray-700">
+                        <span className="inline-flex items-center rounded-full border border-gray-200 bg-gray-50 px-2.5 py-1 text-gray-700 font-medium">
                           {report.subcategory}
                         </span>
 
@@ -596,7 +607,7 @@ const ReportsView = memo(function ReportsView({
                     <button
                       type="button"
                       onClick={() => onView(report)}
-                      className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
+                      className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
                       title="View"
                     >
                       <Eye className="h-4 w-4" />
@@ -604,7 +615,7 @@ const ReportsView = memo(function ReportsView({
                     <button
                       type="button"
                       onClick={() => onDownload(report)}
-                      className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
+                      className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
                       title="Download"
                     >
                       <Download className="h-4 w-4" />
@@ -612,7 +623,7 @@ const ReportsView = memo(function ReportsView({
                     <button
                       type="button"
                       onClick={() => onPrint(report)}
-                      className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
+                      className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
                       title="Print"
                     >
                       <Printer className="h-4 w-4" />
@@ -620,7 +631,7 @@ const ReportsView = memo(function ReportsView({
                     <button
                       type="button"
                       onClick={() => onShare(report)}
-                      className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
+                      className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
                       title="Share"
                     >
                       <Share className="h-4 w-4" />
@@ -633,7 +644,7 @@ const ReportsView = memo(function ReportsView({
         })}
 
         {filteredReports.length === 0 && (
-          <div className="mt-4 rounded-xl border border-dashed border-gray-300 bg-gray-50 p-8 text-center text-sm text-gray-600">
+          <div className="mt-4 rounded-2xl border border-dashed border-gray-300 bg-white p-10 text-center text-sm text-gray-600 shadow-sm">
             <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-gray-100">
               <FileText className="h-6 w-6 text-gray-400" />
             </div>
@@ -673,50 +684,58 @@ const AuditTrailView = memo(function AuditTrailView({
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card>
+        <Card className="border-l-4 border-l-blue-500">
           <CardContent>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-gray-600">Total Activities</p>
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Total Activities</p>
                 <p className="mt-1 text-2xl font-bold text-gray-900">{filteredAuditTrail.length}</p>
               </div>
-              <Activity className="h-6 w-6 text-blue-600" />
+              <div className="rounded-2xl bg-blue-50 border border-blue-100 p-3">
+                <Activity className="h-6 w-6 text-blue-700" />
+              </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-l-4 border-l-emerald-500">
           <CardContent>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-gray-600">Today&apos;s Actions</p>
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Today&apos;s Actions</p>
                 <p className="mt-1 text-2xl font-bold text-emerald-700">{todayCount}</p>
               </div>
-              <Clock className="h-6 w-6 text-emerald-600" />
+              <div className="rounded-2xl bg-emerald-50 border border-emerald-100 p-3">
+                <Clock className="h-6 w-6 text-emerald-700" />
+              </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-l-4 border-l-red-500">
           <CardContent>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-gray-600">Critical Events</p>
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Critical Events</p>
                 <p className="mt-1 text-2xl font-bold text-red-700">{criticalCount}</p>
               </div>
-              <AlertTriangle className="h-6 w-6 text-red-600" />
+              <div className="rounded-2xl bg-red-50 border border-red-100 p-3">
+                <AlertTriangle className="h-6 w-6 text-red-700" />
+              </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-l-4 border-l-purple-500">
           <CardContent>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-gray-600">Active Users</p>
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Active Users</p>
                 <p className="mt-1 text-2xl font-bold text-purple-700">{activeUsersCount}</p>
               </div>
-              <Users className="h-6 w-6 text-purple-600" />
+              <div className="rounded-2xl bg-purple-50 border border-purple-100 p-3">
+                <Users className="h-6 w-6 text-purple-700" />
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -726,7 +745,7 @@ const AuditTrailView = memo(function AuditTrailView({
         <CardContent>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             <div className="relative">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+              <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
               <Input
                 placeholder="Search activities..."
                 value={auditSearchTerm}
@@ -734,7 +753,7 @@ const AuditTrailView = memo(function AuditTrailView({
                 onKeyDownCapture={stopKeys}
                 onKeyUpCapture={stopKeys}
                 onKeyPressCapture={stopKeys}
-                className="pl-10"
+                className="pl-11"
                 autoComplete="off"
                 spellCheck={false}
               />
@@ -766,7 +785,7 @@ const AuditTrailView = memo(function AuditTrailView({
           <Card key={entry.id}>
             <CardContent>
               <div className="flex gap-3">
-                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-gray-100">
+                <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl bg-gray-100 border border-gray-200">
                   {getActionIcon(entry.action)}
                 </div>
 
@@ -774,15 +793,15 @@ const AuditTrailView = memo(function AuditTrailView({
                   <div className="mb-2 flex flex-wrap items-center gap-2 text-xs">
                     <span className="font-semibold text-gray-900">{entry.userName}</span>
 
-                    <span className={`inline-flex items-center rounded-full border px-2 py-0.5 font-medium ${getRoleColor(entry.userRole)}`}>
+                    <span className={`inline-flex items-center rounded-full border px-2.5 py-1 font-semibold ${getRoleColor(entry.userRole)}`}>
                       {entry.userRole.replace("_", " ")}
                     </span>
 
-                    <span className={`inline-flex items-center rounded-full border px-2 py-0.5 font-medium ${getSeverityColor(entry.severity)}`}>
+                    <span className={`inline-flex items-center rounded-full border px-2.5 py-1 font-semibold ${getSeverityColor(entry.severity)}`}>
                       {entry.action}
                     </span>
 
-                    <span className="inline-flex items-center rounded-full border border-gray-200 bg-gray-50 px-2 py-0.5 text-gray-700">
+                    <span className="inline-flex items-center rounded-full border border-gray-200 bg-gray-50 px-2.5 py-1 text-gray-700 font-medium">
                       {entry.module}
                     </span>
                   </div>
@@ -808,7 +827,7 @@ const AuditTrailView = memo(function AuditTrailView({
         ))}
 
         {filteredAuditTrail.length === 0 && (
-          <div className="mt-4 rounded-xl border border-dashed border-gray-300 bg-gray-50 p-8 text-center text-sm text-gray-600">
+          <div className="mt-4 rounded-2xl border border-dashed border-gray-300 bg-white p-10 text-center text-sm text-gray-600 shadow-sm">
             <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-gray-100">
               <Search className="h-6 w-6 text-gray-400" />
             </div>
@@ -908,8 +927,8 @@ export default function Reports() {
   const onShare = (r) => console.log("Share report:", r.title);
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen space-y-6">
-      <div className="space-y-6">
+    <div className="min-h-screen bg-gray-50 px-6 py-8 lg:px-10">
+      <div className="mx-auto max-w-6xl space-y-6">
         {/* Header */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
@@ -917,12 +936,15 @@ export default function Reports() {
             <p className="mt-1 text-sm text-gray-600">View ready-made reports and review the system audit trail.</p>
           </div>
 
-          <div className="flex gap-2">
+          {/* Top switch buttons (styled like tabs) */}
+          <div className="rounded-2xl border border-gray-200 bg-white p-1 shadow-sm flex gap-2 w-full sm:w-auto">
             <Button
               variant={activeView === "reports" ? "primary" : "outline"}
               size="medium"
               onClick={() => setActiveView("reports")}
-              className="inline-flex items-center gap-2"
+              className={`inline-flex items-center gap-2 rounded-xl ${
+                activeView === "reports" ? "shadow-sm" : "border-transparent"
+              }`}
             >
               <FileText className="h-4 w-4" />
               Reports
@@ -932,7 +954,9 @@ export default function Reports() {
               variant={activeView === "audit" ? "primary" : "outline"}
               size="medium"
               onClick={() => setActiveView("audit")}
-              className="inline-flex items-center gap-2"
+              className={`inline-flex items-center gap-2 rounded-xl ${
+                activeView === "audit" ? "shadow-sm" : "border-transparent"
+              }`}
             >
               <Shield className="h-4 w-4" />
               Audit Trail

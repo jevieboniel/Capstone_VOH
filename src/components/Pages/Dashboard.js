@@ -1,4 +1,3 @@
-// src/components/Pages/Dashboard.js
 import React, { useMemo, useState } from "react";
 import {
   Users,
@@ -16,10 +15,10 @@ import {
   PieChart as PieChartIcon,
 } from "lucide-react";
 
-// ✅ USE YOUR SEPARATED CHART COMPONENTS (Charts folder)
+// SEPARATED CHART COMPONENTS (Charts folder)
 import { ChartContainer, BarChart, LineChart, AreaChart } from "../Charts";
 
-// ✅ Use Recharts ONLY for the Pie charts (so we can match your screenshot design)
+//  Recharts ONLY for the Pie charts
 import {
   PieChart as RePieChart,
   Pie,
@@ -30,14 +29,16 @@ import {
 /* ------------------- Tiny UI Helpers (no external UI lib) ------------------- */
 
 const Card = ({ children, className = "" }) => (
-  <div className={`bg-white rounded-xl shadow-sm border border-gray-200 ${className}`}>
+  <div
+    className={`bg-white rounded-2xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow ${className}`}
+  >
     {children}
   </div>
 );
 
 const CardHeader = ({ children, className = "" }) => (
   <div
-    className={`px-5 py-4 border-b border-gray-100 flex items-center justify-between gap-2 ${className}`}
+    className={`px-6 py-5 border-b border-gray-100 flex items-center justify-between gap-2 ${className}`}
   >
     {children}
   </div>
@@ -50,11 +51,12 @@ const CardTitle = ({ children, className = "" }) => (
 );
 
 const CardContent = ({ children, className = "" }) => (
-  <div className={`px-5 py-5 ${className}`}>{children}</div>
+  <div className={`px-6 py-6 ${className}`}>{children}</div>
 );
 
 const Badge = ({ children, variant = "solid", className = "" }) => {
-  const base = "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium";
+  const base =
+    "inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold shadow-sm";
   const variants = {
     solid: "bg-gray-900 text-white border-transparent",
     outline: "bg-white text-gray-700 border-gray-300",
@@ -64,13 +66,13 @@ const Badge = ({ children, variant = "solid", className = "" }) => {
 
 const Button = ({ children, variant = "solid", size = "md", className = "", ...props }) => {
   const base =
-    "inline-flex items-center justify-center rounded-lg font-medium transition focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-60 disabled:cursor-not-allowed";
+    "inline-flex items-center justify-center rounded-xl font-semibold transition focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-60 disabled:cursor-not-allowed";
   const sizes = {
-    sm: "text-xs px-3 py-1.5",
-    md: "text-sm px-4 py-2",
+    sm: "text-xs px-3.5 py-2",
+    md: "text-sm px-4.5 py-2.5",
   };
   const variants = {
-    solid: "bg-blue-600 hover:bg-blue-700 text-white",
+    solid: "bg-blue-600 hover:bg-blue-700 text-white shadow-sm",
     outline: "border border-gray-300 bg-white text-gray-800 hover:bg-gray-50",
     link: "text-blue-600 hover:text-blue-700 px-0 py-0",
   };
@@ -83,9 +85,9 @@ const Button = ({ children, variant = "solid", size = "md", className = "", ...p
 };
 
 const Progress = ({ value = 0, className = "" }) => (
-  <div className={`w-full h-2 rounded-full bg-gray-100 overflow-hidden ${className}`}>
+  <div className={`w-full h-3 rounded-full bg-gray-200 overflow-hidden shadow-inner ${className}`}>
     <div
-      className="h-full bg-blue-500 rounded-full transition-all"
+      className="h-full bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 rounded-full transition-all shadow-sm"
       style={{ width: `${Math.min(Math.max(value, 0), 100)}%` }}
     />
   </div>
@@ -263,7 +265,7 @@ const getActivityIcon = (type) => {
   }
 };
 
-// ✅ Pie label renderer (colored name + percent like your screenshot)
+// Pie label renderer (colored name + percent)
 const RADIAN = Math.PI / 180;
 
 const renderPieLabel = (labelKey) => (props) => {
@@ -289,7 +291,7 @@ const renderPieLabel = (labelKey) => (props) => {
   );
 };
 
-// ✅ Utility to attach percent to pie data (keeps your original numbers unchanged)
+// Utility to attach percent to pie data (for label display)
 const withPercent = (data, valueKey) => {
   const sum = data.reduce((acc, d) => acc + (Number(d[valueKey]) || 0), 0) || 1;
   return data.map((d) => ({
@@ -323,73 +325,84 @@ const Dashboard = () => {
   return (
     <div className="p-6 bg-gray-50 min-h-screen space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Dashboard</h1>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Dashboard</h1>
+          <p className="mt-1 text-sm text-gray-600">Quick insights across children, health, development, and donations</p>
+        </div>
       </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-        <Card>
+        <Card className="border-l-4 border-l-blue-500">
           <CardContent>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs sm:text-sm font-medium text-gray-600">Total Children</p>
+            <div className="flex items-center justify-between gap-4">
+              <div className="min-w-0">
+                <p className="text-xs sm:text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                  Total Children
+                </p>
                 <p className="text-2xl sm:text-3xl font-bold text-gray-900">{mockStats.totalChildren}</p>
-                <p className="text-xs sm:text-sm text-green-600">+{mockStats.newAdmissions} new this month</p>
+                <p className="text-xs sm:text-sm text-green-600 font-medium">+{mockStats.newAdmissions} new this month</p>
               </div>
-              <div className="bg-blue-100 p-2 sm:p-3 rounded-full flex-shrink-0">
-                <Users className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600" />
+              <div className="bg-gradient-to-br from-blue-500 to-indigo-600 p-3 sm:p-4 rounded-2xl shadow-sm flex-shrink-0">
+                <Users className="h-6 w-6 sm:h-7 sm:w-7 text-white" />
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-l-4 border-l-red-500">
           <CardContent>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs sm:text-sm font-medium text-gray-600">Health Alerts</p>
+            <div className="flex items-center justify-between gap-4">
+              <div className="min-w-0">
+                <p className="text-xs sm:text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                  Health Alerts
+                </p>
                 <p className="text-2xl sm:text-3xl font-bold text-gray-900">{mockStats.healthChecksDue}</p>
-                <p className="text-xs sm:text-sm text-orange-600">Check-ups due</p>
+                <p className="text-xs sm:text-sm text-orange-600 font-medium">Check-ups due</p>
               </div>
-              <div className="bg-red-100 p-2 sm:p-3 rounded-full flex-shrink-0">
-                <Heart className="h-5 w-5 sm:h-6 sm:w-6 text-red-600" />
+              <div className="bg-gradient-to-br from-red-500 to-rose-600 p-3 sm:p-4 rounded-2xl shadow-sm flex-shrink-0">
+                <Heart className="h-6 w-6 sm:h-7 sm:w-7 text-white" />
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-l-4 border-l-green-500">
           <CardContent>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs sm:text-sm font-medium text-gray-600">Total Donations</p>
+            <div className="flex items-center justify-between gap-4">
+              <div className="min-w-0">
+                <p className="text-xs sm:text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                  Total Donations
+                </p>
                 <p className="text-2xl sm:text-3xl font-bold text-gray-900">
                   ${mockStats.totalDonations.toLocaleString()}
                 </p>
-                <p className="text-xs sm:text-sm text-green-600">
+                <p className="text-xs sm:text-sm text-green-600 font-medium">
                   ${mockStats.monthlyDonations.toLocaleString()} this month
                 </p>
               </div>
-              <div className="bg-green-100 p-2 sm:p-3 rounded-full flex-shrink-0">
-                <DollarSign className="h-5 w-5 sm:h-6 sm:w-6 text-green-600" />
+              <div className="bg-gradient-to-br from-green-500 to-emerald-600 p-3 sm:p-4 rounded-2xl shadow-sm flex-shrink-0">
+                <DollarSign className="h-6 w-6 sm:h-7 sm:w-7 text-white" />
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-l-4 border-l-purple-500">
           <CardContent>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs sm:text-sm font-medium text-gray-600">Milestones</p>
+            <div className="flex items-center justify-between gap-4">
+              <div className="min-w-0">
+                <p className="text-xs sm:text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                  Milestones
+                </p>
                 <p className="text-2xl sm:text-3xl font-bold text-gray-900">
                   {mockStats.completedMilestones}/{mockStats.developmentMilestones}
                 </p>
-                <p className="text-xs sm:text-sm text-purple-600">{milestoneProgress.toFixed(0)}% completed</p>
+                <p className="text-xs sm:text-sm text-purple-600 font-medium">{milestoneProgress.toFixed(0)}% completed</p>
               </div>
-              <div className="bg-purple-100 p-2 sm:p-3 rounded-full flex-shrink-0">
-                <TrendingUp className="h-5 w-5 sm:h-6 sm:w-6 text-purple-600" />
+              <div className="bg-gradient-to-br from-purple-500 to-violet-600 p-3 sm:p-4 rounded-2xl shadow-sm flex-shrink-0">
+                <TrendingUp className="h-6 w-6 sm:h-7 sm:w-7 text-white" />
               </div>
             </div>
           </CardContent>
@@ -398,21 +411,23 @@ const Dashboard = () => {
 
       {/* Tabs */}
       <div className="w-full">
-        <div className="grid w-full grid-cols-2 lg:grid-cols-6 gap-2 bg-gray-50 p-1 rounded-xl">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={
-                "text-xs sm:text-sm font-medium rounded-lg px-3 py-2.5 border transition " +
-                (activeTab === tab.id
-                  ? "bg-white text-blue-600 border-blue-200 shadow-sm"
-                  : "bg-gray-50 text-gray-600 border-transparent hover:bg-gray-100")
-              }
-            >
-              {tab.label}
-            </button>
-          ))}
+        <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-2">
+          <div className="grid w-full grid-cols-2 lg:grid-cols-6 gap-2">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={
+                  "text-xs sm:text-sm font-semibold rounded-xl px-3 py-2.5 border transition " +
+                  (activeTab === tab.id
+                    ? "bg-gradient-to-br from-blue-50 to-indigo-50 text-blue-700 border-blue-200 shadow-sm"
+                    : "bg-white text-gray-600 border-transparent hover:bg-gray-50")
+                }
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -424,18 +439,23 @@ const Dashboard = () => {
             <Card>
               <CardHeader className="border-b border-gray-100">
                 <CardTitle className="flex items-center gap-2">
-                  <AlertCircle className="h-5 w-5 text-orange-500" />
+                  <div className="rounded-xl bg-orange-100 p-2">
+                    <AlertCircle className="h-5 w-5 text-orange-600" />
+                  </div>
                   Alerts &amp; Reminders
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 {mockAlerts.map((alert) => (
-                  <div key={alert.id} className="flex flex-col sm:flex-row sm:items-start gap-3 p-3 bg-gray-50 rounded-lg">
+                  <div
+                    key={alert.id}
+                    className="flex flex-col sm:flex-row sm:items-start gap-3 p-4 bg-gray-50 border border-gray-200 rounded-xl hover:bg-gray-50/60 transition"
+                  >
                     <Badge className={`${getPriorityColor(alert.priority)} capitalize w-fit`}>
                       {alert.priority}
                     </Badge>
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-gray-900 text-sm sm:text-base">{alert.message}</p>
+                      <p className="font-semibold text-gray-900 text-sm sm:text-base">{alert.message}</p>
                       <div className="flex items-center gap-2 mt-1">
                         <Calendar className="h-3 w-3 sm:h-4 sm:w-4 text-gray-400" />
                         <span className="text-xs sm:text-sm text-gray-600">{alert.date}</span>
@@ -464,33 +484,38 @@ const Dashboard = () => {
             {/* Progress */}
             <Card>
               <CardHeader>
-                <CardTitle>Progress Metrics</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <div className="rounded-xl bg-indigo-100 p-2">
+                    <BarChart3 className="h-5 w-5 text-indigo-600" />
+                  </div>
+                  Progress Metrics
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div>
                   <div className="flex justify-between items-center mb-2">
-                    <span className="text-sm font-medium text-gray-700">Monthly Donation Goal</span>
+                    <span className="text-sm font-semibold text-gray-800">Monthly Donation Goal</span>
                     <span className="text-sm text-gray-600">
                       ${mockStats.monthlyDonations.toLocaleString()} / ${mockStats.donationGoal.toLocaleString()}
                     </span>
                   </div>
                   <Progress value={donationProgress} />
-                  <p className="text-xs text-gray-500 mt-1">{donationProgress.toFixed(0)}% of goal reached</p>
+                  <p className="text-xs text-gray-500 mt-2">{donationProgress.toFixed(0)}% of goal reached</p>
                 </div>
 
                 <div>
                   <div className="flex justify-between items-center mb-2">
-                    <span className="text-sm font-medium text-gray-700">Development Milestones</span>
+                    <span className="text-sm font-semibold text-gray-800">Development Milestones</span>
                     <span className="text-sm text-gray-600">
                       {mockStats.completedMilestones} / {mockStats.developmentMilestones}
                     </span>
                   </div>
                   <Progress value={milestoneProgress} />
-                  <p className="text-xs text-gray-500 mt-1">{milestoneProgress.toFixed(0)}% completed</p>
+                  <p className="text-xs text-gray-500 mt-2">{milestoneProgress.toFixed(0)}% completed</p>
                 </div>
 
                 <div className="pt-4 border-t border-gray-100">
-                  <h4 className="font-medium text-gray-900 mb-3">Quick Actions</h4>
+                  <h4 className="font-semibold text-gray-900 mb-3">Quick Actions</h4>
                   <div className="grid grid-cols-2 gap-2">
                     <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
                       Add Child
@@ -508,17 +533,24 @@ const Dashboard = () => {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Activity className="h-5 w-5 text-blue-500" />
+                <div className="rounded-xl bg-blue-100 p-2">
+                  <Activity className="h-5 w-5 text-blue-600" />
+                </div>
                 Recent Activities
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 {recentActivities.map((activity) => (
-                  <div key={activity.id} className="flex items-start gap-3 pb-3 border-b last:border-0 last:pb-0 border-gray-100">
-                    <div className="p-2 bg-gray-100 rounded-full flex-shrink-0">{getActivityIcon(activity.type)}</div>
+                  <div
+                    key={activity.id}
+                    className="flex items-start gap-3 pb-4 border-b last:border-0 last:pb-0 border-gray-100"
+                  >
+                    <div className="p-2.5 bg-gray-100 rounded-full flex-shrink-0">
+                      {getActivityIcon(activity.type)}
+                    </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900">{activity.action}</p>
+                      <p className="text-sm font-semibold text-gray-900">{activity.action}</p>
                       <p className="text-xs text-gray-600">by {activity.user}</p>
                     </div>
                     <span className="text-xs text-gray-500 flex-shrink-0">{activity.time}</span>
@@ -548,11 +580,13 @@ const Dashboard = () => {
               />
             </ChartContainer>
 
-            {/* ✅ Gender Distribution (MATCHES YOUR SCREENSHOT) */}
+            {/* Gender Distribution */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <PieChartIcon className="h-5 w-5 text-purple-500" />
+                  <div className="rounded-xl bg-purple-100 p-2">
+                    <PieChartIcon className="h-5 w-5 text-purple-600" />
+                  </div>
                   Gender Distribution
                 </CardTitle>
               </CardHeader>
@@ -599,21 +633,21 @@ const Dashboard = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="p-4 bg-blue-50 rounded-lg">
+                  <div className="p-4 bg-blue-50 border border-blue-100 rounded-xl">
                     <p className="text-sm text-gray-600">Average Age</p>
-                    <p className="text-2xl font-bold text-blue-600">8.5 years</p>
+                    <p className="text-2xl font-bold text-blue-700">8.5 years</p>
                   </div>
-                  <div className="p-4 bg-green-50 rounded-lg">
+                  <div className="p-4 bg-green-50 border border-green-100 rounded-xl">
                     <p className="text-sm text-gray-600">Most Common Grade</p>
-                    <p className="text-2xl font-bold text-green-600">Grade 3</p>
+                    <p className="text-2xl font-bold text-green-700">Grade 3</p>
                   </div>
-                  <div className="p-4 bg-purple-50 rounded-lg">
+                  <div className="p-4 bg-purple-50 border border-purple-100 rounded-xl">
                     <p className="text-sm text-gray-600">Youngest Child</p>
-                    <p className="text-2xl font-bold text-purple-600">6 months</p>
+                    <p className="text-2xl font-bold text-purple-700">6 months</p>
                   </div>
-                  <div className="p-4 bg-orange-50 rounded-lg">
+                  <div className="p-4 bg-orange-50 border border-orange-100 rounded-xl">
                     <p className="text-sm text-gray-600">Oldest Child</p>
-                    <p className="text-2xl font-bold text-orange-600">17 years</p>
+                    <p className="text-2xl font-bold text-orange-700">17 years</p>
                   </div>
                 </div>
               </CardContent>
@@ -654,12 +688,12 @@ const Dashboard = () => {
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                   {subjectPerformanceData.map((subject) => (
-                    <div key={subject.subject} className="p-4 border rounded-lg">
-                      <h4 className="font-medium text-gray-900 mb-2">{subject.subject}</h4>
-                      <p className="text-2xl font-bold text-blue-600 mb-1">{subject.avgScore}%</p>
+                    <div key={subject.subject} className="p-4 border border-gray-200 rounded-xl bg-white hover:bg-gray-50 transition">
+                      <h4 className="font-semibold text-gray-900 mb-2">{subject.subject}</h4>
+                      <p className="text-2xl font-bold text-blue-700 mb-1">{subject.avgScore}%</p>
                       <div className="flex items-center gap-1 text-sm">
                         <TrendingUp className="h-3 w-3 text-green-600" />
-                        <span className="text-green-600">+{subject.improvement}%</span>
+                        <span className="text-green-700 font-medium">+{subject.improvement}%</span>
                       </div>
                     </div>
                   ))}
@@ -677,7 +711,9 @@ const Dashboard = () => {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Award className="h-5 w-5 text-purple-500" />
+                  <div className="rounded-xl bg-purple-100 p-2">
+                    <Award className="h-5 w-5 text-purple-600" />
+                  </div>
                   Development Progress by Category
                 </CardTitle>
               </CardHeader>
@@ -685,7 +721,7 @@ const Dashboard = () => {
                 {developmentProgressData.map((category) => (
                   <div key={category.category}>
                     <div className="flex justify-between items-center mb-2">
-                      <span className="text-sm font-medium text-gray-700">{category.category}</span>
+                      <span className="text-sm font-semibold text-gray-800">{category.category}</span>
                       <span className="text-sm text-gray-600">{category.progress}%</span>
                     </div>
                     <Progress value={category.progress} />
@@ -712,19 +748,19 @@ const Dashboard = () => {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="p-4 bg-purple-50 rounded-lg">
+                  <div className="p-4 bg-purple-50 border border-purple-100 rounded-xl">
                     <p className="text-sm text-gray-600 mb-2">Overall Progress</p>
-                    <p className="text-3xl font-bold text-purple-600 mb-1">82.6%</p>
+                    <p className="text-3xl font-bold text-purple-700 mb-1">82.6%</p>
                     <p className="text-xs text-gray-600">Average across all categories</p>
                   </div>
-                  <div className="p-4 bg-green-50 rounded-lg">
+                  <div className="p-4 bg-green-50 border border-green-100 rounded-xl">
                     <p className="text-sm text-gray-600 mb-2">Highest Category</p>
-                    <p className="text-2xl font-bold text-green-600 mb-1">Social (88%)</p>
+                    <p className="text-2xl font-bold text-green-700 mb-1">Social (88%)</p>
                     <p className="text-xs text-gray-600">Best performing area</p>
                   </div>
-                  <div className="p-4 bg-orange-50 rounded-lg">
+                  <div className="p-4 bg-orange-50 border border-orange-100 rounded-xl">
                     <p className="text-sm text-gray-600 mb-2">Needs Focus</p>
-                    <p className="text-2xl font-bold text-orange-600 mb-1">Cognitive (78%)</p>
+                    <p className="text-2xl font-bold text-orange-700 mb-1">Cognitive (78%)</p>
                     <p className="text-xs text-gray-600">Area for improvement</p>
                   </div>
                 </div>
@@ -738,11 +774,13 @@ const Dashboard = () => {
       {activeTab === "health" && (
         <div className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* ✅ Health Status Overview (MATCHES YOUR SCREENSHOT) */}
+            {/*  Health Status Overview */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Stethoscope className="h-5 w-5 text-red-500" />
+                  <div className="rounded-xl bg-red-100 p-2">
+                    <Stethoscope className="h-5 w-5 text-red-600" />
+                  </div>
                   Health Status Overview
                 </CardTitle>
               </CardHeader>
@@ -768,7 +806,7 @@ const Dashboard = () => {
                   </ResponsiveContainer>
                 </div>
 
-                {/* Legend bottom (2 columns, aligned like your screenshot) */}
+                {/* Legend bottom (2 columns) */}
                 <div className="mt-6 grid grid-cols-2 gap-x-10 gap-y-4">
                   {healthPie.map((entry) => (
                     <div key={entry.status} className="flex items-center gap-3">
@@ -800,24 +838,24 @@ const Dashboard = () => {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <div className="p-4 bg-green-50 rounded-lg">
+                  <div className="p-4 bg-green-50 border border-green-100 rounded-xl">
                     <p className="text-sm text-gray-600">Healthy Children</p>
-                    <p className="text-2xl font-bold text-green-600">38/45</p>
+                    <p className="text-2xl font-bold text-green-700">38/45</p>
                     <p className="text-xs text-gray-600">84% of total</p>
                   </div>
-                  <div className="p-4 bg-blue-50 rounded-lg">
+                  <div className="p-4 bg-blue-50 border border-blue-100 rounded-xl">
                     <p className="text-sm text-gray-600">Vaccination Rate</p>
-                    <p className="text-2xl font-bold text-blue-600">94%</p>
+                    <p className="text-2xl font-bold text-blue-700">94%</p>
                     <p className="text-xs text-gray-600">Above target</p>
                   </div>
-                  <div className="p-4 bg-orange-50 rounded-lg">
+                  <div className="p-4 bg-orange-50 border border-orange-100 rounded-xl">
                     <p className="text-sm text-gray-600">Pending Check-ups</p>
-                    <p className="text-2xl font-bold text-orange-600">8</p>
+                    <p className="text-2xl font-bold text-orange-700">8</p>
                     <p className="text-xs text-gray-600">Due this month</p>
                   </div>
-                  <div className="p-4 bg-red-50 rounded-lg">
+                  <div className="p-4 bg-red-50 border border-red-100 rounded-xl">
                     <p className="text-sm text-gray-600">Requires Attention</p>
-                    <p className="text-2xl font-bold text-red-600">2</p>
+                    <p className="text-2xl font-bold text-red-700">2</p>
                     <p className="text-xs text-gray-600">Immediate care needed</p>
                   </div>
                 </div>
@@ -847,11 +885,13 @@ const Dashboard = () => {
               />
             </ChartContainer>
 
-            {/* ✅ Donor Type Distribution (MATCHES YOUR SCREENSHOT) */}
+            {/* Donor Type Distribution */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Users className="h-5 w-5 text-blue-500" />
+                  <div className="rounded-xl bg-blue-100 p-2">
+                    <Users className="h-5 w-5 text-blue-600" />
+                  </div>
                   Donor Type Distribution
                 </CardTitle>
               </CardHeader>
@@ -867,7 +907,7 @@ const Dashboard = () => {
                         cy="50%"
                         outerRadius={80}
                         labelLine={false}
-                        // label like the screenshot (shows percent outside)
+                        // label (shows percent outside)
                         label={(props) => {
                           const { cx, cy, midAngle, outerRadius, payload } = props;
                           const radius = outerRadius + 22;
@@ -895,7 +935,7 @@ const Dashboard = () => {
                   </ResponsiveContainer>
                 </div>
 
-                {/* Legend list with percent on right (like screenshot) */}
+                {/* Legend list with percent on right */}
                 <div className="mt-6 space-y-3">
                   {donorPie.map((entry) => (
                     <div key={entry.type} className="flex items-center justify-between">
@@ -903,7 +943,7 @@ const Dashboard = () => {
                         <span className="inline-block h-3 w-3 rounded-full" style={{ backgroundColor: entry.color }} />
                         <span className="text-sm text-gray-700">{entry.type}</span>
                       </div>
-                      <span className="text-sm text-gray-900">{entry.value}%</span>
+                      <span className="text-sm font-semibold text-gray-900">{entry.value}%</span>
                     </div>
                   ))}
                 </div>
@@ -912,36 +952,36 @@ const Dashboard = () => {
 
             {/* Donation Overview Cards */}
             <div className="lg:col-span-2">
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
                 <h2 className="text-lg font-semibold text-gray-900 mb-4">Donation Overview</h2>
 
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <div className="p-4 bg-green-50 rounded-lg">
+                  <div className="p-4 bg-green-50 border border-green-100 rounded-xl">
                     <p className="text-sm text-gray-600">Total This Year</p>
-                    <p className="text-2xl font-bold text-green-600">$86,000</p>
+                    <p className="text-2xl font-bold text-green-700">$86,000</p>
                     <p className="text-xs text-gray-600">Up 12% from last year</p>
                   </div>
 
-                  <div className="p-4 bg-blue-50 rounded-lg">
+                  <div className="p-4 bg-blue-50 border border-blue-100 rounded-xl">
                     <p className="text-sm text-gray-600">Average Donation</p>
-                    <p className="text-2xl font-bold text-blue-600">$285</p>
+                    <p className="text-2xl font-bold text-blue-700">$285</p>
                     <p className="text-xs text-gray-600">Per donor</p>
                   </div>
 
-                  <div className="p-4 bg-purple-50 rounded-lg">
+                  <div className="p-4 bg-purple-50 border border-purple-100 rounded-xl">
                     <p className="text-sm text-gray-600">Total Donors</p>
-                    <p className="text-2xl font-bold text-purple-600">318</p>
+                    <p className="text-2xl font-bold text-purple-700">318</p>
                     <p className="text-xs text-gray-600">Active donors</p>
                   </div>
 
-                  <div className="p-4 bg-orange-50 rounded-lg">
+                  <div className="p-4 bg-orange-50 border border-orange-100 rounded-xl">
                     <p className="text-sm text-gray-600">Monthly Goal</p>
-                    <p className="text-2xl font-bold text-orange-600">75%</p>
+                    <p className="text-2xl font-bold text-orange-700">75%</p>
                     <p className="text-xs text-gray-600">$15K / $20K</p>
                   </div>
                 </div>
 
-                <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+                <div className="mt-4 p-4 bg-blue-50 border border-blue-100 rounded-xl">
                   <p className="text-sm text-gray-700">
                     <strong>Note:</strong> For detailed donation analytics including donor management, transaction
                     history, and detailed reports, please visit the Donation Management module.

@@ -168,7 +168,7 @@ const UserCard = ({
   };
 
   return (
-    <div className="h-full rounded-2xl border border-slate-100 bg-white shadow-sm p-6 flex flex-col justify-between">
+    <div className="h-full rounded-2xl border border-gray-200 bg-white shadow-sm hover:shadow-md transition-shadow p-6 flex flex-col justify-between">
       <div className="flex items-start justify-between gap-4">
         {/* Left: avatar + info */}
         <div className="flex items-start gap-4 min-w-0">
@@ -176,47 +176,55 @@ const UserCard = ({
             <img
               src={user.avatarUrl}
               alt={fullName}
-              className="w-12 h-12 rounded-full object-cover"
+              className="w-12 h-12 rounded-full object-cover border border-gray-200"
             />
           ) : (
-            <div className="w-12 h-12 rounded-full bg-indigo-50 text-indigo-700 flex items-center justify-center font-semibold text-lg">
+            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-50 to-blue-50 text-indigo-700 flex items-center justify-center font-semibold text-lg border border-indigo-100">
               {initials}
             </div>
           )}
 
           <div className="min-w-0">
-            <h3 className="text-lg font-semibold text-slate-900 truncate">{fullName}</h3>
+            <h3 className="text-lg font-semibold text-gray-900 truncate">{fullName}</h3>
 
             <div className="mt-2 flex flex-wrap items-center gap-2">
-              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${getRoleBadgeClasses(user.role)}`}>
+              <span
+                className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${getRoleBadgeClasses(
+                  user.role
+                )}`}
+              >
                 {user.role}
               </span>
 
-              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${getStatusBadgeClasses(user.status)}`}>
+              <span
+                className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${getStatusBadgeClasses(
+                  user.status
+                )}`}
+              >
                 {user.status}
               </span>
             </div>
 
-            <div className="mt-4 space-y-1.5 text-sm text-slate-600">
+            <div className="mt-4 space-y-1.5 text-sm text-gray-600">
               <div className="flex items-center gap-2">
-                <Mail className="h-4 w-4 text-slate-500" />
+                <Mail className="h-4 w-4 text-gray-500" />
                 <span className="truncate">{user.email}</span>
               </div>
 
               {user.phone && (
                 <div className="flex items-center gap-2">
-                  <Phone className="h-4 w-4 text-slate-500" />
+                  <Phone className="h-4 w-4 text-gray-500" />
                   <span className="truncate">{user.phone}</span>
                 </div>
               )}
 
               <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-slate-500" />
+                <Calendar className="h-4 w-4 text-gray-500" />
                 <span>Joined: {user.createdAt}</span>
               </div>
 
               <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4 text-slate-500" />
+                <Clock className="h-4 w-4 text-gray-500" />
                 <span>Last login: {formatLastLogin(user.lastLogin)}</span>
               </div>
             </div>
@@ -228,25 +236,25 @@ const UserCard = ({
           <button
             type="button"
             onClick={() => onEdit(user)}
-            className="h-10 w-10 rounded-xl border border-slate-200 hover:bg-slate-50 inline-flex items-center justify-center"
+            className="h-10 w-10 rounded-xl border border-gray-200 hover:bg-gray-50 inline-flex items-center justify-center transition-colors"
             title="Edit"
           >
-            <Edit className="h-4 w-4 text-slate-700" />
+            <Edit className="h-4 w-4 text-gray-700" />
           </button>
 
           <button
             type="button"
             onClick={() => setMenuOpen((o) => !o)}
-            className="h-10 w-10 rounded-xl border border-slate-200 hover:bg-slate-50 inline-flex items-center justify-center"
+            className="h-10 w-10 rounded-xl border border-gray-200 hover:bg-gray-50 inline-flex items-center justify-center transition-colors"
             title="More"
           >
-            <MoreVertical className="h-4 w-4 text-slate-700" />
+            <MoreVertical className="h-4 w-4 text-gray-700" />
           </button>
 
           {menuOpen && (
-            <div className="absolute right-0 top-12 w-56 bg-white rounded-2xl shadow-lg border border-slate-100 py-1 text-sm z-10 overflow-hidden">
+            <div className="absolute right-0 top-12 w-56 bg-white rounded-2xl shadow-xl border border-gray-200 py-1 text-sm z-10 overflow-hidden">
               <button
-                className="w-full flex items-center gap-2 px-4 py-2.5 hover:bg-slate-50 text-slate-700 text-left"
+                className="w-full flex items-center gap-2 px-4 py-2.5 hover:bg-gray-50 text-gray-700 text-left"
                 onClick={() => handleMenuItem(onViewDetails)}
               >
                 <Eye className="h-4 w-4" />
@@ -254,7 +262,7 @@ const UserCard = ({
               </button>
 
               <button
-                className="w-full flex items-center gap-2 px-4 py-2.5 hover:bg-slate-50 text-slate-700 text-left"
+                className="w-full flex items-center gap-2 px-4 py-2.5 hover:bg-gray-50 text-gray-700 text-left"
                 onClick={() => handleMenuItem(onEdit)}
               >
                 <Edit className="h-4 w-4" />
@@ -262,17 +270,17 @@ const UserCard = ({
               </button>
 
               <button
-                className="w-full flex items-center gap-2 px-4 py-2.5 hover:bg-slate-50 text-slate-700 text-left"
+                className="w-full flex items-center gap-2 px-4 py-2.5 hover:bg-gray-50 text-gray-700 text-left"
                 onClick={() => handleMenuItem(onResetPassword)}
               >
                 <Key className="h-4 w-4" />
                 Reset Password
               </button>
 
-              <div className="my-1 border-t border-slate-100" />
+              <div className="my-1 border-t border-gray-100" />
 
               <button
-                className={`w-full flex items-center gap-2 px-4 py-2.5 hover:bg-slate-50 text-left ${
+                className={`w-full flex items-center gap-2 px-4 py-2.5 hover:bg-gray-50 text-left ${
                   user.status === 'Active' ? 'text-orange-600' : 'text-emerald-600'
                 }`}
                 onClick={() => handleMenuItem(onToggleStatus)}
@@ -290,10 +298,10 @@ const UserCard = ({
                 )}
               </button>
 
-              <div className="my-1 border-t border-slate-100" />
+              <div className="my-1 border-t border-gray-100" />
 
               <button
-                className="w-full flex items-center gap-2 px-4 py-2.5 hover:bg-slate-50 text-red-600 text-left"
+                className="w-full flex items-center gap-2 px-4 py-2.5 hover:bg-gray-50 text-red-600 text-left"
                 onClick={() => handleMenuItem(onDelete)}
               >
                 <Trash2 className="h-4 w-4" />
@@ -306,13 +314,13 @@ const UserCard = ({
 
       {/* Permissions */}
       {user.permissions && user.permissions.length > 0 && (
-        <div className="mt-6 pt-4 border-t border-slate-100">
-          <p className="text-xs font-semibold text-slate-700 mb-2">Permissions</p>
+        <div className="mt-6 pt-4 border-t border-gray-100">
+          <p className="text-xs font-semibold text-gray-700 mb-2">Permissions</p>
           <div className="flex flex-wrap gap-2">
             {user.permissions.map((perm) => (
               <span
                 key={perm}
-                className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] border border-slate-200 bg-slate-50 text-slate-700 font-medium"
+                className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] border border-gray-200 bg-gray-50 text-gray-700 font-medium"
               >
                 {perm}
               </span>
@@ -541,20 +549,20 @@ const Users = () => {
   const adminCount = users.filter((u) => u.role === 'Admin').length;
 
   return (
-    <div className="min-h-screen bg-slate-50 px-6 py-8 lg:px-10">
+    <div className="min-h-screen bg-gray-50 px-6 py-8 lg:px-10">
       <div className="mx-auto max-w-6xl space-y-6">
         {/* HEADER */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-slate-900">User Management</h1>
-            <p className="text-sm text-slate-500 mt-1">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">User Management</h1>
+            <p className="text-sm text-gray-600 mt-1">
               Manage system users, roles, and permissions
             </p>
           </div>
 
           <Button
             onClick={() => setIsAddModalOpen(true)}
-            className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white w-full sm:w-auto"
+            className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white w-full sm:w-auto px-5 py-2.5 rounded-xl shadow-sm"
           >
             <Plus className="h-4 w-4" />
             Add User
@@ -563,63 +571,71 @@ const Users = () => {
 
         {/* STATS */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <div className="rounded-2xl border border-slate-100 bg-white shadow-sm p-6">
+          <div className="rounded-2xl border border-gray-200 bg-white shadow-sm hover:shadow-md transition-shadow p-6 border-l-4 border-l-indigo-500">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-slate-500">Total Users</p>
-                <p className="mt-1 text-2xl font-bold text-slate-900">{totalUsers}</p>
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Total Users</p>
+                <p className="mt-1 text-2xl font-bold text-gray-900">{totalUsers}</p>
               </div>
-              <UsersIcon className="h-8 w-8 text-indigo-600" />
+              <div className="bg-gradient-to-br from-indigo-500 to-blue-600 p-3 rounded-2xl shadow-md">
+                <UsersIcon className="h-6 w-6 text-white" />
+              </div>
             </div>
           </div>
 
-          <div className="rounded-2xl border border-slate-100 bg-white shadow-sm p-6">
+          <div className="rounded-2xl border border-gray-200 bg-white shadow-sm hover:shadow-md transition-shadow p-6 border-l-4 border-l-emerald-500">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-slate-500">Active Users</p>
-                <p className="mt-1 text-2xl font-bold text-emerald-700">{activeUsers}</p>
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Active Users</p>
+                <p className="mt-1 text-2xl font-bold text-gray-900">{activeUsers}</p>
               </div>
-              <UserCheck className="h-8 w-8 text-emerald-600" />
+              <div className="bg-gradient-to-br from-emerald-500 to-green-600 p-3 rounded-2xl shadow-md">
+                <UserCheck className="h-6 w-6 text-white" />
+              </div>
             </div>
           </div>
 
-          <div className="rounded-2xl border border-slate-100 bg-white shadow-sm p-6">
+          <div className="rounded-2xl border border-gray-200 bg-white shadow-sm hover:shadow-md transition-shadow p-6 border-l-4 border-l-slate-500">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-slate-500">Inactive/Suspended</p>
-                <p className="mt-1 text-2xl font-bold text-slate-900">{inactiveSuspended}</p>
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Inactive/Suspended</p>
+                <p className="mt-1 text-2xl font-bold text-gray-900">{inactiveSuspended}</p>
               </div>
-              <UserX className="h-8 w-8 text-slate-500" />
+              <div className="bg-gradient-to-br from-slate-500 to-gray-600 p-3 rounded-2xl shadow-md">
+                <UserX className="h-6 w-6 text-white" />
+              </div>
             </div>
           </div>
 
-          <div className="rounded-2xl border border-slate-100 bg-white shadow-sm p-6">
+          <div className="rounded-2xl border border-gray-200 bg-white shadow-sm hover:shadow-md transition-shadow p-6 border-l-4 border-l-red-500">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-slate-500">Admins</p>
-                <p className="mt-1 text-2xl font-bold text-red-700">{adminCount}</p>
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Admins</p>
+                <p className="mt-1 text-2xl font-bold text-gray-900">{adminCount}</p>
               </div>
-              <Shield className="h-8 w-8 text-red-600" />
+              <div className="bg-gradient-to-br from-red-500 to-rose-600 p-3 rounded-2xl shadow-md">
+                <Shield className="h-6 w-6 text-white" />
+              </div>
             </div>
           </div>
         </div>
 
         {/* SEARCH + FILTERS */}
-        <div className="rounded-2xl border border-slate-100 bg-white shadow-sm p-6">
+        <div className="rounded-2xl border border-gray-200 bg-white shadow-sm p-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="relative md:col-span-1">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
               <input
                 type="text"
-                placeholder="Search users by name, email, or role..."
+                placeholder="🔍 Search users by name, email, or role..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 pl-11 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-slate-200 focus:border-slate-300"
+                className="h-12 w-full rounded-xl border border-gray-300 bg-white pl-12 pr-4 text-sm outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
               />
             </div>
 
             <select
-              className="h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-slate-200 focus:border-slate-300"
+              className="h-12 w-full rounded-xl border border-gray-300 bg-white px-4 text-sm outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
               value={selectedRole}
               onChange={(e) => setSelectedRole(e.target.value)}
             >
@@ -632,7 +648,7 @@ const Users = () => {
             </select>
 
             <select
-              className="h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-slate-200 focus:border-slate-300"
+              className="h-12 w-full rounded-xl border border-gray-300 bg-white px-4 text-sm outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
               value={selectedStatus}
               onChange={(e) => setSelectedStatus(e.target.value)}
             >
@@ -659,7 +675,7 @@ const Users = () => {
           ))}
 
           {currentUsers.length === 0 && (
-            <div className="col-span-full rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center text-slate-500 shadow-sm">
+            <div className="col-span-full rounded-2xl border border-dashed border-gray-300 bg-white p-10 text-center text-gray-600 shadow-sm">
               No users found matching your criteria.
             </div>
           )}
@@ -667,8 +683,8 @@ const Users = () => {
 
         {/* PAGINATION */}
         {totalPages > 1 && (
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-2xl border border-slate-100 bg-white shadow-sm p-6">
-            <div className="text-sm text-slate-600">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-2xl border border-gray-200 bg-white shadow-sm p-6">
+            <div className="text-sm text-gray-600">
               Showing {filteredUsers.length === 0 ? 0 : indexOfFirstItem + 1} to{' '}
               {Math.min(indexOfLastItem, filteredUsers.length)} of {filteredUsers.length} users
             </div>
@@ -709,24 +725,24 @@ const Users = () => {
         {/* ADD USER MODAL */}
         {isAddModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-            <div className="bg-white rounded-2xl shadow-xl w-full max-w-3xl p-6 md:p-7">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl p-6 md:p-7 border border-gray-200">
               {/* Header */}
               <div className="flex items-start justify-between mb-4 gap-4">
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="inline-flex h-9 w-9 rounded-full bg-indigo-50 items-center justify-center">
-                      <UserPlus className="h-4 w-4 text-indigo-600" />
+                    <span className="inline-flex h-10 w-10 rounded-2xl bg-gradient-to-br from-indigo-500 to-blue-600 items-center justify-center shadow-md">
+                      <UserPlus className="h-4 w-4 text-white" />
                     </span>
-                    <h2 className="text-lg font-semibold text-slate-900">Add New User</h2>
+                    <h2 className="text-lg font-semibold text-gray-900">Add New User</h2>
                   </div>
-                  <p className="mt-2 text-sm text-slate-500">
+                  <p className="mt-2 text-sm text-gray-600">
                     Create a new user account with appropriate role and permissions.
                   </p>
                 </div>
 
                 <button
                   onClick={() => setIsAddModalOpen(false)}
-                  className="h-10 w-10 rounded-xl border border-slate-200 hover:bg-slate-50 inline-flex items-center justify-center text-slate-600"
+                  className="h-10 w-10 rounded-xl border border-gray-200 hover:bg-gray-50 inline-flex items-center justify-center text-gray-600 transition-colors"
                   title="Close"
                 >
                   ×
@@ -742,15 +758,15 @@ const Users = () => {
                       <img
                         src={newUser.avatarUrl}
                         alt="Preview"
-                        className="w-20 h-20 rounded-full object-cover border border-slate-200"
+                        className="w-20 h-20 rounded-full object-cover border border-gray-200"
                       />
                     ) : (
-                      <div className="w-20 h-20 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600 text-2xl font-semibold">
+                      <div className="w-20 h-20 rounded-full bg-gradient-to-br from-indigo-50 to-blue-50 flex items-center justify-center text-indigo-600 text-2xl font-semibold border border-indigo-100">
                         ?
                       </div>
                     )}
 
-                    <label className="inline-flex items-center px-4 py-2 rounded-xl border border-slate-200 text-sm font-medium text-slate-700 cursor-pointer hover:bg-slate-50">
+                    <label className="inline-flex items-center px-4 py-2 rounded-xl border border-gray-200 text-sm font-medium text-gray-700 cursor-pointer hover:bg-gray-50 transition-colors">
                       <span>Upload Photo</span>
                       <input
                         type="file"
@@ -759,7 +775,7 @@ const Users = () => {
                         onChange={handleAvatarChange}
                       />
                     </label>
-                    <p className="text-xs text-slate-500 text-center md:text-left">
+                    <p className="text-xs text-gray-500 text-center md:text-left">
                       JPG or PNG, max ~2MB.
                     </p>
                   </div>
@@ -767,7 +783,7 @@ const Users = () => {
                   {/* Inputs */}
                   <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
-                      <label className="text-sm font-medium text-slate-700">
+                      <label className="text-sm font-medium text-gray-700">
                         First Name <span className="text-red-500">*</span>
                       </label>
                       <input
@@ -775,12 +791,12 @@ const Users = () => {
                         placeholder="Enter first name"
                         value={newUser.firstName}
                         onChange={(e) => setNewUser((prev) => ({ ...prev, firstName: e.target.value }))}
-                        className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-slate-200"
+                        className="h-11 w-full rounded-xl border border-gray-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                       />
                     </div>
 
                     <div className="space-y-1.5">
-                      <label className="text-sm font-medium text-slate-700">
+                      <label className="text-sm font-medium text-gray-700">
                         Last Name <span className="text-red-500">*</span>
                       </label>
                       <input
@@ -788,23 +804,23 @@ const Users = () => {
                         placeholder="Enter last name"
                         value={newUser.lastName}
                         onChange={(e) => setNewUser((prev) => ({ ...prev, lastName: e.target.value }))}
-                        className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-slate-200"
+                        className="h-11 w-full rounded-xl border border-gray-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                       />
                     </div>
 
                     <div className="space-y-1.5">
-                      <label className="text-sm font-medium text-slate-700">Middle Name</label>
+                      <label className="text-sm font-medium text-gray-700">Middle Name</label>
                       <input
                         type="text"
                         placeholder="Enter middle name"
                         value={newUser.middleName}
                         onChange={(e) => setNewUser((prev) => ({ ...prev, middleName: e.target.value }))}
-                        className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-slate-200"
+                        className="h-11 w-full rounded-xl border border-gray-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                       />
                     </div>
 
                     <div className="space-y-1.5">
-                      <label className="text-sm font-medium text-slate-700">
+                      <label className="text-sm font-medium text-gray-700">
                         Email Address <span className="text-red-500">*</span>
                       </label>
                       <input
@@ -812,29 +828,29 @@ const Users = () => {
                         placeholder="Enter email address"
                         value={newUser.email}
                         onChange={(e) => setNewUser((prev) => ({ ...prev, email: e.target.value }))}
-                        className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-slate-200"
+                        className="h-11 w-full rounded-xl border border-gray-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                       />
                     </div>
 
                     <div className="space-y-1.5">
-                      <label className="text-sm font-medium text-slate-700">Phone Number</label>
+                      <label className="text-sm font-medium text-gray-700">Phone Number</label>
                       <input
                         type="text"
                         placeholder="Enter phone number"
                         value={newUser.phone}
                         onChange={(e) => setNewUser((prev) => ({ ...prev, phone: e.target.value }))}
-                        className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-slate-200"
+                        className="h-11 w-full rounded-xl border border-gray-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                       />
                     </div>
 
                     <div className="space-y-1.5">
-                      <label className="text-sm font-medium text-slate-700">
+                      <label className="text-sm font-medium text-gray-700">
                         Role <span className="text-red-500">*</span>
                       </label>
                       <select
                         value={newUser.role}
                         onChange={(e) => setNewUser((prev) => ({ ...prev, role: e.target.value }))}
-                        className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-slate-200"
+                        className="h-11 w-full rounded-xl border border-gray-300 bg-white px-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                       >
                         <option value="">Select role</option>
                         <option value="Staff">Staff</option>
@@ -848,18 +864,18 @@ const Users = () => {
 
                 {/* Permissions */}
                 <div>
-                  <p className="text-sm font-medium text-slate-900">
+                  <p className="text-sm font-medium text-gray-900">
                     Permissions{' '}
-                    <span className="font-normal text-slate-500">
+                    <span className="font-normal text-gray-600">
                       (Optional - defaults will be applied based on role)
                     </span>
                   </p>
                   <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {availablePermissions.map((permission) => (
-                      <label key={permission} className="inline-flex items-center gap-2 text-sm text-slate-700">
+                      <label key={permission} className="inline-flex items-center gap-2 text-sm text-gray-700">
                         <input
                           type="checkbox"
-                          className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                          className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
                           checked={newUser.permissions.includes(permission)}
                           onChange={() => togglePermission(permission)}
                         />
