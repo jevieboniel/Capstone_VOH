@@ -12,7 +12,7 @@ import {
   getAdoptionStatusColor,
 } from "../Modals/ChildrenModals";
 
-// ✅ NEW: this is the modal that shows the Development Tracking summary (like your screenshot)
+//this is the modal that shows the Development Tracking summary
 import DevelopmentSummaryModal from "../Modals/DevelopmentSummaryModal";
 
 const Children = () => {
@@ -28,7 +28,7 @@ const Children = () => {
   const [editChild, setEditChild] = useState(null);
   const [reintegrationChild, setReintegrationChild] = useState(null);
 
-  // ✅ NEW: child that is currently being viewed in Development modal
+  //child that is currently being viewed in Development modal
   const [devChild, setDevChild] = useState(null);
 
   const API_URL = "http://localhost:5000/api/children";
@@ -154,7 +154,7 @@ const Children = () => {
     });
   }, [children, search]);
 
-  // ✅ NEW helper: normalize name for the Dev modal header
+  //normalize name for the Dev modal header
   const withFullName = (c) => {
     if (!c) return null;
     const firstName = c.firstName ?? c.first_name ?? "";
@@ -198,9 +198,9 @@ const Children = () => {
             type="text"
             placeholder="🔍 Search children by name, house, or education level..."
             className="w-full pl-11 pr-4 h-12 border border-gray-300 dark:border-gray-700 rounded-xl
-                       bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100
-                       placeholder:text-gray-400 dark:placeholder:text-gray-500
-                       shadow-sm outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm transition-colors duration-300"
+                      bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100
+                      placeholder:text-gray-400 dark:placeholder:text-gray-500
+                      shadow-sm outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm transition-colors duration-300"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -225,7 +225,7 @@ const Children = () => {
             <div
               key={child.id}
               className="bg-white dark:bg-gray-900 rounded-2xl p-5 shadow-sm border border-gray-200 dark:border-gray-800
-                         hover:shadow-md transition-shadow flex flex-col gap-3"
+                        hover:shadow-md transition-shadow flex flex-col gap-3"
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex gap-3 min-w-0">
@@ -245,7 +245,7 @@ const Children = () => {
                 <div className="flex gap-2 shrink-0">
                   <button
                     className="p-2 border border-gray-200 dark:border-gray-800 rounded-xl
-                               hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-gray-700 dark:text-gray-200"
+                              hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-gray-700 dark:text-gray-200"
                     onClick={() => setSelectedChild(child)}
                     type="button"
                     title="View"
@@ -255,7 +255,7 @@ const Children = () => {
 
                   <button
                     className="p-2 border border-gray-200 dark:border-gray-800 rounded-xl
-                               hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-gray-700 dark:text-gray-200"
+                              hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-gray-700 dark:text-gray-200"
                     onClick={() => setEditChild(child)}
                     type="button"
                     title="Edit"
@@ -265,7 +265,7 @@ const Children = () => {
 
                   <button
                     className="p-2 border border-gray-200 dark:border-gray-800 rounded-xl
-                               hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-gray-700 dark:text-gray-200"
+                              hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-gray-700 dark:text-gray-200"
                     onClick={() => setReintegrationChild(child)}
                     type="button"
                     title="Reintegration"
@@ -334,7 +334,7 @@ const Children = () => {
           child={selectedChild}
           onClose={() => setSelectedChild(null)}
           onEdit={(c) => setEditChild(c)}
-          // ✅ NEW: when user clicks "View Development" inside ChildDetailModal
+          //when user clicks "View Development" inside ChildDetailModal
           onViewDevelopment={(c) => setDevChild(withFullName(c))}
         />
       )}
@@ -349,7 +349,7 @@ const Children = () => {
         />
       )}
 
-      {/* ✅ NEW: Development summary modal */}
+      {/* Development summary modal */}
       {devChild && (
         <DevelopmentSummaryModal
           child={devChild}

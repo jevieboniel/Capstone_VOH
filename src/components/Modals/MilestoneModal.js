@@ -1,13 +1,13 @@
-    // Milestonemodal.jsx
-    import React, { useEffect, useMemo, useState } from "react";
-    import { Plus, Target, X, Trash2 } from "lucide-react";
-    import Button from "../UI/Button";
-    import { UI } from "../UI/uiTokens";
+// Milestonemodal.jsx
+import React, { useEffect, useMemo, useState } from "react";
+import { Plus, Target, X, Trash2 } from "lucide-react";
+import Button from "../UI/Button";
+import { UI } from "../UI/uiTokens";
 
-    /* ==========================================================
-    AddMilestoneModal (DB Children dropdown)
-    ========================================================== */
-    const Milestonemodal = ({ onClose, onSave, children: childrenList = [] }) => {
+/* ==========================================================
+AddMilestoneModal (DB Children dropdown)
+========================================================== */
+const Milestonemodal = ({ onClose, onSave, children: childrenList = [] }) => {
     const [childId, setChildId] = useState("");
     const [category, setCategory] = useState("");
     const [title, setTitle] = useState("");
@@ -88,22 +88,33 @@
         <div className={UI.modalOverlay}>
         <div className={`${UI.modalBox} max-w-2xl`}>
             <div className={UI.modalHeader}>
-            <h2 className="text-lg font-semibold flex items-center gap-2">
+            <h2 className="text-lg font-semibold flex items-center gap-2 text-gray-900 dark:text-gray-100">
                 <Target className="h-5 w-5 text-purple-600" />
                 Add New Milestone
             </h2>
 
-            <button onClick={closeAndReset} className={UI.iconBtn} type="button" aria-label="Close">
+            <button
+                onClick={closeAndReset}
+                className={`${UI.iconBtn} text-gray-700 dark:text-gray-200`}
+                type="button"
+                aria-label="Close"
+            >
                 <X className="h-4 w-4" />
             </button>
             </div>
 
-            <div className={`${UI.modalBody} space-y-4 max-h-[75vh] overflow-y-auto`}>
+            <div
+            className={`${UI.modalBody} space-y-4 max-h-[75vh] overflow-y-auto text-gray-900 dark:text-gray-100`}
+            >
             {/* FIELDS */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Child *</label>
-                <select value={childId} onChange={(e) => setChildId(e.target.value)} className={UI.select}>
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Child *</label>
+                <select
+                    value={childId}
+                    onChange={(e) => setChildId(e.target.value)}
+                    className={`${UI.select} text-gray-900 dark:text-gray-100 dark:bg-gray-900 dark:border-gray-700`}
+                >
                     <option value="">Select child</option>
                     {sortedChildren.map((c) => (
                     <option key={c.id} value={c.id}>
@@ -114,8 +125,12 @@
                 </div>
 
                 <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Category *</label>
-                <select value={category} onChange={(e) => setCategory(e.target.value)} className={UI.select}>
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Category *</label>
+                <select
+                    value={category}
+                    onChange={(e) => setCategory(e.target.value)}
+                    className={`${UI.select} text-gray-900 dark:text-gray-100 dark:bg-gray-900 dark:border-gray-700`}
+                >
                     <option value="">Select category</option>
                     <option value="Physical">Physical</option>
                     <option value="Educational">Educational</option>
@@ -126,38 +141,38 @@
             </div>
 
             <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Milestone Title *</label>
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Milestone Title *</label>
                 <input
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="e.g. Reading Level 3"
-                className={UI.input}
+                className={`${UI.input} text-gray-900 dark:text-gray-100 dark:bg-gray-900 dark:border-gray-700 dark:placeholder-gray-500`}
                 />
             </div>
 
             <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Description</label>
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Description</label>
                 <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Describe milestone..."
-                className={UI.textarea}
+                className={`${UI.textarea} text-gray-900 dark:text-gray-100 dark:bg-gray-900 dark:border-gray-700 dark:placeholder-gray-500`}
                 />
             </div>
 
             <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Target Date *</label>
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Target Date *</label>
                 <input
                 type="date"
                 value={targetDate}
                 onChange={(e) => setTargetDate(e.target.value)}
-                className={UI.input}
+                className={`${UI.input} text-gray-900 dark:text-gray-100 dark:bg-gray-900 dark:border-gray-700`}
                 />
             </div>
 
             {/* Objectives */}
             <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Objectives</label>
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Objectives</label>
 
                 <div className="space-y-2">
                 {objectives.map((obj, i) => (
@@ -166,7 +181,7 @@
                         value={obj}
                         onChange={(e) => updateObjective(e.target.value, i)}
                         placeholder={`Objective ${i + 1}`}
-                        className={UI.input}
+                        className={`${UI.input} text-gray-900 dark:text-gray-100 dark:bg-gray-900 dark:border-gray-700 dark:placeholder-gray-500`}
                     />
 
                     {/* ✅ remove button */}
@@ -174,11 +189,11 @@
                         <button
                         type="button"
                         onClick={() => removeObjective(i)}
-                        className="h-10 w-10 inline-flex items-center justify-center rounded-lg border border-gray-300 hover:bg-gray-50"
+                        className="h-10 w-10 inline-flex items-center justify-center rounded-lg border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
                         aria-label="Remove objective"
                         title="Remove"
                         >
-                        <Trash2 className="h-4 w-4 text-gray-700" />
+                        <Trash2 className="h-4 w-4 text-gray-700 dark:text-gray-200" />
                         </button>
                     )}
                     </div>
@@ -192,12 +207,12 @@
             </div>
 
             <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Initial Notes</label>
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Initial Notes</label>
                 <textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="Additional notes..."
-                className={UI.textarea}
+                className={`${UI.textarea} text-gray-900 dark:text-gray-100 dark:bg-gray-900 dark:border-gray-700 dark:placeholder-gray-500`}
                 />
             </div>
             </div>
@@ -213,6 +228,6 @@
         </div>
         </div>
     );
-    };
+};
 
-    export default Milestonemodal;
+export default Milestonemodal;
