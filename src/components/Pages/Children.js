@@ -1,6 +1,17 @@
 import React, { useMemo, useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { Search, Eye, Pencil, UserPlus, MapPin, User, Calendar, Heart, FileText } from "lucide-react";
+import {
+  Search,
+  Eye,
+  Pencil,
+  UserPlus,
+  MapPin,
+  User,
+  Calendar,
+  Heart,
+  FileText,
+  Home,
+} from "lucide-react";
 import Button from "../UI/Button";
 import {
   AddChildModal,
@@ -12,7 +23,7 @@ import {
   getAdoptionStatusColor,
 } from "../Modals/ChildrenModals";
 
-//this is the modal that shows the Development Tracking summary
+// this is the modal that shows the Development Tracking summary
 import DevelopmentSummaryModal from "../Modals/DevelopmentSummaryModal";
 
 const Children = () => {
@@ -28,7 +39,7 @@ const Children = () => {
   const [editChild, setEditChild] = useState(null);
   const [reintegrationChild, setReintegrationChild] = useState(null);
 
-  //child that is currently being viewed in Development modal
+  // child that is currently being viewed in Development modal
   const [devChild, setDevChild] = useState(null);
 
   const API_URL = "http://localhost:5000/api/children";
@@ -51,6 +62,8 @@ const Children = () => {
           ...c,
           image: c.image || "https://i.pravatar.cc/100",
           photoUrl: c.photoUrl || c.photo_url || c.photo || null,
+          // keep reintegration if API returns it
+          reintegration: c.reintegration || c.reintegration_details || null,
         }));
 
         setChildren(normalized);
@@ -95,6 +108,7 @@ const Children = () => {
         ...created,
         image: created.image || "https://i.pravatar.cc/100",
         photoUrl: created.photoUrl || created.photo_url || created.photo || null,
+        reintegration: created.reintegration || created.reintegration_details || null,
       };
 
       setChildren((prev) => [...prev, normalized]);
@@ -131,7 +145,9 @@ const Children = () => {
       const normalized = {
         ...saved,
         image: saved.image || "https://i.pravatar.cc/100",
-        photoUrl: saved.photoUrl || saved.photo_url || saved.photo || updatedChild.photoUrl || null,
+        photoUrl:
+          saved.photoUrl || saved.photo_url || saved.photo || updatedChild.photoUrl || null,
+        reintegration: saved.reintegration || saved.reintegration_details || updatedChild.reintegration || null,
       };
 
       setChildren((prev) => prev.map((c) => (c.id === normalized.id ? normalized : c)));
@@ -144,7 +160,9 @@ const Children = () => {
   const filteredChildren = useMemo(() => {
     return children.filter((child) => {
       const fullText = `
-        ${child.firstName || child.first_name || ""} ${child.middleName || child.middle_name || ""} ${child.lastName || child.last_name || ""}
+        ${child.firstName || child.first_name || ""} ${child.middleName || child.middle_name || ""} ${
+        child.lastName || child.last_name || ""
+      }
         ${child.house || ""} ${child.educationLevel || child.education_level || ""}
       `
         .toLowerCase()
@@ -154,7 +172,7 @@ const Children = () => {
     });
   }, [children, search]);
 
-  //normalize name for the Dev modal header
+  // normalize name for the Dev modal header
   const withFullName = (c) => {
     if (!c) return null;
     const firstName = c.firstName ?? c.first_name ?? "";
@@ -193,7 +211,10 @@ const Children = () => {
       {/* Search */}
       <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 p-4 transition-colors duration-300">
         <div className="relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500" size={18} />
+          <Search
+            className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500"
+            size={18}
+          />
           <input
             type="text"
             placeholder="🔍 Search children by name, house, or education level..."
@@ -220,6 +241,9 @@ const Children = () => {
           const middleName = child.middleName ?? child.middle_name ?? "";
           const lastName = child.lastName ?? child.last_name ?? "";
           const fullName = `${firstName} ${middleName ? middleName + " " : ""}${lastName}`.trim();
+
+          const isReintegrated = child.status === "Reintegrated" || !!child.reintegration;
+          const reintegrationName = child.reintegration?.adoptiveParents || child.reintegration?.adoptive_parents;
 
           return (
             <div
@@ -282,12 +306,16 @@ const Children = () => {
                   </span>
                 )}
                 {child.healthStatus && (
-                  <span className={`text-xs px-3 py-1 rounded-full border ${getHealthStatusColor(child.healthStatus)}`}>
+                  <span
+                    className={`text-xs px-3 py-1 rounded-full border ${getHealthStatusColor(child.healthStatus)}`}
+                  >
                     {child.healthStatus}
                   </span>
                 )}
                 {child.adoptionStatus && (
-                  <span className={`text-xs px-3 py-1 rounded-full border ${getAdoptionStatusColor(child.adoptionStatus)}`}>
+                  <span
+                    className={`text-xs px-3 py-1 rounded-full border ${getAdoptionStatusColor(child.adoptionStatus)}`}
+                  >
                     {child.adoptionStatus}
                   </span>
                 )}
@@ -314,6 +342,16 @@ const Children = () => {
                   <Heart size={14} className="text-gray-400 dark:text-gray-500" />
                   <span>Health: {child.healthStatus || "—"}</span>
                 </p>
+
+                {/* ✅ Reintegration row like your screenshot */}
+                {isReintegrated && (
+                  <p className="flex items-center gap-2">
+                    <Home size={14} className="text-green-600 dark:text-green-400" />
+                    <span className="text-green-700 dark:text-green-300 font-medium">
+                      Reintegrated with {reintegrationName || "—"}
+                    </span>
+                  </p>
+                )}
               </div>
 
               {child.notes && (
@@ -334,7 +372,7 @@ const Children = () => {
           child={selectedChild}
           onClose={() => setSelectedChild(null)}
           onEdit={(c) => setEditChild(c)}
-          //when user clicks "View Development" inside ChildDetailModal
+          // when user clicks "View Development" inside ChildDetailModal
           onViewDevelopment={(c) => setDevChild(withFullName(c))}
         />
       )}
@@ -350,13 +388,7 @@ const Children = () => {
       )}
 
       {/* Development summary modal */}
-      {devChild && (
-        <DevelopmentSummaryModal
-          child={devChild}
-          token={token}
-          onClose={() => setDevChild(null)}
-        />
-      )}
+      {devChild && <DevelopmentSummaryModal child={devChild} token={token} onClose={() => setDevChild(null)} />}
     </div>
   );
 };
