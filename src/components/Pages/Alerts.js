@@ -10,17 +10,13 @@
     CheckCircle,
     Clock3,
     RotateCcw,
-    User,
-    X,
-    Info,
-    Clipboard,
-    Mail,
-    MessageSquare,
-    Bell,
     Target,
     } from "lucide-react";
 
     import Button from "../UI/Button";
+    import CreateAlertModal from "../Modals/CreateAlertModal";
+    import AlertViewDetailsModal from "../Modals/AlertViewDetailsModal";
+
 
     /* ---------------- Mock Data ---------------- */
     const mockAlerts = [
@@ -468,353 +464,39 @@
             </div>
 
             {/* ---------------- Create Alert Modal ---------------- */}
-            {showCreateAlert && (
-            <div
-                className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 px-4"
-                onClick={() => setShowCreateAlert(false)}
-            >
-                <div
-                className="w-full max-w-xl rounded-2xl bg-white dark:bg-gray-900 p-6 shadow-xl max-h-[90vh] overflow-y-auto border border-gray-100 dark:border-gray-700"
-                onClick={(e) => e.stopPropagation()}
-                >
-                <div className="mb-4 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                    <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-red-50 dark:bg-red-500/10 ring-1 ring-red-100 dark:ring-red-500/20">
-                        <Bell className="h-5 w-5 text-red-600 dark:text-red-300" />
-                    </span>
-                    <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Create New Alert</h2>
-                    </div>
-                    <button
-                    onClick={() => setShowCreateAlert(false)}
-                    className="rounded-xl p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800"
-                    type="button"
-                    >
-                    <X className="h-4 w-4" />
-                    </button>
-                </div>
-
-                <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">Notify staff and house parents about important updates.</p>
-
-                <div className="space-y-4 text-sm">
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <div>
-                        <label className="mb-1 block text-xs font-semibold text-gray-700 dark:text-gray-200">
-                        Alert Title <span className="text-red-500">*</span>
-                        </label>
-                        <Input
-                        value={newAlert.title}
-                        onChange={(e) => setNewAlert((prev) => ({ ...prev, title: e.target.value }))}
-                        placeholder="Enter alert title"
-                        />
-                    </div>
-
-                    <div>
-                        <label className="mb-1 block text-xs font-semibold text-gray-700 dark:text-gray-200">Alert Type</label>
-                        <Select value={newAlert.type} onChange={(e) => setNewAlert((prev) => ({ ...prev, type: e.target.value }))}>
-                        {alertTypes.map((type) => (
-                            <option key={type.value} value={type.value}>
-                            {type.icon} {type.label}
-                            </option>
-                        ))}
-                        </Select>
-                    </div>
-                    </div>
-
-                    <div>
-                    <label className="mb-1 block text-xs font-semibold text-gray-700 dark:text-gray-200">
-                        Message <span className="text-red-500">*</span>
-                    </label>
-                    <textarea
-                        rows={4}
-                        value={newAlert.message}
-                        onChange={(e) => setNewAlert((prev) => ({ ...prev, message: e.target.value }))}
-                        className="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-4 py-3 text-sm text-gray-900 dark:text-gray-100 outline-none focus:bg-white dark:focus:bg-gray-800 focus:border-blue-300 dark:focus:border-blue-500 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-500/30"
-                        placeholder="Enter the alert message..."
-                    />
-                    </div>
-
-                    <div>
-                    <label className="mb-1 block text-xs font-semibold text-gray-700 dark:text-gray-200">Priority Level</label>
-                    <Select value={newAlert.priority} onChange={(e) => setNewAlert((prev) => ({ ...prev, priority: e.target.value }))}>
-                        <option value="low">🟢 Low Priority</option>
-                        <option value="medium">🟡 Medium Priority</option>
-                        <option value="high">🔴 High Priority</option>
-                    </Select>
-                    </div>
-
-                    <div>
-                    <label className="mb-2 block text-xs font-semibold text-gray-700 dark:text-gray-200">
-                        Recipients <span className="text-red-500">*</span>{" "}
-                        <span className="font-normal text-gray-500 dark:text-gray-400">(select at least one)</span>
-                    </label>
-                    <div className="grid max-h-32 grid-cols-2 gap-2 overflow-y-auto rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-3">
-                        {recipientGroups.map((group) => (
-                        <label key={group} className="flex cursor-pointer items-center gap-2 text-xs text-gray-700 dark:text-gray-200">
-                            <input
-                            type="checkbox"
-                            className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                            checked={newAlert.recipients.includes(group)}
-                            onChange={() => toggleRecipient(group)}
-                            />
-                            {group}
-                        </label>
-                        ))}
-                    </div>
-                    <p className="mt-1 text-[11px] text-gray-600 dark:text-gray-400">Selected: {newAlert.recipients.length} groups</p>
-                    </div>
-
-                    <div>
-                    <label className="mb-2 block text-xs font-semibold text-gray-700 dark:text-gray-200">Notification Methods</label>
-                    <div className="flex flex-wrap gap-4">
-                        <label className="flex cursor-pointer items-center gap-2 text-xs text-gray-700 dark:text-gray-200">
-                        <input
-                            type="checkbox"
-                            className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                            checked={newAlert.notificationMethods.email}
-                            onChange={() => toggleNotificationMethod("email")}
-                        />
-                        <span className="inline-flex items-center gap-1">
-                            <Mail className="h-4 w-4" />
-                            Email
-                        </span>
-                        </label>
-
-                        <label className="flex cursor-pointer items-center gap-2 text-xs text-gray-700 dark:text-gray-200">
-                        <input
-                            type="checkbox"
-                            className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                            checked={newAlert.notificationMethods.sms}
-                            onChange={() => toggleNotificationMethod("sms")}
-                        />
-                        <span className="inline-flex items-center gap-1">
-                            <MessageSquare className="h-4 w-4" />
-                            SMS
-                        </span>
-                        </label>
-
-                        <label className="flex cursor-pointer items-center gap-2 text-xs text-gray-700 dark:text-gray-200">
-                        <input
-                            type="checkbox"
-                            className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                            checked={newAlert.notificationMethods.inApp}
-                            onChange={() => toggleNotificationMethod("inApp")}
-                        />
-                        <span className="inline-flex items-center gap-1">
-                            <Bell className="h-4 w-4" />
-                            In-App
-                        </span>
-                        </label>
-                    </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <div>
-                        <label className="mb-1 block text-xs font-semibold text-gray-700 dark:text-gray-200">Schedule Date (optional)</label>
-                        <Input
-                        type="date"
-                        value={newAlert.scheduleDate}
-                        onChange={(e) => setNewAlert((prev) => ({ ...prev, scheduleDate: e.target.value }))}
-                        />
-                    </div>
-
-                    <div>
-                        <label className="mb-1 block text-xs font-semibold text-gray-700 dark:text-gray-200">Schedule Time (optional)</label>
-                        <Input
-                        type="time"
-                        value={newAlert.scheduleTime}
-                        onChange={(e) => setNewAlert((prev) => ({ ...prev, scheduleTime: e.target.value }))}
-                        />
-                    </div>
-                    </div>
-
-                    <div className="rounded-xl bg-blue-50 dark:bg-blue-500/10 px-4 py-3 text-xs text-blue-800 dark:text-blue-200 border border-blue-100 dark:border-blue-500/20">
-                    <strong>Preview:</strong> Your alert will be sent to {newAlert.recipients.length} group
-                    {newAlert.recipients.length === 1 ? "" : "s"}
-                    {newAlert.scheduleDate ? ` on ${newAlert.scheduleDate}` : " immediately"}
-                    {newAlert.scheduleTime ? ` at ${formatTime12(newAlert.scheduleTime)}` : ""}.
-                    </div>
-                </div>
-
-                <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-                    <Button variant="outline" size="medium" onClick={() => setShowCreateAlert(false)} className="w-full sm:w-auto">
-                    Cancel
-                    </Button>
-
-                    <Button
-                    variant="primary"
-                    size="medium"
-                    onClick={handleCreateAlert}
-                    className="inline-flex w-full items-center justify-center gap-2 sm:w-auto"
-                    >
-                    <Send className="h-4 w-4" />
-                    {newAlert.scheduleDate ? "Schedule Alert" : "Send Alert"}
-                    </Button>
-                </div>
-                </div>
-            </div>
-            )}
+            <CreateAlertModal
+                showCreateAlert={showCreateAlert}
+                setShowCreateAlert={setShowCreateAlert}
+                newAlert={newAlert}
+                setNewAlert={setNewAlert}
+                alertTypes={alertTypes}
+                recipientGroups={recipientGroups}
+                toggleRecipient={toggleRecipient}
+                toggleNotificationMethod={toggleNotificationMethod}
+                formatTime12={formatTime12}
+                handleCreateAlert={handleCreateAlert}
+                Input={Input}
+                Select={Select}
+                />
 
             {/* ---------------- View Details Modal ---------------- */}
-            {showViewDetails && selectedAlert && (
-            <div
-                className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
-                onClick={() => setShowViewDetails(false)}
-            >
-                <div
-                className="w-full max-w-5xl rounded-2xl bg-white dark:bg-gray-900 shadow-xl max-h-[90vh] overflow-y-auto border border-gray-100 dark:border-gray-700"
-                onClick={(e) => e.stopPropagation()}
-                >
-                <div className="flex items-start justify-between gap-3 border-b border-gray-100 dark:border-gray-800 px-6 py-5">
-                    <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                        <Info className="h-5 w-5 text-gray-700 dark:text-gray-200" />
-                        <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Alert Details</h2>
-                    </div>
-                    <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">Comprehensive information and delivery status for this alert.</p>
-                    </div>
-
-                    <button
-                    onClick={() => setShowViewDetails(false)}
-                    className="rounded-xl p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 shrink-0"
-                    type="button"
-                    >
-                    <X className="h-5 w-5" />
-                    </button>
-                </div>
-
-                <div className="px-6 py-6">
-                    <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{selectedAlert.title}</h3>
-
-                    <div className="mt-3 flex flex-wrap items-center gap-2">
-                    <Pill className={priorityPill[selectedAlert.priority]}>{selectedAlert.priority} priority</Pill>
-                    <Pill className={statusPill[selectedAlert.status]}>{selectedAlert.status}</Pill>
-
-                    <span className="inline-flex items-center gap-2 rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-1 text-sm text-gray-800 dark:text-gray-200">
-                        <span className="text-base">{typeMeta(selectedAlert.type)?.icon}</span>
-                        {typeMeta(selectedAlert.type)?.label}
-                    </span>
-                    </div>
-
-                    <div className="mt-6 rounded-2xl bg-gray-50 dark:bg-gray-800 p-5 border border-gray-200 dark:border-gray-700">
-                    <h4 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Message</h4>
-                    <p className="mt-3 text-base leading-relaxed text-gray-700 dark:text-gray-200">{selectedAlert.message}</p>
-                    </div>
-
-                    <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2">
-                    <div className="space-y-5">
-                        <div>
-                        <div className="flex items-center gap-2 text-gray-900 dark:text-gray-100 font-semibold">
-                            <User className="h-4 w-4 text-gray-600 dark:text-gray-300" />
-                            Sent By
-                        </div>
-                        <p className="mt-2 text-gray-700 dark:text-gray-200">{selectedAlert.sentBy}</p>
-                        </div>
-
-                        <div>
-                        <div className="flex items-center gap-2 text-gray-900 dark:text-gray-100 font-semibold">
-                            <Users className="h-4 w-4 text-gray-600 dark:text-gray-300" />
-                            Recipients
-                        </div>
-                        <p className="mt-2 text-gray-700 dark:text-gray-200">{selectedAlert.recipients.join(", ")}</p>
-                        </div>
-                    </div>
-
-                    <div className="space-y-5">
-                        <div>
-                        <div className="flex items-center gap-2 text-gray-900 dark:text-gray-100 font-semibold">
-                            <Calendar className="h-4 w-4 text-gray-600 dark:text-gray-300" />
-                            Date &amp; Time
-                        </div>
-                        <p className="mt-2 text-gray-700 dark:text-gray-200">{formatDateTime(selectedAlert.sentDate, selectedAlert.sentTime)}</p>
-                        </div>
-
-                        <div>
-                        <div className="flex items-center gap-2 text-gray-900 dark:text-gray-100 font-semibold">
-                            <Clipboard className="h-4 w-4 text-gray-600 dark:text-gray-300" />
-                            Methods
-                        </div>
-
-                        <div className="mt-2 flex flex-wrap gap-2">
-                            {selectedAlert.notificationMethods.map((m) => (
-                            <span
-                                key={m}
-                                className="inline-flex items-center gap-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm text-gray-800 dark:text-gray-200"
-                            >
-                                {m === "email" && <Mail className="h-4 w-4 text-gray-600 dark:text-gray-300" />}
-                                {m === "sms" && <MessageSquare className="h-4 w-4 text-gray-600 dark:text-gray-300" />}
-                                {m === "inApp" && <Bell className="h-4 w-4 text-gray-600 dark:text-gray-300" />}
-                                {m}
-                            </span>
-                            ))}
-                        </div>
-                        </div>
-                    </div>
-                    </div>
-
-                    <div className="my-8 border-t border-gray-200 dark:border-gray-700" />
-
-                    {selectedAlert.status === "sent" && (
-                    <>
-                        <h4 className="text-lg font-bold text-gray-900 dark:text-gray-100">Delivery Statistics</h4>
-
-                        <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-3">
-                        <Card>
-                            <CardBody className="text-center">
-                            <p className="text-4xl font-extrabold text-blue-600">{selectedAlert.deliveryStatus.delivered}</p>
-                            <p className="mt-1 text-gray-600 dark:text-gray-400">Delivered</p>
-                            <div className="mt-4">
-                                <ProgressBar value={Math.round((selectedAlert.deliveryStatus.delivered / selectedAlert.totalRecipients) * 100)} />
-                            </div>
-                            </CardBody>
-                        </Card>
-
-                        <Card>
-                            <CardBody className="text-center">
-                            <p className="text-4xl font-extrabold text-emerald-600">{selectedAlert.deliveryStatus.read}</p>
-                            <p className="mt-1 text-gray-600 dark:text-gray-400">Read</p>
-                            <div className="mt-4">
-                                <ProgressBar value={getReadRate(selectedAlert)} />
-                            </div>
-                            </CardBody>
-                        </Card>
-
-                        <Card>
-                            <CardBody className="text-center">
-                            <p className="text-4xl font-extrabold text-red-600">{selectedAlert.deliveryStatus.failed}</p>
-                            <p className="mt-1 text-gray-600 dark:text-gray-400">Failed</p>
-                            {selectedAlert.deliveryStatus.failed > 0 && (
-                                <p className="mt-3 text-sm font-medium text-red-600 dark:text-red-300">Delivery issues detected</p>
-                            )}
-                            </CardBody>
-                        </Card>
-                        </div>
-                    </>
-                    )}
-
-                    <div className="mt-8 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end border-t border-gray-100 dark:border-gray-800 pt-5">
-                    <Button variant="outline" size="medium" onClick={() => setShowViewDetails(false)} className="w-full sm:w-auto">
-                        Close
-                    </Button>
-
-                    {selectedAlert.status === "sent" &&
-                        selectedAlert.deliveryStatus.failed > 0 &&
-                        (userRole === "admin" || userRole === "staff") && (
-                        <Button
-                            variant="primary"
-                            size="medium"
-                            onClick={() => handleResendAlert(selectedAlert.id)}
-                            disabled={sendingAlert === selectedAlert.id}
-                            className="inline-flex w-full items-center justify-center gap-2 sm:w-auto"
-                        >
-                            {sendingAlert === selectedAlert.id ? <Clock3 className="h-4 w-4 animate-spin" /> : <RotateCcw className="h-4 w-4" />}
-                            Resend
-                        </Button>
-                        )}
-                    </div>
-                </div>
-                </div>
-            </div>
-            )}
+            <AlertViewDetailsModal
+                showViewDetails={showViewDetails}
+                setShowViewDetails={setShowViewDetails}
+                selectedAlert={selectedAlert}
+                priorityPill={priorityPill}
+                statusPill={statusPill}
+                typeMeta={typeMeta}
+                formatDateTime={formatDateTime}
+                getReadRate={getReadRate}
+                Card={Card}
+                CardBody={CardBody}
+                Pill={Pill}
+                ProgressBar={ProgressBar}
+                userRole={userRole}
+                sendingAlert={sendingAlert}
+                handleResendAlert={handleResendAlert}
+                />
         </div>
         </div>
     );

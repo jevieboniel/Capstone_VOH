@@ -23,7 +23,6 @@ import {
   getAdoptionStatusColor,
 } from "../Modals/ChildrenModals";
 
-// this is the modal that shows the Development Tracking summary
 import DevelopmentSummaryModal from "../Modals/DevelopmentSummaryModal";
 
 const Children = () => {
@@ -39,13 +38,11 @@ const Children = () => {
   const [editChild, setEditChild] = useState(null);
   const [reintegrationChild, setReintegrationChild] = useState(null);
 
-  // child that is currently being viewed in Development modal
   const [devChild, setDevChild] = useState(null);
 
   const API_URL = "http://localhost:5000/api/children";
   const token = localStorage.getItem("admin_token");
 
-  // Fetch children on load
   useEffect(() => {
     const fetchChildren = async () => {
       try {
@@ -62,8 +59,13 @@ const Children = () => {
           ...c,
           image: c.image || "https://i.pravatar.cc/100",
           photoUrl: c.photoUrl || c.photo_url || c.photo || null,
-          // keep reintegration if API returns it
+
+          // reintegration
           reintegration: c.reintegration || c.reintegration_details || null,
+
+          // education records
+          educationSummary: c.educationSummary || c.education_summary || null,
+          educationSubjects: c.educationSubjects || c.education_subjects || [],
         }));
 
         setChildren(normalized);
@@ -75,7 +77,6 @@ const Children = () => {
     fetchChildren();
   }, [API_URL, token]);
 
-  // Auto-open Add Child modal via /children?add=1
   useEffect(() => {
     if (searchParams.get("add") === "1") {
       setShowModal(true);
@@ -83,7 +84,6 @@ const Children = () => {
     }
   }, [searchParams, navigate]);
 
-  // Add child
   const handleAddChild = async (child) => {
     try {
       const formData = new FormData();
@@ -109,6 +109,8 @@ const Children = () => {
         image: created.image || "https://i.pravatar.cc/100",
         photoUrl: created.photoUrl || created.photo_url || created.photo || null,
         reintegration: created.reintegration || created.reintegration_details || null,
+        educationSummary: created.educationSummary || created.education_summary || null,
+        educationSubjects: created.educationSubjects || created.education_subjects || [],
       };
 
       setChildren((prev) => [...prev, normalized]);
@@ -118,7 +120,7 @@ const Children = () => {
     }
   };
 
-  // Update child
+  // ✅ main save-to-db function (ChildDetailModal will call this)
   const updateChild = async (updatedChild) => {
     try {
       const id = updatedChild.id;
@@ -126,8 +128,13 @@ const Children = () => {
 
       Object.entries(updatedChild).forEach(([key, value]) => {
         if (value === undefined || value === null) return;
-        if (key === "photo") return; // handled below
-        formData.append(key, value);
+        if (key === "photo") return;
+        // IMPORTANT: if value is an object/array, stringify it
+        if (typeof value === "object") {
+          formData.append(key, JSON.stringify(value));
+        } else {
+          formData.append(key, value);
+        }
       });
 
       if (updatedChild.photo) formData.append("photo", updatedChild.photo);
@@ -145,9 +152,10 @@ const Children = () => {
       const normalized = {
         ...saved,
         image: saved.image || "https://i.pravatar.cc/100",
-        photoUrl:
-          saved.photoUrl || saved.photo_url || saved.photo || updatedChild.photoUrl || null,
+        photoUrl: saved.photoUrl || saved.photo_url || saved.photo || updatedChild.photoUrl || null,
         reintegration: saved.reintegration || saved.reintegration_details || updatedChild.reintegration || null,
+        educationSummary: saved.educationSummary || saved.education_summary || updatedChild.educationSummary || null,
+        educationSubjects: saved.educationSubjects || saved.education_subjects || updatedChild.educationSubjects || [],
       };
 
       setChildren((prev) => prev.map((c) => (c.id === normalized.id ? normalized : c)));
@@ -160,19 +168,15 @@ const Children = () => {
   const filteredChildren = useMemo(() => {
     return children.filter((child) => {
       const fullText = `
-        ${child.firstName || child.first_name || ""} ${child.middleName || child.middle_name || ""} ${
-        child.lastName || child.last_name || ""
-      }
+        ${child.firstName || child.first_name || ""} ${child.middleName || child.middle_name || ""} ${child.lastName || child.last_name || ""}
         ${child.house || ""} ${child.educationLevel || child.education_level || ""}
       `
         .toLowerCase()
         .trim();
-
       return fullText.includes(search.toLowerCase());
     });
   }, [children, search]);
 
-  // normalize name for the Dev modal header
   const withFullName = (c) => {
     if (!c) return null;
     const firstName = c.firstName ?? c.first_name ?? "";
@@ -211,10 +215,7 @@ const Children = () => {
       {/* Search */}
       <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 p-4 transition-colors duration-300">
         <div className="relative">
-          <Search
-            className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500"
-            size={18}
-          />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500" size={18} />
           <input
             type="text"
             placeholder="🔍 Search children by name, house, or education level..."
@@ -248,8 +249,7 @@ const Children = () => {
           return (
             <div
               key={child.id}
-              className="bg-white dark:bg-gray-900 rounded-2xl p-5 shadow-sm border border-gray-200 dark:border-gray-800
-                        hover:shadow-md transition-shadow flex flex-col gap-3"
+              className="bg-white dark:bg-gray-900 rounded-2xl p-5 shadow-sm border border-gray-200 dark:border-gray-800 hover:shadow-md transition-shadow flex flex-col gap-3"
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex gap-3 min-w-0">
@@ -268,8 +268,7 @@ const Children = () => {
 
                 <div className="flex gap-2 shrink-0">
                   <button
-                    className="p-2 border border-gray-200 dark:border-gray-800 rounded-xl
-                              hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-gray-700 dark:text-gray-200"
+                    className="p-2 border border-gray-200 dark:border-gray-800 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-gray-700 dark:text-gray-200"
                     onClick={() => setSelectedChild(child)}
                     type="button"
                     title="View"
@@ -278,8 +277,7 @@ const Children = () => {
                   </button>
 
                   <button
-                    className="p-2 border border-gray-200 dark:border-gray-800 rounded-xl
-                              hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-gray-700 dark:text-gray-200"
+                    className="p-2 border border-gray-200 dark:border-gray-800 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-gray-700 dark:text-gray-200"
                     onClick={() => setEditChild(child)}
                     type="button"
                     title="Edit"
@@ -288,8 +286,7 @@ const Children = () => {
                   </button>
 
                   <button
-                    className="p-2 border border-gray-200 dark:border-gray-800 rounded-xl
-                              hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-gray-700 dark:text-gray-200"
+                    className="p-2 border border-gray-200 dark:border-gray-800 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-gray-700 dark:text-gray-200"
                     onClick={() => setReintegrationChild(child)}
                     type="button"
                     title="Reintegration"
@@ -306,16 +303,12 @@ const Children = () => {
                   </span>
                 )}
                 {child.healthStatus && (
-                  <span
-                    className={`text-xs px-3 py-1 rounded-full border ${getHealthStatusColor(child.healthStatus)}`}
-                  >
+                  <span className={`text-xs px-3 py-1 rounded-full border ${getHealthStatusColor(child.healthStatus)}`}>
                     {child.healthStatus}
                   </span>
                 )}
                 {child.adoptionStatus && (
-                  <span
-                    className={`text-xs px-3 py-1 rounded-full border ${getAdoptionStatusColor(child.adoptionStatus)}`}
-                  >
+                  <span className={`text-xs px-3 py-1 rounded-full border ${getAdoptionStatusColor(child.adoptionStatus)}`}>
                     {child.adoptionStatus}
                   </span>
                 )}
@@ -323,12 +316,10 @@ const Children = () => {
 
               <div className="text-sm text-gray-600 dark:text-gray-300 space-y-2">
                 <p className="flex items-center gap-2">
-                  <MapPin size={14} className="text-gray-400 dark:text-gray-500" />{" "}
-                  {child.house || "No house assigned"}
+                  <MapPin size={14} className="text-gray-400 dark:text-gray-500" /> {child.house || "No house assigned"}
                 </p>
                 <p className="flex items-center gap-2">
-                  <User size={14} className="text-gray-400 dark:text-gray-500" />{" "}
-                  {child.houseParent || "No house parent"}
+                  <User size={14} className="text-gray-400 dark:text-gray-500" /> {child.houseParent || "No house parent"}
                 </p>
                 <p className="flex items-center gap-2">
                   <Calendar size={14} className="text-gray-400 dark:text-gray-500" />
@@ -343,7 +334,6 @@ const Children = () => {
                   <span>Health: {child.healthStatus || "—"}</span>
                 </p>
 
-                {/* ✅ Reintegration row like your screenshot */}
                 {isReintegrated && (
                   <p className="flex items-center gap-2">
                     <Home size={14} className="text-green-600 dark:text-green-400" />
@@ -372,22 +362,17 @@ const Children = () => {
           child={selectedChild}
           onClose={() => setSelectedChild(null)}
           onEdit={(c) => setEditChild(c)}
-          // when user clicks "View Development" inside ChildDetailModal
           onViewDevelopment={(c) => setDevChild(withFullName(c))}
+          onUpdateChild={updateChild}   /* ✅ IMPORTANT */
         />
       )}
 
       {editChild && <EditProfileModal child={editChild} onClose={() => setEditChild(null)} onSave={updateChild} />}
 
       {reintegrationChild && (
-        <ReintegrationModal
-          child={reintegrationChild}
-          onClose={() => setReintegrationChild(null)}
-          onComplete={updateChild}
-        />
+        <ReintegrationModal child={reintegrationChild} onClose={() => setReintegrationChild(null)} onComplete={updateChild} />
       )}
 
-      {/* Development summary modal */}
       {devChild && <DevelopmentSummaryModal child={devChild} token={token} onClose={() => setDevChild(null)} />}
     </div>
   );
