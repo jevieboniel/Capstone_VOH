@@ -16,7 +16,6 @@ const FormModal = ({
 }) => {
   const [formData, setFormData] = useState({});
 
-  // Create a stable "signature" for initialData (so we can detect changes safely)
   const initialKey = useMemo(() => {
     try {
       return JSON.stringify(initialData || {});
@@ -25,8 +24,6 @@ const FormModal = ({
     }
   }, [initialData]);
 
-  // ✅ Reset ONLY when modal opens.
-  // If you switch selectedUser while modal is open, it should load that user too.
   useEffect(() => {
     if (!isOpen) return;
     setFormData(initialData || {});
@@ -35,7 +32,6 @@ const FormModal = ({
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-
     setFormData((prev) => ({
       ...prev,
       [name]: type === "checkbox" ? checked : value,
@@ -52,6 +48,8 @@ const FormModal = ({
   // ---------- Tailwind styles (light + dark) ----------
   const labelCls = "block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1";
   const helpCls = "text-xs text-gray-500 dark:text-gray-400 mt-1";
+
+  // Slightly more mobile-friendly height/padding
   const inputCls =
     "w-full h-11 rounded-xl px-3 text-sm outline-none " +
     "bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 " +
@@ -83,7 +81,7 @@ const FormModal = ({
       required = false,
       options = [],
       description,
-      cols = 1, // optional: 1 or 2
+      cols = 1, // 1 or 2
     } = field;
 
     const wrapperCls = cols === 2 ? "md:col-span-2" : "";
@@ -173,20 +171,41 @@ const FormModal = ({
     );
   };
 
+  // ✅ Width/height rules handled inside Modal usually.
+  // But we can still ensure the form area scrolls on small screens.
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={title} size={size}>
-      <form onSubmit={handleSubmit} className="space-y-5">
-        {/* optional grid for nicer layout */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {fields.map((field) => renderField(field))}
+      <form
+        onSubmit={handleSubmit}
+        className="space-y-5"
+      >
+        {/* ✅ Scroll inside modal content if needed */}
+        <div className="max-h-[70vh] overflow-y-auto pr-1 sm:pr-2">
+          {/* ✅ Responsive grid: 1 col on mobile, 2 cols on md+ */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {fields.map((field) => renderField(field))}
+          </div>
         </div>
 
-        <div className="flex justify-end gap-3 pt-2">
-          <Button type="button" variant="outline" onClick={onClose} disabled={loading}>
+        {/* ✅ Buttons stack on tiny screens, inline on sm+ */}
+        <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onClose}
+            disabled={loading}
+            className="w-full sm:w-auto"
+          >
             {cancelText}
           </Button>
 
-          <Button type="submit" variant="primary" disabled={loading} loading={loading}>
+          <Button
+            type="submit"
+            variant="primary"
+            disabled={loading}
+            loading={loading}
+            className="w-full sm:w-auto"
+          >
             {submitText}
           </Button>
         </div>

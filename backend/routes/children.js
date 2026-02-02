@@ -25,6 +25,9 @@ const storage = multer.diskStorage({
 
     const BASE_URL = process.env.BASE_URL || "http://localhost:5000";
 
+    /* -------------------- helpers -------------------- */
+    const toISODate = (d) => (d ? new Date(d).toISOString().slice(0, 10) : "");
+
     /* -------------------- GET all children -------------------- */
     router.get("/", async (_req, res) => {
     try {
@@ -64,7 +67,6 @@ const storage = multer.diskStorage({
     router.post("/", upload.single("photo"), async (req, res) => {
     try {
         const body = req.body;
-
         const photoUrl = req.file ? `/uploads/${req.file.filename}` : null;
 
         const payload = {
@@ -118,7 +120,6 @@ const storage = multer.diskStorage({
         ]
         );
 
-        // ✅ Return created child (consistent with frontend expectations)
         const [rows] = await pool.query("SELECT * FROM children WHERE id=?", [result.insertId]);
         const r = rows[0];
 
@@ -152,13 +153,12 @@ const storage = multer.diskStorage({
     }
     });
 
-    /* -------------------- PUT edit child (FIXED: DON'T CLEAR PHOTO) -------------------- */
+    /* -------------------- PUT edit child (DON'T CLEAR PHOTO) -------------------- */
     router.put("/:id", upload.single("photo"), async (req, res) => {
     try {
         const { id } = req.params;
         const body = req.body;
 
-        // ✅ Get current photo_url so we do not delete it when no new file is uploaded
         const [existingRows] = await pool.query("SELECT photo_url FROM children WHERE id=?", [id]);
         if (!existingRows.length) {
         return res.status(404).json({ success: false, error: "Child not found" });
@@ -209,7 +209,6 @@ const storage = multer.diskStorage({
         ]
         );
 
-        // ✅ Return updated child
         const [rows] = await pool.query("SELECT * FROM children WHERE id=?", [id]);
         const r = rows[0];
 
@@ -258,7 +257,6 @@ const storage = multer.diskStorage({
         [JSON.stringify(reintegration), id]
         );
 
-        // ✅ Return updated child
         const [rows] = await pool.query("SELECT * FROM children WHERE id=?", [id]);
         if (!rows.length) return res.json({ success: true });
 
@@ -290,7 +288,379 @@ const storage = multer.diskStorage({
     } catch (err) {
         console.error("PUT /children/:id/reintegration error:", err);
         return res.status(500).json({ success: false, error: "Server error" });
-    }   
+    }
+    });
+
+    /* =========================================================
+    HEALTH RECORDS ROUTES
+    Base: /api/children
+    ========================================================= */
+
+    /** GET health records for a child */
+    router.get("/:id/health-records", async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        // ensure child exists (optional but nice)
+        const [childRows] = await pool.query("SELECT id FROM children WHERE id=?", [id]);
+        if (!childRows.length) return res.status(404).json({ success: false, error: "Child not found" });
+
+        const [rows] = await pool.query(
+        `SELECT id, child_id, record_type, provider, record_date, notes, next_appointment
+        FROM health_records
+        WHERE child_id=?
+        ORDER BY record_date DESC, id DESC`,
+        [id]
+        );
+
+        const records = rows.map((r) => ({
+        id: r.id,
+        childId: r.child_id,
+        recordType: r.record_type,
+        provider: r.provider,
+        recordDate: toISODate(r.record_date),
+        notes: r.notes,
+        nextAppointment: toISODate(r.next_appointment),
+        }));
+
+        return res.json({ success: true, records });
+    } catch (err) {
+        console.error("GET /children/:id/health-records error:", err);
+        return res.status(500).json({ success: false, error: "Server error" });
+    }
+    });
+
+    /** POST create a health record for a child */
+    router.post("/:id/health-records", async (req, res) => {
+    try {
+        const { id } = req.params;
+        const body = req.body;
+
+        const recordType = body.recordType || body.record_type;
+        const provider = body.provider;
+        const recordDate = body.recordDate || body.record_date;
+        const notes = body.notes;
+        const nextAppointment = body.nextAppointment || body.next_appointment || null;
+
+        if (!recordType || !provider || !recordDate || !notes) {
+        return res.status(400).json({ success: false, error: "Missing required fields" });
+        }
+
+        const [childRows] = await pool.query("SELECT id FROM children WHERE id=?", [id]);
+        if (!childRows.length) return res.status(404).json({ success: false, error: "Child not found" });
+
+        const [result] = await pool.query(
+        `INSERT INTO health_records (child_id, record_type, provider, record_date, notes, next_appointment)
+        VALUES (?, ?, ?, ?, ?, ?)`,
+        [id, recordType, provider, recordDate, notes, nextAppointment]
+        );
+
+        const [rows] = await pool.query(
+        `SELECT id, child_id, record_type, provider, record_date, notes, next_appointment
+        FROM health_records WHERE id=?`,
+        [result.insertId]
+        );
+
+        const r = rows[0];
+        const record = {
+        id: r.id,
+        childId: r.child_id,
+        recordType: r.record_type,
+        provider: r.provider,
+        recordDate: toISODate(r.record_date),
+        notes: r.notes,
+        nextAppointment: toISODate(r.next_appointment),
+        };
+
+        return res.json({ success: true, record });
+    } catch (err) {
+        console.error("POST /children/:id/health-records error:", err);
+        return res.status(500).json({ success: false, error: "Server error" });
+    }
+    });
+
+    /** PUT update a health record */
+    router.put("/health-records/:recordId", async (req, res) => {
+    try {
+        const { recordId } = req.params;
+        const body = req.body;
+
+        const recordType = body.recordType || body.record_type;
+        const provider = body.provider;
+        const recordDate = body.recordDate || body.record_date;
+        const notes = body.notes;
+        const nextAppointment = body.nextAppointment || body.next_appointment || null;
+
+        if (!recordType || !provider || !recordDate || !notes) {
+        return res.status(400).json({ success: false, error: "Missing required fields" });
+        }
+
+        const [existing] = await pool.query("SELECT id FROM health_records WHERE id=?", [recordId]);
+        if (!existing.length) return res.status(404).json({ success: false, error: "Record not found" });
+
+        await pool.query(
+        `UPDATE health_records SET record_type=?, provider=?, record_date=?, notes=?, next_appointment=?
+        WHERE id=?`,
+        [recordType, provider, recordDate, notes, nextAppointment, recordId]
+        );
+
+        const [rows] = await pool.query(
+        `SELECT id, child_id, record_type, provider, record_date, notes, next_appointment
+        FROM health_records WHERE id=?`,
+        [recordId]
+        );
+
+        const r = rows[0];
+        const record = {
+        id: r.id,
+        childId: r.child_id,
+        recordType: r.record_type,
+        provider: r.provider,
+        recordDate: toISODate(r.record_date),
+        notes: r.notes,
+        nextAppointment: toISODate(r.next_appointment),
+        };
+
+        return res.json({ success: true, record });
+    } catch (err) {
+        console.error("PUT /children/health-records/:recordId error:", err);
+        return res.status(500).json({ success: false, error: "Server error" });
+    }
+    });
+
+    /** DELETE a health record */
+    router.delete("/health-records/:recordId", async (req, res) => {
+    try {
+        const { recordId } = req.params;
+
+        const [existing] = await pool.query("SELECT id FROM health_records WHERE id=?", [recordId]);
+        if (!existing.length) return res.status(404).json({ success: false, error: "Record not found" });
+
+        await pool.query("DELETE FROM health_records WHERE id=?", [recordId]);
+        return res.json({ success: true });
+    } catch (err) {
+        console.error("DELETE /children/health-records/:recordId error:", err);
+        return res.status(500).json({ success: false, error: "Server error" });
+    }
+    });
+
+    /* =========================================================
+    EDUCATION ROUTES
+    Base: /api/children
+    ========================================================= */
+
+    /** GET education summary + subject details */
+    router.get("/:id/education", async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const [childRows] = await pool.query("SELECT id FROM children WHERE id=?", [id]);
+        if (!childRows.length) return res.status(404).json({ success: false, error: "Child not found" });
+
+        const [sumRows] = await pool.query(
+        `SELECT school, average_grade, honor
+        FROM education_summaries
+        WHERE child_id=?`,
+        [id]
+        );
+
+        const summaryRow = sumRows[0] || { school: "", average_grade: "", honor: "None" };
+
+        const [subRows] = await pool.query(
+        `SELECT id, child_id, subject, grade, teacher, term, comments
+        FROM education_records
+        WHERE child_id=?
+        ORDER BY id DESC`,
+        [id]
+        );
+
+        const summary = {
+        school: summaryRow.school || "",
+        averageGrade: summaryRow.average_grade ?? "",
+        honor: summaryRow.honor || "None",
+        };
+
+        const subjects = subRows.map((r) => ({
+        id: r.id,
+        childId: r.child_id,
+        subject: r.subject,
+        grade: r.grade,
+        teacher: r.teacher,
+        term: r.term || "",
+        comments: r.comments || "",
+        }));
+
+        return res.json({ success: true, summary, subjects });
+    } catch (err) {
+        console.error("GET /children/:id/education error:", err);
+        return res.status(500).json({ success: false, error: "Server error" });
+    }
+    });
+
+    /** PUT upsert education summary (edit summary card) */
+    router.put("/:id/education-summary", async (req, res) => {
+    try {
+        const { id } = req.params;
+        const body = req.body;
+
+        const school = body.school || "";
+        const averageGrade =
+        body.averageGrade === "" || body.averageGrade === null || body.averageGrade === undefined
+            ? null
+            : Number(body.averageGrade);
+        const honor = body.honor || "None";
+
+        if (averageGrade !== null && Number.isNaN(averageGrade)) {
+        return res.status(400).json({ success: false, error: "averageGrade must be a number" });
+        }
+
+        const [childRows] = await pool.query("SELECT id FROM children WHERE id=?", [id]);
+        if (!childRows.length) return res.status(404).json({ success: false, error: "Child not found" });
+
+        await pool.query(
+        `INSERT INTO education_summaries (child_id, school, average_grade, honor)
+        VALUES (?, ?, ?, ?)
+        ON DUPLICATE KEY UPDATE
+            school=VALUES(school),
+            average_grade=VALUES(average_grade),
+            honor=VALUES(honor)`,
+        [id, school || null, averageGrade, honor]
+        );
+
+        const [rows] = await pool.query(
+        `SELECT school, average_grade, honor
+        FROM education_summaries WHERE child_id=?`,
+        [id]
+        );
+
+        const r = rows[0] || { school: "", average_grade: "", honor: "None" };
+
+        const summary = {
+        school: r.school || "",
+        averageGrade: r.average_grade ?? "",
+        honor: r.honor || "None",
+        };
+
+        return res.json({ success: true, summary });
+    } catch (err) {
+        console.error("PUT /children/:id/education-summary error:", err);
+        return res.status(500).json({ success: false, error: "Server error" });
+    }
+    });
+
+    /** POST add education subject record */
+    router.post("/:id/education-records", async (req, res) => {
+    try {
+        const { id } = req.params;
+        const body = req.body;
+
+        const subject = body.subject;
+        const grade = body.grade;
+        const teacher = body.teacher;
+        const term = body.term || null;
+        const comments = body.comments || null;
+
+        if (!subject || !grade || !teacher) {
+        return res.status(400).json({ success: false, error: "Missing required fields" });
+        }
+
+        const [childRows] = await pool.query("SELECT id FROM children WHERE id=?", [id]);
+        if (!childRows.length) return res.status(404).json({ success: false, error: "Child not found" });
+
+        const [result] = await pool.query(
+        `INSERT INTO education_records (child_id, subject, grade, teacher, term, comments)
+        VALUES (?, ?, ?, ?, ?, ?)`,
+        [id, subject, grade, teacher, term, comments]
+        );
+
+        const [rows] = await pool.query(
+        `SELECT id, child_id, subject, grade, teacher, term, comments
+        FROM education_records WHERE id=?`,
+        [result.insertId]
+        );
+
+        const r = rows[0];
+        const record = {
+        id: r.id,
+        childId: r.child_id,
+        subject: r.subject,
+        grade: r.grade,
+        teacher: r.teacher,
+        term: r.term || "",
+        comments: r.comments || "",
+        };
+
+        return res.json({ success: true, record });
+    } catch (err) {
+        console.error("POST /children/:id/education-records error:", err);
+        return res.status(500).json({ success: false, error: "Server error" });
+    }
+    });
+
+    /** PUT update education subject record */
+    router.put("/education-records/:recordId", async (req, res) => {
+    try {
+        const { recordId } = req.params;
+        const body = req.body;
+
+        const subject = body.subject;
+        const grade = body.grade;
+        const teacher = body.teacher;
+        const term = body.term || null;
+        const comments = body.comments || null;
+
+        if (!subject || !grade || !teacher) {
+        return res.status(400).json({ success: false, error: "Missing required fields" });
+        }
+
+        const [existing] = await pool.query("SELECT id FROM education_records WHERE id=?", [recordId]);
+        if (!existing.length) return res.status(404).json({ success: false, error: "Record not found" });
+
+        await pool.query(
+        `UPDATE education_records
+        SET subject=?, grade=?, teacher=?, term=?, comments=?
+        WHERE id=?`,
+        [subject, grade, teacher, term, comments, recordId]
+        );
+
+        const [rows] = await pool.query(
+        `SELECT id, child_id, subject, grade, teacher, term, comments
+        FROM education_records WHERE id=?`,
+        [recordId]
+        );
+
+        const r = rows[0];
+        const record = {
+        id: r.id,
+        childId: r.child_id,
+        subject: r.subject,
+        grade: r.grade,
+        teacher: r.teacher,
+        term: r.term || "",
+        comments: r.comments || "",
+        };
+
+        return res.json({ success: true, record });
+    } catch (err) {
+        console.error("PUT /children/education-records/:recordId error:", err);
+        return res.status(500).json({ success: false, error: "Server error" });
+    }
+    });
+
+    /** DELETE education subject record */
+    router.delete("/education-records/:recordId", async (req, res) => {
+    try {
+        const { recordId } = req.params;
+
+        const [existing] = await pool.query("SELECT id FROM education_records WHERE id=?", [recordId]);
+        if (!existing.length) return res.status(404).json({ success: false, error: "Record not found" });
+
+        await pool.query("DELETE FROM education_records WHERE id=?", [recordId]);
+        return res.json({ success: true });
+    } catch (err) {
+        console.error("DELETE /children/education-records/:recordId error:", err);
+        return res.status(500).json({ success: false, error: "Server error" });
+    }
 });
 
 module.exports = router;
