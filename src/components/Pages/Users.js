@@ -56,20 +56,6 @@ const initialUsers = [
     avatarUrl: "",
   },
   {
-    id: 3,
-    firstName: "Mike",
-    middleName: "",
-    lastName: "Johnson",
-    email: "mike.johnson@example.com",
-    role: "Moderator",
-    status: "Inactive",
-    createdAt: "2024-01-17",
-    lastLogin: "2024-01-18T14:00:00Z",
-    phone: "+254700333333",
-    permissions: ["Reports"],
-    avatarUrl: "",
-  },
-  {
     id: 4,
     firstName: "Sarah",
     middleName: "",
@@ -373,7 +359,6 @@ const Users = () => {
         { value: "Staff", label: "Staff" },
         { value: "Social Worker", label: "Social Worker" },
         { value: "House Parent", label: "House Parent" },
-        { value: "Moderator", label: "Moderator" },
       ],
     },
     {
@@ -612,7 +597,6 @@ const Users = () => {
               <option value="Staff">Staff</option>
               <option value="Social Worker">Social Worker</option>
               <option value="House Parent">House Parent</option>
-              <option value="Moderator">Moderator</option>
             </select>
 
             <select className={CONTROL} value={selectedStatus} onChange={(e) => setSelectedStatus(e.target.value)}>

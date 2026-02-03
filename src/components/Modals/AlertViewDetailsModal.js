@@ -4,7 +4,6 @@ import {
     X,
     Mail,
     MessageSquare,
-    Bell,
     User,
     Users,
     Calendar,
@@ -32,6 +31,11 @@ import {
     handleResendAlert,
     }) {
     if (!showViewDetails || !selectedAlert) return null;
+
+    // ✅ Safety: ensure we only render email/sms and avoid crashes if undefined
+    const methods = Array.isArray(selectedAlert.notificationMethods)
+        ? selectedAlert.notificationMethods.filter((m) => m === "email" || m === "sms")
+        : [];
 
     return (
         <div
@@ -133,23 +137,31 @@ import {
                     </div>
 
                     <div className="mt-2 flex flex-wrap gap-2">
-                    {selectedAlert.notificationMethods.map((m) => (
-                        <span
-                        key={m}
-                        className="inline-flex items-center gap-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm text-gray-800 dark:text-gray-200"
-                        >
-                        {m === "email" && (
-                            <Mail className="h-4 w-4 text-gray-600 dark:text-gray-300" />
-                        )}
-                        {m === "sms" && (
-                            <MessageSquare className="h-4 w-4 text-gray-600 dark:text-gray-300" />
-                        )}
-                        {m === "inApp" && (
-                            <Bell className="h-4 w-4 text-gray-600 dark:text-gray-300" />
-                        )}
-                        {m}
+                    {methods.length === 0 ? (
+                        <span className="text-sm text-gray-600 dark:text-gray-400">
+                        —
                         </span>
-                    ))}
+                    ) : (
+                        methods.map((m) => (
+                        <span
+                            key={m}
+                            className="inline-flex items-center gap-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm text-gray-800 dark:text-gray-200"
+                        >
+                            {m === "email" && (
+                            <>
+                                <Mail className="h-4 w-4 text-gray-600 dark:text-gray-300" />
+                                Email
+                            </>
+                            )}
+                            {m === "sms" && (
+                            <>
+                                <MessageSquare className="h-4 w-4 text-gray-600 dark:text-gray-300" />
+                                SMS
+                            </>
+                            )}
+                        </span>
+                        ))
+                    )}
                     </div>
                 </div>
                 </div>

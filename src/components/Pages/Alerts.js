@@ -1,5 +1,5 @@
-    import React, { useMemo, useState } from "react";
-    import {
+import React, { useMemo, useState } from "react";
+import {
     AlertTriangle,
     Plus,
     Send,
@@ -16,7 +16,6 @@
     import Button from "../UI/Button";
     import CreateAlertModal from "../Modals/CreateAlertModal";
     import AlertViewDetailsModal from "../Modals/AlertViewDetailsModal";
-
 
     /* ---------------- Mock Data ---------------- */
     const mockAlerts = [
@@ -35,7 +34,7 @@
         readCount: 8,
         totalRecipients: 12,
         deliveryStatus: { delivered: 10, read: 8, failed: 2 },
-        notificationMethods: ["email", "inApp"],
+        notificationMethods: ["email", "sms"], // ✅ inApp removed (email + sms only)
         readBy: [],
         unreadBy: [],
         failedDelivery: [],
@@ -56,12 +55,16 @@
     /* ---------------- UI helpers ---------------- */
 
     const Card = ({ className = "", children }) => (
-    <div className={`bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 ${className}`}>
+    <div
+        className={`bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 ${className}`}
+    >
         {children}
     </div>
     );
 
-    const CardBody = ({ className = "", children }) => <div className={`p-5 sm:p-6 ${className}`}>{children}</div>;
+    const CardBody = ({ className = "", children }) => (
+    <div className={`p-5 sm:p-6 ${className}`}>{children}</div>
+    );
 
     const Input = ({ className = "", ...props }) => (
     <input
@@ -78,13 +81,20 @@
     );
 
     const Pill = ({ className = "", children }) => (
-    <span className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold ${className}`}>{children}</span>
+    <span
+        className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold ${className}`}
+    >
+        {children}
+    </span>
     );
 
     /* Simple progress bar */
     const ProgressBar = ({ value }) => (
     <div className="h-2 w-full rounded-full bg-gray-100 dark:bg-gray-800 overflow-hidden">
-        <div className="h-full bg-blue-600 transition-all rounded-full" style={{ width: `${value}%` }} />
+        <div
+        className="h-full bg-blue-600 transition-all rounded-full"
+        style={{ width: `${value}%` }}
+        />
     </div>
     );
 
@@ -92,14 +102,17 @@
 
     const priorityPill = {
     high: "bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-300 border-red-200 dark:border-red-500/20",
-    medium: "bg-yellow-50 dark:bg-yellow-500/10 text-yellow-800 dark:text-yellow-300 border-yellow-200 dark:border-yellow-500/20",
+    medium:
+        "bg-yellow-50 dark:bg-yellow-500/10 text-yellow-800 dark:text-yellow-300 border-yellow-200 dark:border-yellow-500/20",
     low: "bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-500/20",
     };
 
     const statusPill = {
     sent: "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-500/20",
-    draft: "bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-200 border-gray-200 dark:border-gray-700",
-    scheduled: "bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-500/20",
+    draft:
+        "bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-200 border-gray-200 dark:border-gray-700",
+    scheduled:
+        "bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-500/20",
     };
 
     /* -------- date/time helpers (kept) -------- */
@@ -143,6 +156,7 @@
     const [sendingAlert, setSendingAlert] = useState(null);
     const [feedback, setFeedback] = useState("");
 
+    // ✅ notificationMethods now only has email + sms
     const [newAlert, setNewAlert] = useState({
         title: "",
         message: "",
@@ -151,7 +165,7 @@
         recipients: [],
         scheduleDate: "",
         scheduleTime: "",
-        notificationMethods: { email: true, sms: false, inApp: true },
+        notificationMethods: { email: true, sms: false },
     });
 
     const filteredAlerts = useMemo(() => {
@@ -167,7 +181,8 @@
             alert.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
             alert.message.toLowerCase().includes(searchTerm.toLowerCase());
             const matchesType = filterType === "all" || alert.type === filterType;
-            const matchesPriority = filterPriority === "all" || alert.priority === filterPriority;
+            const matchesPriority =
+            filterPriority === "all" || alert.priority === filterPriority;
             return matchesSearch && matchesType && matchesPriority;
         })
         .sort((a, b) => toTimestamp(b) - toTimestamp(a));
@@ -176,7 +191,9 @@
     const toggleRecipient = (group) => {
         setNewAlert((prev) => ({
         ...prev,
-        recipients: prev.recipients.includes(group) ? prev.recipients.filter((r) => r !== group) : [...prev.recipients, group],
+        recipients: prev.recipients.includes(group)
+            ? prev.recipients.filter((r) => r !== group)
+            : [...prev.recipients, group],
         }));
     };
 
@@ -192,7 +209,9 @@
 
     const handleCreateAlert = () => {
         if (!newAlert.title || !newAlert.message || newAlert.recipients.length === 0) {
-        setFeedback("Please fill in title, message, and select at least one recipient group.");
+        setFeedback(
+            "Please fill in title, message, and select at least one recipient group."
+        );
         return;
         }
 
@@ -202,6 +221,7 @@
         const today = now.toISOString().slice(0, 10);
         const currentTime = now.toTimeString().slice(0, 5);
 
+        // ✅ Will only produce ["email"] or ["sms"] or ["email","sms"]
         const methods = Object.entries(newAlert.notificationMethods)
         .filter(([, enabled]) => enabled)
         .map(([key]) => key);
@@ -234,10 +254,13 @@
 
         setFeedback(
         isScheduled
-            ? `Alert scheduled for ${newAlert.scheduleDate} at ${formatTime12(newAlert.scheduleTime)} to ${newAlert.recipients.length} groups.`
+            ? `Alert scheduled for ${newAlert.scheduleDate} at ${formatTime12(
+                newAlert.scheduleTime
+            )} to ${newAlert.recipients.length} groups.`
             : `Alert "${newAlert.title}" sent to ${newAlert.recipients.length} recipient groups.`
         );
 
+        // ✅ reset only email + sms
         setNewAlert({
         title: "",
         message: "",
@@ -246,7 +269,7 @@
         recipients: [],
         scheduleDate: "",
         scheduleTime: "",
-        notificationMethods: { email: true, sms: false, inApp: true },
+        notificationMethods: { email: true, sms: false },
         });
 
         setShowCreateAlert(false);
@@ -290,7 +313,9 @@
         setSendingAlert(null);
         setAlerts((prev) =>
             prev.map((a) =>
-            a.id === alertId ? { ...a, deliveryStatus: { ...a.deliveryStatus, failed: 0 }, failedDelivery: [] } : a
+            a.id === alertId
+                ? { ...a, deliveryStatus: { ...a.deliveryStatus, failed: 0 }, failedDelivery: [] }
+                : a
             )
         );
         setFeedback("Alert resent to failed recipients.");
@@ -298,7 +323,9 @@
     };
 
     const getReadRate = (alert) =>
-        !alert.deliveryStatus.delivered ? 0 : Math.round((alert.deliveryStatus.read / alert.deliveryStatus.delivered) * 100);
+        !alert.deliveryStatus.delivered
+        ? 0
+        : Math.round((alert.deliveryStatus.read / alert.deliveryStatus.delivered) * 100);
 
     const typeMeta = (type) => alertTypes.find((t) => t.value === type);
 
@@ -309,8 +336,12 @@
             {/* Header */}
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="min-w-0">
-                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">Alert Management</h1>
-                <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">Send and manage system alerts and notifications</p>
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">
+                Alert Management
+                </h1>
+                <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
+                Send and manage system alerts and notifications
+                </p>
             </div>
 
             {(userRole === "admin" || userRole === "staff") && (
@@ -347,7 +378,12 @@
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
                 <div className="relative flex-1 min-w-0">
                     <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                    <Input placeholder="Search alerts..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-11" />
+                    <Input
+                    placeholder="Search alerts..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-11"
+                    />
                 </div>
 
                 <div className="flex flex-col gap-3 sm:flex-row lg:w-[420px]">
@@ -360,7 +396,10 @@
                     ))}
                     </Select>
 
-                    <Select value={filterPriority} onChange={(e) => setFilterPriority(e.target.value)}>
+                    <Select
+                    value={filterPriority}
+                    onChange={(e) => setFilterPriority(e.target.value)}
+                    >
                     <option value="all">All Priorities</option>
                     <option value="high">High Priority</option>
                     <option value="medium">Medium Priority</option>
@@ -384,13 +423,17 @@
 
                         <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">
-                            <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">{alert.title}</h3>
+                            <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                            {alert.title}
+                            </h3>
 
                             <Pill className={priorityPill[alert.priority]}>{alert.priority}</Pill>
                             <Pill className={statusPill[alert.status]}>{alert.status}</Pill>
                         </div>
 
-                        <p className="mt-2 text-sm leading-relaxed text-gray-700 dark:text-gray-200">{alert.message}</p>
+                        <p className="mt-2 text-sm leading-relaxed text-gray-700 dark:text-gray-200">
+                            {alert.message}
+                        </p>
 
                         <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-gray-600 dark:text-gray-400">
                             <span className="inline-flex items-center gap-2">
@@ -430,7 +473,11 @@
                             disabled={sendingAlert === alert.id}
                             className="inline-flex items-center gap-2"
                         >
-                            {sendingAlert === alert.id ? <Clock3 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                            {sendingAlert === alert.id ? (
+                            <Clock3 className="h-4 w-4 animate-spin" />
+                            ) : (
+                            <Send className="h-4 w-4" />
+                            )}
                             Send
                         </Button>
                         )}
@@ -445,7 +492,11 @@
                             disabled={sendingAlert === alert.id}
                             className="inline-flex items-center gap-2"
                             >
-                            {sendingAlert === alert.id ? <Clock3 className="h-4 w-4 animate-spin" /> : <RotateCcw className="h-4 w-4" />}
+                            {sendingAlert === alert.id ? (
+                                <Clock3 className="h-4 w-4 animate-spin" />
+                            ) : (
+                                <RotateCcw className="h-4 w-4" />
+                            )}
                             Resend
                             </Button>
                         )}
@@ -465,39 +516,39 @@
 
             {/* ---------------- Create Alert Modal ---------------- */}
             <CreateAlertModal
-                showCreateAlert={showCreateAlert}
-                setShowCreateAlert={setShowCreateAlert}
-                newAlert={newAlert}
-                setNewAlert={setNewAlert}
-                alertTypes={alertTypes}
-                recipientGroups={recipientGroups}
-                toggleRecipient={toggleRecipient}
-                toggleNotificationMethod={toggleNotificationMethod}
-                formatTime12={formatTime12}
-                handleCreateAlert={handleCreateAlert}
-                Input={Input}
-                Select={Select}
-                />
+            showCreateAlert={showCreateAlert}
+            setShowCreateAlert={setShowCreateAlert}
+            newAlert={newAlert}
+            setNewAlert={setNewAlert}
+            alertTypes={alertTypes}
+            recipientGroups={recipientGroups}
+            toggleRecipient={toggleRecipient}
+            toggleNotificationMethod={toggleNotificationMethod} // ✅ keep, but modal must only call email/sms
+            formatTime12={formatTime12}
+            handleCreateAlert={handleCreateAlert}
+            Input={Input}
+            Select={Select}
+            />
 
             {/* ---------------- View Details Modal ---------------- */}
             <AlertViewDetailsModal
-                showViewDetails={showViewDetails}
-                setShowViewDetails={setShowViewDetails}
-                selectedAlert={selectedAlert}
-                priorityPill={priorityPill}
-                statusPill={statusPill}
-                typeMeta={typeMeta}
-                formatDateTime={formatDateTime}
-                getReadRate={getReadRate}
-                Card={Card}
-                CardBody={CardBody}
-                Pill={Pill}
-                ProgressBar={ProgressBar}
-                userRole={userRole}
-                sendingAlert={sendingAlert}
-                handleResendAlert={handleResendAlert}
-                />
+            showViewDetails={showViewDetails}
+            setShowViewDetails={setShowViewDetails}
+            selectedAlert={selectedAlert}
+            priorityPill={priorityPill}
+            statusPill={statusPill}
+            typeMeta={typeMeta}
+            formatDateTime={formatDateTime}
+            getReadRate={getReadRate}
+            Card={Card}
+            CardBody={CardBody}
+            Pill={Pill}
+            ProgressBar={ProgressBar}
+            userRole={userRole}
+            sendingAlert={sendingAlert}
+            handleResendAlert={handleResendAlert}
+            />
         </div>
         </div>
     );
-    }
+}

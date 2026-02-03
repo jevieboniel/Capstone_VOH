@@ -12,12 +12,13 @@ import Alerts from './Pages/Alerts';
 import Donations from './Pages/Donations';
 import Reports from './Pages/Reports';
 import Setting from './Pages/Setting';
+import Profile from './Pages/Profile';
 
 
 // Placeholder components for other routes
 // const Users = () => <div className="p-6"><h1 className="text-2xl font-bold">Users Management</h1></div>;
 const Settings = () => <div className="p-6"><h1 className="text-2xl font-bold">Settings</h1></div>;
-const Profile = () => <div className="p-6"><h1 className="text-2xl font-bold">User Profile</h1></div>;
+// const Profile = () => <div className="p-6"><h1 className="text-2xl font-bold">User Profile</h1></div>;
 
 // Component mapping
 const componentMap = {
