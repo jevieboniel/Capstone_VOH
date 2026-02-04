@@ -1,7 +1,7 @@
 import React from "react";
 import ProfileSettings from "./ProfileSettings";
 import { useAuth } from "../../contexts/AuthContext";
-import { splitName, joinName } from "../../utils/name";
+import { splitName } from "../../utils/name";
 
 const Profile = () => {
   const { user, authFetch, setUser } = useAuth();
