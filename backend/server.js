@@ -7,6 +7,7 @@ const authRoutes = require("./routes/auth");
 const usersRoutes = require("./routes/users");
 const childrenRoutes = require("./routes/children");
 const milestoneRoutes = require("./routes/milestones");
+const settingsRoutes = require("./routes/settings");
 
 const app = express();
 
@@ -22,6 +23,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/users", usersRoutes);
 app.use("/api/children", childrenRoutes);
 app.use("/api/milestones", milestoneRoutes);
+app.use("/api/settings", settingsRoutes);
 
 app.get("/", (_req, res) => res.send("Backend running ✅"));
 

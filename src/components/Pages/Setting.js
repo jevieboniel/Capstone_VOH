@@ -1,10 +1,8 @@
     import React, { useMemo, useState, useEffect } from "react";
     import {
     Settings,
-    Shield,
     Database,
     Bell,
-    Mail,
     Globe,
     Users,
     Lock,
@@ -15,7 +13,7 @@
     Save,
     } from "lucide-react";
 
-    /* ---------------- Tailwind UI helpers (same style system as Children.js) ---------------- */
+    /* ---------------- Tailwind UI helpers ---------------- */
 
     function Card({ children, className = "" }) {
     return (
@@ -59,19 +57,6 @@
     );
     }
 
-    function Select({ className = "", children, ...props }) {
-    return (
-        <select
-        {...props}
-        className={`w-full h-11 rounded-xl border border-gray-300 bg-white px-4 text-sm text-gray-900 shadow-sm outline-none
-        focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500
-        dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100 ${className}`}
-        >
-        {children}
-        </select>
-    );
-    }
-
     function Button({ children, variant = "default", className = "", type = "button", ...props }) {
     const base =
         "inline-flex items-center justify-center h-11 px-5 rounded-xl text-sm font-semibold shadow-sm transition focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed";
@@ -88,14 +73,9 @@
     }
 
     function Badge({ children, className = "" }) {
-    return (
-        <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${className}`}>
-        {children}
-        </span>
-    );
+    return <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${className}`}>{children}</span>;
     }
 
-    /* Toggle switch (matches your screenshot style) */
     function Toggle({ checked, onChange }) {
     return (
         <button
@@ -116,73 +96,22 @@
     );
     }
 
-    /* -------------------------------- Page -------------------------------- */
+    /* -------------------------------- Constants -------------------------------- */
 
-    export default function Setting() {
-    const systemStats = useMemo(
-        () => ({
-        version: "2.1.4",
-        lastUpdate: "2025-09-01",
-        uptime: "99.9%",
-        storage: { used: 45.2, total: 100 },
-        backupStatus: "Completed",
-        lastBackup: "2025-09-03T02:00:00Z",
-        }),
-        []
-    );
+    const API_ORIGIN = "http://localhost:5000";
 
-    const [activeSection, setActiveSection] = useState("general");
-
-    // ✅ Option 2: local toggle, global effect
-    const [darkMode, setDarkMode] = useState(() => {
-        // Prefer actual <html> state first (in case index.js already applied it)
-        const hasDarkClass = document.documentElement.classList.contains("dark");
-        if (hasDarkClass) return true;
-
-        // Fallback to localStorage
-        return localStorage.getItem("theme") === "dark";
-    });
-
-    useEffect(() => {
-        const root = document.documentElement; // <html>
-
-        if (darkMode) {
-        root.classList.add("dark");
-        localStorage.setItem("theme", "dark");
-        } else {
-        root.classList.remove("dark");
-        localStorage.setItem("theme", "light");
-        }
-    }, [darkMode]);
-
-    const [settings, setSettings] = useState({
-        organizationName: "Village of Hope Orphanage",
-        address: "123 Hope Street, Nairobi, Kenya",
-        phone: "+254700123456",
-        email: "admin@villageofhope.org",
-        website: "www.villageofhope.org",
-        timezone: "Africa/Nairobi",
-        currency: "KES",
-        language: "English",
-    });
-
-    const [notifState, setNotifState] = useState([
-        { id: 1, type: "System Update", enabled: true, description: "System maintenance and updates" },
-        { id: 2, type: "Health Alerts", enabled: true, description: "Health check-up reminders" },
-        { id: 3, type: "Development Milestones", enabled: true, description: "Milestone progress notifications" },
-        { id: 4, type: "Donation Alerts", enabled: false, description: "New donation notifications" },
-        { id: 5, type: "User Activity", enabled: true, description: "User login and activity alerts" },
-        { id: 6, type: "Data Backup", enabled: true, description: "Backup completion notifications" },
-    ]);
-
-    const handleSaveAll = () => {
-        console.log("Save Settings:", { settings, notifState, darkMode });
-        alert("Saved (demo). Connect this to your backend API.");
+    const DEFAULT_SETTINGS = {
+    organizationName: "Village of Hope Orphanage",
+    address: "123 Hope Street, Nairobi, Kenya",
+    phone: "+254700123456",
+    email: "admin@villageofhope.org",
+    website: "www.villageofhope.org",
     };
 
-    /* ---------------- Sections ---------------- */
+    /* -------------------------------- Sections (MOVED OUTSIDE ✅) -------------------------------- */
 
-    const GeneralSettings = () => (
+    function GeneralSettingsSection({ draftSettings, setDraftField, onReset, saving, loading }) {
+    return (
         <div className="space-y-6">
         <Card>
             <CardHeader>
@@ -191,6 +120,7 @@
                 Organization Details
             </CardTitle>
             </CardHeader>
+
             <CardContent className="space-y-5">
             <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                 <div>
@@ -198,8 +128,8 @@
                     Organization Name
                 </label>
                 <Input
-                    value={settings.organizationName}
-                    onChange={(e) => setSettings({ ...settings, organizationName: e.target.value })}
+                    value={draftSettings.organizationName ?? ""}
+                    onChange={(e) => setDraftField("organizationName", e.target.value)}
                 />
                 </div>
 
@@ -207,71 +137,49 @@
                 <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Email Address</label>
                 <Input
                     type="email"
-                    value={settings.email}
-                    onChange={(e) => setSettings({ ...settings, email: e.target.value })}
+                    value={draftSettings.email ?? ""}
+                    onChange={(e) => setDraftField("email", e.target.value)}
                 />
                 </div>
 
                 <div className="md:col-span-2">
                 <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Address</label>
-                <Input value={settings.address} onChange={(e) => setSettings({ ...settings, address: e.target.value })} />
+                <Input
+                    value={draftSettings.address ?? ""}
+                    onChange={(e) => setDraftField("address", e.target.value)}
+                />
                 </div>
 
                 <div>
                 <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Phone Number</label>
-                <Input value={settings.phone} onChange={(e) => setSettings({ ...settings, phone: e.target.value })} />
+                <Input
+                    value={draftSettings.phone ?? ""}
+                    onChange={(e) => setDraftField("phone", e.target.value)}
+                />
                 </div>
 
                 <div>
                 <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Website</label>
-                <Input value={settings.website} onChange={(e) => setSettings({ ...settings, website: e.target.value })} />
+                <Input
+                    value={draftSettings.website ?? ""}
+                    onChange={(e) => setDraftField("website", e.target.value)}
+                />
                 </div>
             </div>
-            </CardContent>
-        </Card>
 
-        <Card>
-            <CardHeader>
-            <CardTitle>System Preferences</CardTitle>
-            </CardHeader>
-            <CardContent>
-            <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
-                <div>
-                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Timezone</label>
-                <Select value={settings.timezone} onChange={(e) => setSettings({ ...settings, timezone: e.target.value })}>
-                    <option value="Africa/Nairobi">Africa/Nairobi (EAT)</option>
-                    <option value="UTC">UTC</option>
-                    <option value="America/New_York">America/New_York (EST)</option>
-                    <option value="Europe/London">Europe/London (GMT)</option>
-                </Select>
-                </div>
-
-                <div>
-                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Currency</label>
-                <Select value={settings.currency} onChange={(e) => setSettings({ ...settings, currency: e.target.value })}>
-                    <option value="KES">Kenyan Shilling (KES)</option>
-                    <option value="USD">US Dollar (USD)</option>
-                    <option value="EUR">Euro (EUR)</option>
-                    <option value="GBP">British Pound (GBP)</option>
-                </Select>
-                </div>
-
-                <div>
-                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Language</label>
-                <Select value={settings.language} onChange={(e) => setSettings({ ...settings, language: e.target.value })}>
-                    <option value="English">English</option>
-                    <option value="Swahili">Swahili</option>
-                    <option value="French">French</option>
-                    <option value="Spanish">Spanish</option>
-                </Select>
-                </div>
+            <div className="flex flex-wrap gap-2 pt-2">
+                <Button variant="outline" onClick={onReset} disabled={saving || loading}>
+                Reset Changes
+                </Button>
             </div>
             </CardContent>
         </Card>
         </div>
     );
+    }
 
-    const SecuritySettings = () => (
+    function SecuritySettingsSection() {
+    return (
         <div className="space-y-6">
         <Card>
             <CardHeader>
@@ -317,45 +225,6 @@
         <Card>
             <CardHeader>
             <CardTitle>
-                <Shield className="h-5 w-5" />
-                Session Management
-            </CardTitle>
-            </CardHeader>
-
-            <CardContent className="space-y-5">
-            <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-                <div>
-                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Session Timeout (minutes)
-                </label>
-                <Input type="number" defaultValue="30" />
-                </div>
-
-                <div>
-                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Max Concurrent Sessions
-                </label>
-                <Input type="number" defaultValue="3" />
-                </div>
-            </div>
-
-            <div className="space-y-3 text-sm text-gray-700 dark:text-gray-300">
-                {[
-                { label: "Force logout on password change", checked: true },
-                { label: "Enable two-factor authentication", checked: true },
-                ].map((item) => (
-                <label key={item.label} className="flex items-center gap-2">
-                    <input type="checkbox" defaultChecked={item.checked} className="h-4 w-4 rounded border-gray-300" />
-                    {item.label}
-                </label>
-                ))}
-            </div>
-            </CardContent>
-        </Card>
-
-        <Card>
-            <CardHeader>
-            <CardTitle>
                 <Users className="h-5 w-5" />
                 Access Control
             </CardTitle>
@@ -379,8 +248,10 @@
         </Card>
         </div>
     );
+    }
 
-    const NotificationSettings = () => (
+    function NotificationSettingsSection({ notifState, setNotifState }) {
+    return (
         <div className="space-y-6">
         <Card>
             <CardHeader>
@@ -390,70 +261,36 @@
             </CardTitle>
             </CardHeader>
 
-        <CardContent>
+            <CardContent>
             <div className="space-y-4">
-            {notifState.map((n) => (
+                {notifState.map((n) => (
                 <div
-                key={n.id}
-                className="flex items-center justify-between gap-4 rounded-xl border border-gray-200 p-4
-                dark:border-gray-800 dark:bg-gray-950/40"
+                    key={n.id}
+                    className="flex items-center justify-between gap-4 rounded-xl border border-gray-200 p-4
+                    dark:border-gray-800 dark:bg-gray-950/40"
                 >
-                <div className="min-w-0">
+                    <div className="min-w-0">
                     <h4 className="font-semibold text-gray-900 dark:text-gray-100">{n.type}</h4>
                     <p className="text-sm text-gray-600 dark:text-gray-400">{n.description}</p>
-                </div>
+                    </div>
 
-                <Toggle
+                    <Toggle
                     checked={n.enabled}
-                    onChange={(next) => setNotifState((prev) => prev.map((x) => (x.id === n.id ? { ...x, enabled: next } : x)))}
-                />
+                    onChange={(next) =>
+                        setNotifState((prev) => prev.map((x) => (x.id === n.id ? { ...x, enabled: next } : x)))
+                    }
+                    />
                 </div>
-            ))}
-            </div>
-        </CardContent>
-        </Card>
-
-        <Card>
-            <CardHeader>
-            <CardTitle>
-                <Mail className="h-5 w-5" />
-                Email Settings
-            </CardTitle>
-            </CardHeader>
-
-            <CardContent className="space-y-5">
-            <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-                <div>
-                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">SMTP Server</label>
-                <Input defaultValue="smtp.gmail.com" />
-                </div>
-
-                <div>
-                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">SMTP Port</label>
-                <Input defaultValue="587" />
-                </div>
-
-                <div>
-                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Username</label>
-                <Input defaultValue="admin@villageofhope.org" />
-                </div>
-
-                <div>
-                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
-                <Input type="password" placeholder="••••••••" />
-                </div>
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-                <Button variant="outline">Test Connection</Button>
-                <Button>Save Email Settings</Button>
+                ))}
             </div>
             </CardContent>
         </Card>
         </div>
     );
+    }
 
-    const BackupSettings = () => (
+    function BackupSettingsSection({ systemStats }) {
+    return (
         <div className="space-y-6">
         <Card>
             <CardHeader>
@@ -507,27 +344,6 @@
                 <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100">Success</Badge>
             </div>
 
-            <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-                <div>
-                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Backup Frequency</label>
-                <Select defaultValue="Daily (2:00 AM)">
-                    <option>Daily (2:00 AM)</option>
-                    <option>Weekly</option>
-                    <option>Monthly</option>
-                </Select>
-                </div>
-
-                <div>
-                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Retention Period</label>
-                <Select defaultValue="30 days">
-                    <option>30 days</option>
-                    <option>60 days</option>
-                    <option>90 days</option>
-                    <option>1 year</option>
-                </Select>
-                </div>
-            </div>
-
             <div className="flex flex-wrap gap-2">
                 <Button>
                 <Download className="mr-2 h-4 w-4" />
@@ -569,6 +385,132 @@
         </Card>
         </div>
     );
+    }
+
+    /* -------------------------------- Main Component -------------------------------- */
+
+    export default function Setting() {
+    const systemStats = useMemo(
+        () => ({
+        version: "2.1.4",
+        lastUpdate: "2025-09-01",
+        uptime: "99.9%",
+        storage: { used: 45.2, total: 100 },
+        backupStatus: "Completed",
+        lastBackup: "2025-09-03T02:00:00Z",
+        }),
+        []
+    );
+
+    const [activeSection, setActiveSection] = useState("general");
+    const [saving, setSaving] = useState(false);
+    const [loading, setLoading] = useState(false);
+
+    const [darkMode, setDarkMode] = useState(() => {
+        const hasDarkClass = document.documentElement.classList.contains("dark");
+        if (hasDarkClass) return true;
+        return localStorage.getItem("theme") === "dark";
+    });
+
+    useEffect(() => {
+        const root = document.documentElement;
+        if (darkMode) {
+        root.classList.add("dark");
+        localStorage.setItem("theme", "dark");
+        } else {
+        root.classList.remove("dark");
+        localStorage.setItem("theme", "light");
+        }
+    }, [darkMode]);
+
+    const [settings, setSettings] = useState(DEFAULT_SETTINGS);
+    const [draftSettings, setDraftSettings] = useState(DEFAULT_SETTINGS);
+    const [isDirty, setIsDirty] = useState(false);
+
+    const [notifState, setNotifState] = useState([
+        { id: 1, type: "System Update", enabled: true, description: "System maintenance and updates" },
+        { id: 2, type: "Health Alerts", enabled: true, description: "Health check-up reminders" },
+        { id: 3, type: "Development Milestones", enabled: true, description: "Milestone progress notifications" },
+        { id: 4, type: "Donation Alerts", enabled: false, description: "New donation notifications" },
+        { id: 5, type: "User Activity", enabled: true, description: "User login and activity alerts" },
+        { id: 6, type: "Data Backup", enabled: true, description: "Backup completion notifications" },
+    ]);
+
+    // LOAD settings from backend
+    useEffect(() => {
+        const token = localStorage.getItem("admin_token");
+        if (!token) return;
+
+        setLoading(true);
+
+        fetch(`${API_ORIGIN}/api/settings`, {
+        headers: { Authorization: `Bearer ${token}` },
+        })
+        .then((res) => res.json())
+        .then((data) => {
+            if (!data?.success) return;
+
+            if (data.settings) setSettings(data.settings);
+            if (typeof data.darkMode === "boolean") setDarkMode(data.darkMode);
+            if (Array.isArray(data.notifState)) setNotifState(data.notifState);
+        })
+        .catch((err) => console.error("Load settings error:", err))
+        .finally(() => setLoading(false));
+    }, []);
+
+    // Sync draft from canonical ONLY when not editing
+    useEffect(() => {
+        if (isDirty) return;
+        setDraftSettings(settings || DEFAULT_SETTINGS);
+    }, [settings, isDirty]);
+
+    const setDraftField = (key, value) => {
+        setIsDirty(true);
+        setDraftSettings((prev) => ({ ...prev, [key]: value }));
+    };
+
+    const handleSaveAll = async () => {
+        try {
+        const token = localStorage.getItem("admin_token");
+        if (!token) {
+            alert("Not logged in.");
+            return;
+        }
+
+        setSaving(true);
+
+        const res = await fetch(`${API_ORIGIN}/api/settings`, {
+            method: "PUT",
+            headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+            settings: draftSettings,
+            notifState,
+            darkMode,
+            }),
+        });
+
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.success) throw new Error(data.message || "Failed to save");
+
+        setSettings(draftSettings);
+        setIsDirty(false);
+
+        alert("Settings saved successfully ✅");
+        } catch (err) {
+        console.error("Save settings error:", err);
+        alert(err.message || "Failed to save settings");
+        } finally {
+        setSaving(false);
+        }
+    };
+
+    const resetDraft = () => {
+        setDraftSettings(settings || DEFAULT_SETTINGS);
+        setIsDirty(false);
+    };
 
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-950 transition-colors duration-300">
@@ -584,22 +526,26 @@
                 </p>
             </div>
 
-            {/* Right top controls */}
             <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
                 <div className="flex items-center gap-3">
                 <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                     {darkMode ? "Dark" : "Default"}
                 </span>
-
                 <Toggle checked={darkMode} onChange={setDarkMode} />
                 </div>
 
-                <Button onClick={handleSaveAll} className="w-full sm:w-auto">
+                <Button onClick={handleSaveAll} className="w-full sm:w-auto" disabled={saving || loading}>
                 <Save className="mr-2 h-4 w-4" />
-                Save All Changes
+                {saving ? "Saving..." : "Save All Changes"}
                 </Button>
             </div>
             </div>
+
+            {loading ? (
+            <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4 text-sm text-gray-600 dark:text-gray-300">
+                Loading settings...
+            </div>
+            ) : null}
 
             {/* Tabs */}
             <Card>
@@ -641,10 +587,23 @@
             </Card>
 
             {/* Section Content */}
-            {activeSection === "general" && <GeneralSettings />}
-            {activeSection === "security" && <SecuritySettings />}
-            {activeSection === "notifications" && <NotificationSettings />}
-            {activeSection === "backup" && <BackupSettings />}
+            {activeSection === "general" && (
+            <GeneralSettingsSection
+                draftSettings={draftSettings}
+                setDraftField={setDraftField}
+                onReset={resetDraft}
+                saving={saving}
+                loading={loading}
+            />
+            )}
+
+            {activeSection === "security" && <SecuritySettingsSection />}
+
+            {activeSection === "notifications" && (
+            <NotificationSettingsSection notifState={notifState} setNotifState={setNotifState} />
+            )}
+
+            {activeSection === "backup" && <BackupSettingsSection systemStats={systemStats} />}
         </div>
         </div>
     );
