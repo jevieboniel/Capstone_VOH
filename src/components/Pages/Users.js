@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Users as UsersIcon,
   UserCheck,
@@ -17,59 +17,16 @@ import {
   Ban,
   CheckCircle,
   Clock,
+  X,
+  Camera,
 } from "lucide-react";
 
 import Button from "../UI/Button";
-import FormModal from "../UI/FormModal";
 import ConfirmationModal from "../UI/ConfirmationModal";
 import AddUserModal from "../Modals/AddUserModal";
 
-
-// ----- SAMPLE DATA -----
-const initialUsers = [
-  {
-    id: 1,
-    firstName: "John",
-    middleName: "",
-    lastName: "Doe",
-    email: "john.doe@example.com",
-    role: "Admin",
-    status: "Active",
-    createdAt: "2024-01-15",
-    lastLogin: "2024-01-20T10:30:00Z",
-    phone: "+254700111111",
-    permissions: ["Full Access"],
-    avatarUrl: "",
-  },
-  {
-    id: 2,
-    firstName: "Jane",
-    middleName: "",
-    lastName: "Smith",
-    email: "jane.smith@example.com",
-    role: "Staff",
-    status: "Active",
-    createdAt: "2024-01-16",
-    lastLogin: "2024-01-19T08:15:00Z",
-    phone: "+254700222222",
-    permissions: ["Child Management", "Reports"],
-    avatarUrl: "",
-  },
-  {
-    id: 4,
-    firstName: "Sarah",
-    middleName: "",
-    lastName: "Wilson",
-    email: "sarah.wilson@example.com",
-    role: "Staff",
-    status: "Active",
-    createdAt: "2024-01-18",
-    lastLogin: "2024-01-20T06:45:00Z",
-    phone: "+254700444444",
-    permissions: ["Donations", "Child Management"],
-    avatarUrl: "",
-  },
-];
+import { useAuth } from "../../contexts/AuthContext";
+import { splitName, joinName } from "../../utils/name";
 
 // ----- PERMISSIONS SETUP -----
 const availablePermissions = [
@@ -86,6 +43,16 @@ const rolePermissions = {
   Staff: ["Child Management", "Reports", "Donations", "Development Tracking"],
   "Social Worker": ["Child Management", "Development Tracking", "Reports"],
   "House Parent": ["Child Management", "Development Tracking"],
+};
+
+// ====== helpers: avatar url fix (so /uploads works) ======
+const API_ORIGIN = "http://localhost:5000";
+const toAbsoluteAvatarUrl = (url) => {
+  if (!url) return "";
+  if (url.startsWith("blob:") || url.startsWith("data:")) return url;
+  if (url.startsWith("http://") || url.startsWith("https://")) return url;
+  if (url.startsWith("/")) return `${API_ORIGIN}${url}`;
+  return url;
 };
 
 // ----- HELPERS -----
@@ -123,13 +90,430 @@ const formatLastLogin = (iso) => {
   const last = new Date(iso);
   const diffMs = now.getTime() - last.getTime();
   const hours = Math.floor(diffMs / (1000 * 60 * 60));
-
   if (hours < 1) return "Just now";
   if (hours < 24) return `${hours}h ago`;
   const days = Math.floor(hours / 24);
   if (days < 7) return `${days}d ago`;
   return last.toLocaleDateString();
 };
+
+const formatDateShort = (iso) => {
+  if (!iso) return "—";
+  try {
+    return new Date(iso).toLocaleDateString();
+  } catch {
+    return String(iso);
+  }
+};
+
+// ======================= SMALL UI PRIMITIVE MODAL =======================
+const BaseModal = ({ isOpen, title, subtitle, onClose, children, footer }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50">
+      {/* overlay */}
+      <div
+        className="absolute inset-0 bg-black/40"
+        onClick={onClose}
+      />
+
+      {/* wrapper */}
+      <div className="absolute inset-0 flex items-end sm:items-center justify-center p-0 sm:p-4">
+        {/* panel */}
+        <div
+          className="
+            w-full
+            sm:max-w-2xl
+            bg-white dark:bg-gray-900
+            border border-gray-200 dark:border-gray-800
+            shadow-2xl
+            overflow-hidden
+            flex flex-col
+            h-[95vh] sm:h-auto
+            sm:rounded-2xl
+            rounded-t-2xl
+          "
+        >
+          {/* header */}
+          <div className="p-4 sm:p-6 border-b border-gray-100 dark:border-gray-800 flex items-start justify-between gap-4">
+            <div className="min-w-0">
+              <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100">
+                {title}
+              </h3>
+              {subtitle ? (
+                <p className="mt-1 text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                  {subtitle}
+                </p>
+              ) : null}
+            </div>
+
+            <button
+              type="button"
+              onClick={onClose}
+              className="h-10 w-10 rounded-xl border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 inline-flex items-center justify-center shrink-0"
+              title="Close"
+            >
+              <X className="h-4 w-4 text-gray-700 dark:text-gray-200" />
+            </button>
+          </div>
+
+          {/* body (scrollable) */}
+          <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+            {children}
+          </div>
+
+          {/* footer (sticky on mobile) */}
+          {footer ? (
+            <div
+              className="
+                border-t border-gray-100 dark:border-gray-800
+                bg-white/95 dark:bg-gray-900/95 backdrop-blur
+                p-4 sm:p-6
+                sticky bottom-0
+              "
+              style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 1rem)" }}
+            >
+              {footer}
+            </div>
+          ) : null}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+
+// ======================= VIEW DETAILS MODAL (matches screenshot) =======================
+const UserDetailsModal = ({ isOpen, user, onClose, onEdit }) => {
+  if (!isOpen || !user) return null;
+
+  const fullName = `${user.firstName} ${user.middleName} ${user.lastName}`.replace(/\s+/g, " ").trim();
+  const initials = `${user.firstName?.[0] || ""}${user.lastName?.[0] || ""}`.toUpperCase();
+  const avatar = toAbsoluteAvatarUrl(user.avatarUrl || "");
+
+  return (
+    <BaseModal
+      isOpen={isOpen}
+      title="User Details"
+      subtitle="Complete information for this user account."
+      onClose={onClose}
+      footer={
+        <div className="flex items-center justify-end gap-3">
+          <Button variant="outline" onClick={onClose} className="px-5 h-11 rounded-xl">
+            Close
+          </Button>
+          <Button
+            onClick={() => onEdit?.(user)}
+            className="px-5 h-11 rounded-xl bg-gray-900 hover:bg-black text-white inline-flex items-center gap-2"
+          >
+            <Edit className="h-4 w-4" />
+            Edit User
+          </Button>
+        </div>
+      }
+    >
+      <div className="flex items-start gap-4">
+        {avatar ? (
+          <img
+            src={avatar}
+            alt={fullName}
+            className="w-16 h-16 rounded-full object-cover border border-gray-200 dark:border-gray-700"
+          />
+        ) : (
+          <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-700 dark:text-gray-200 font-semibold">
+            {initials || "?"}
+          </div>
+        )}
+
+        <div className="min-w-0">
+          <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+            {fullName}
+          </h3>
+
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${getRoleBadgeClasses(user.role)}`}>
+              {String(user.role || "").toLowerCase()}
+            </span>
+            <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${getStatusBadgeClasses(user.status)}`}>
+              {user.status}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-6 space-y-3 text-sm text-gray-700 dark:text-gray-200">
+        <div className="flex items-center gap-3">
+          <Mail className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+          <div>
+            <span className="font-medium">Email:</span>{" "}
+            <span className="text-gray-600 dark:text-gray-300">{user.email}</span>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <Phone className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+          <div>
+            <span className="font-medium">Phone:</span>{" "}
+            <span className="text-gray-600 dark:text-gray-300">{user.phone || "—"}</span>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <Calendar className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+          <div>
+            <span className="font-medium">Joined:</span>{" "}
+            <span className="text-gray-600 dark:text-gray-300">{formatDateShort(user.createdAt)}</span>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <Clock className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+          <div>
+            <span className="font-medium">Last Login:</span>{" "}
+            <span className="text-gray-600 dark:text-gray-300">{formatDateShort(user.lastLogin)}</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-6 pt-4 border-t border-gray-100 dark:border-gray-800">
+        <div className="flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-gray-100">
+          <Shield className="h-4 w-4" />
+          Permissions
+        </div>
+
+        <div className="mt-3 flex flex-wrap gap-2">
+          {(user.permissions && user.permissions.length > 0 ? user.permissions : ["—"]).map((p) => (
+            <span
+              key={p}
+              className="inline-flex items-center px-3 py-1 rounded-full text-xs border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-200"
+            >
+              {p}
+            </span>
+          ))}
+        </div>
+      </div>
+    </BaseModal>
+  );
+};
+
+// ======================= EDIT USER MODAL (matches screenshot) =======================
+const EditUserModal = ({ isOpen, user, onClose, onSubmit, loading }) => {
+  const [form, setForm] = useState(null);
+  const [avatarPreview, setAvatarPreview] = useState("");
+  const [avatarFile, setAvatarFile] = useState(null);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const fullName = `${user.firstName} ${user.middleName} ${user.lastName}`
+      .replace(/\s+/g, " ")
+      .trim();
+
+    setForm({
+      id: user.id,
+      fullName,
+      email: user.email || "",
+      phone: user.phone || "",
+      role: user.role || "Staff",
+      status: user.status || "Active",
+      permissions: Array.isArray(user.permissions) ? user.permissions : [],
+      avatarUrl: user.avatarUrl || "",
+    });
+
+    setAvatarFile(null);
+    setAvatarPreview(toAbsoluteAvatarUrl(user.avatarUrl || ""));
+  }, [user]);
+
+  useEffect(() => {
+    return () => {
+      if (avatarPreview?.startsWith("blob:")) URL.revokeObjectURL(avatarPreview);
+    };
+  }, [avatarPreview]);
+
+  if (!isOpen || !user || !form) return null;
+
+  const CONTROL =
+    "h-11 w-full rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/40 px-4 text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500";
+
+  const LABEL = "block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2";
+
+  const togglePerm = (perm) => {
+    setForm((p) => ({
+      ...p,
+      permissions: p.permissions.includes(perm)
+        ? p.permissions.filter((x) => x !== perm)
+        : [...p.permissions, perm],
+    }));
+  };
+
+  const onPickAvatar = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const url = URL.createObjectURL(file);
+    setAvatarFile(file);
+    setAvatarPreview((prev) => {
+      if (prev?.startsWith("blob:")) URL.revokeObjectURL(prev);
+      return url;
+    });
+  };
+
+  const submit = () => {
+    onSubmit?.({ ...form, avatarFile });
+  };
+
+  // initials fallback
+  const initials =
+    (form.fullName || "?")
+      .split(" ")
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((s) => s[0]?.toUpperCase())
+      .join("") || "?";
+
+  return (
+    <BaseModal
+      isOpen={isOpen}
+      title="Edit User"
+      subtitle="Update user information, role, and permissions."
+      onClose={onClose}
+      footer={
+        <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
+          <Button variant="outline" onClick={onClose} className="w-full sm:w-auto px-5 h-11 rounded-xl">
+            Cancel
+          </Button>
+
+          <Button
+            onClick={submit}
+            loading={loading}
+            className="w-full sm:w-auto px-6 h-11 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white"
+          >
+            Update User
+          </Button>
+        </div>
+      }
+    >
+      {/* Avatar row (responsive) */}
+      <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6">
+        {avatarPreview ? (
+          <img
+            src={avatarPreview}
+            alt="Avatar"
+            className="w-14 h-14 rounded-full object-cover border border-gray-200 dark:border-gray-700"
+          />
+        ) : (
+          <div className="w-14 h-14 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center font-semibold text-gray-700 dark:text-gray-200">
+            {initials}
+          </div>
+        )}
+
+        <label className="inline-flex items-center justify-center gap-2 px-4 h-11 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer text-sm font-medium text-gray-700 dark:text-gray-200 w-full sm:w-auto">
+          <Camera className="h-4 w-4" />
+          Upload Photo
+          <input type="file" accept="image/*" className="hidden" onChange={onPickAvatar} />
+        </label>
+      </div>
+
+      {/* Fields (1 col on mobile, 2 col on desktop) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="sm:col-span-1">
+          <label className={LABEL}>Full Name *</label>
+          <input
+            className={CONTROL}
+            value={form.fullName}
+            onChange={(e) => setForm((p) => ({ ...p, fullName: e.target.value }))}
+            placeholder="e.g. Sarah Johnson"
+          />
+        </div>
+
+        <div className="sm:col-span-1">
+          <label className={LABEL}>Email Address *</label>
+          <input
+            className={CONTROL}
+            value={form.email}
+            onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))}
+            placeholder="e.g. sarah@villageofhope.org"
+          />
+        </div>
+
+        <div className="sm:col-span-1">
+          <label className={LABEL}>Phone Number</label>
+          <input
+            className={CONTROL}
+            value={form.phone}
+            onChange={(e) => setForm((p) => ({ ...p, phone: e.target.value }))}
+            placeholder="+63..."
+          />
+        </div>
+
+        <div className="sm:col-span-1">
+          <label className={LABEL}>Role *</label>
+          <select
+            className={CONTROL}
+            value={form.role}
+            onChange={(e) => {
+              const role = e.target.value;
+              setForm((p) => ({
+                ...p,
+                role,
+                permissions: role === "Admin" ? ["Full Access"] : (p.permissions?.length ? p.permissions : (rolePermissions[role] || [])),
+              }));
+            }}
+          >
+            <option value="Admin">Admin</option>
+            <option value="Staff">Staff</option>
+            <option value="Social Worker">Social Worker</option>
+            <option value="House Parent">House Parent</option>
+          </select>
+        </div>
+
+        <div className="sm:col-span-2">
+          <label className={LABEL}>Status</label>
+          <select
+            className={CONTROL}
+            value={form.status}
+            onChange={(e) => setForm((p) => ({ ...p, status: e.target.value }))}
+          >
+            <option value="Active">Active</option>
+            <option value="Inactive">Inactive</option>
+            <option value="Suspended">Suspended</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Permissions */}
+      <div className="mt-6">
+        <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+          Permissions
+        </div>
+
+        {form.role === "Admin" ? (
+          <div className="mt-3">
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-200">
+              Full Access
+            </span>
+          </div>
+        ) : (
+          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {availablePermissions.map((perm) => (
+              <label key={perm} className="flex items-center gap-3 text-sm text-gray-700 dark:text-gray-200">
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 rounded border-gray-300"
+                  checked={form.permissions.includes(perm)}
+                  onChange={() => togglePerm(perm)}
+                />
+                {perm}
+              </label>
+            ))}
+          </div>
+        )}
+      </div>
+    </BaseModal>
+  );
+};
+
 
 // ----- USER CARD COMPONENT -----
 const UserCard = ({ user, onEdit, onDelete, onToggleStatus, onResetPassword, onViewDetails }) => {
@@ -138,13 +522,13 @@ const UserCard = ({ user, onEdit, onDelete, onToggleStatus, onResetPassword, onV
   const fullName = `${user.firstName} ${user.middleName} ${user.lastName}`.replace(/\s+/g, " ").trim();
   const initials = `${user.firstName?.[0] || ""}${user.lastName?.[0] || ""}`.toUpperCase();
   const hasAvatar = !!user.avatarUrl;
+  const avatar = toAbsoluteAvatarUrl(user.avatarUrl || "");
 
   const handleMenuItem = (cb) => {
     setMenuOpen(false);
     cb && cb(user);
   };
 
-  // ✅ unified button sizing (same style, consistent)
   const ACTION_BTN =
     "h-10 w-10 rounded-xl border border-gray-200 dark:border-gray-700 " +
     "bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800 " +
@@ -153,11 +537,10 @@ const UserCard = ({ user, onEdit, onDelete, onToggleStatus, onResetPassword, onV
   return (
     <div className="h-full rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm hover:shadow-md transition-shadow p-6 flex flex-col justify-between">
       <div className="flex items-start justify-between gap-4">
-        {/* Left: avatar + info */}
         <div className="flex items-start gap-4 min-w-0">
           {hasAvatar ? (
             <img
-              src={user.avatarUrl}
+              src={avatar}
               alt={fullName}
               className="w-12 h-12 rounded-full object-cover border border-gray-200 dark:border-gray-700"
             />
@@ -195,7 +578,7 @@ const UserCard = ({ user, onEdit, onDelete, onToggleStatus, onResetPassword, onV
 
               <div className="flex items-center gap-2">
                 <Calendar className="h-4 w-4 text-gray-500 dark:text-gray-400 shrink-0" />
-                <span>Joined: {user.createdAt}</span>
+                <span>Joined: {user.createdAt || "—"}</span>
               </div>
 
               <div className="flex items-center gap-2">
@@ -206,7 +589,6 @@ const UserCard = ({ user, onEdit, onDelete, onToggleStatus, onResetPassword, onV
           </div>
         </div>
 
-        {/* Right: actions */}
         <div className="flex items-start gap-2 relative shrink-0">
           <button type="button" onClick={() => onEdit(user)} className={ACTION_BTN} title="Edit">
             <Edit className="h-4 w-4 text-gray-700 dark:text-gray-200" />
@@ -277,7 +659,6 @@ const UserCard = ({ user, onEdit, onDelete, onToggleStatus, onResetPassword, onV
         </div>
       </div>
 
-      {/* Permissions */}
       {user.permissions && user.permissions.length > 0 && (
         <div className="mt-6 pt-4 border-t border-gray-100 dark:border-gray-800">
           <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Permissions</p>
@@ -299,27 +680,29 @@ const UserCard = ({ user, onEdit, onDelete, onToggleStatus, onResetPassword, onV
 
 // ======================= MAIN COMPONENT =======================
 const Users = () => {
-  const [users, setUsers] = useState(initialUsers);
-  const [filteredUsers, setFilteredUsers] = useState(initialUsers);
+  const { authFetch } = useAuth();
 
-  // filters
+  const [users, setUsers] = useState([]);
+  const [filteredUsers, setFilteredUsers] = useState([]);
+
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedRole, setSelectedRole] = useState("All");
   const [selectedStatus, setSelectedStatus] = useState("All");
 
-  // pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(4);
 
-  // modals
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // Add User modal state
-  const [newUser, setNewUser] = useState({
+  // Add User modal state — add password because backend requires it
+    const [newUser, setNewUser] = useState({
     firstName: "",
     middleName: "",
     lastName: "",
@@ -328,10 +711,12 @@ const Users = () => {
     role: "",
     permissions: [],
     avatarUrl: "",
+    avatarFile: null, // ✅ ADD THIS
+    password: "",
   });
 
-  // ✅ sizing tokens (style-only)
-  const CONTROL_H = "h-11"; // 44px
+
+  const CONTROL_H = "h-11";
   const CONTROL =
     `${CONTROL_H} w-full rounded-xl border border-gray-300 dark:border-gray-700 ` +
     `bg-white dark:bg-gray-900 px-4 text-sm text-gray-900 dark:text-gray-100 ` +
@@ -343,50 +728,71 @@ const Users = () => {
     "h-10 w-10 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 " +
     "hover:bg-gray-50 dark:hover:bg-gray-800 inline-flex items-center justify-center transition-colors";
 
-  // Fields for EDIT modal (FormModal)
-  const userFields = [
-    { name: "firstName", label: "First Name", type: "text", required: true, placeholder: "Enter first name" },
-    { name: "middleName", label: "Middle Name", type: "text", placeholder: "Enter middle name" },
-    { name: "lastName", label: "Last Name", type: "text", required: true, placeholder: "Enter last name" },
-    { name: "email", label: "Email", type: "email", required: true, placeholder: "Enter email address" },
-    {
-      name: "role",
-      label: "Role",
-      type: "select",
-      required: true,
-      options: [
-        { value: "Admin", label: "Administrator" },
-        { value: "Staff", label: "Staff" },
-        { value: "Social Worker", label: "Social Worker" },
-        { value: "House Parent", label: "House Parent" },
-      ],
-    },
-    {
-      name: "status",
-      label: "Status",
-      type: "select",
-      required: true,
-      options: [
-        { value: "Active", label: "Active" },
-        { value: "Inactive", label: "Inactive" },
-        { value: "Suspended", label: "Suspended" },
-      ],
-    },
-    { name: "phone", label: "Phone Number", type: "text", placeholder: "Enter phone number" },
-  ];
+  /* =========================
+     LOAD USERS FROM BACKEND
+  ========================= */
+  const fetchUsers = async () => {
+    try {
+      setLoading(true);
+
+      const res = await authFetch("/users");
+      const data = await res.json();
+
+      // backend returns normalized objects (after your mapUser)
+      const rows = Array.isArray(data) ? data : (data.users || []);
+
+      const mapped = rows.map((u) => {
+        const parts = splitName(u.name || "");
+        return {
+          id: u.id,
+          ...parts,
+          email: u.email,
+          role: u.role,
+          status: u.status || "Active",
+          phone: u.phone || "",
+          avatarUrl: toAbsoluteAvatarUrl(u.avatarUrl || u.avatar_url || ""),
+          permissions: Array.isArray(u.permissions)
+            ? u.permissions
+            : (() => {
+                try {
+                  return u.permissions ? JSON.parse(u.permissions) : [];
+                } catch {
+                  return [];
+                }
+              })(),
+          createdAt: u.createdAt || u.created_at || "",
+          lastLogin: u.lastLogin || u.last_login || null,
+        };
+      });
+
+      setUsers(mapped);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to load users.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchUsers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // ------- FILTERING -------
   useEffect(() => {
     const q = searchTerm.toLowerCase();
 
-    const filtered = users.filter((user) => {
-      const fullName = `${user.firstName} ${user.middleName} ${user.lastName}`.replace(/\s+/g, " ").trim().toLowerCase();
+    const filtered = users.filter((u) => {
+      const fullName = `${u.firstName} ${u.middleName} ${u.lastName}`.replace(/\s+/g, " ").trim().toLowerCase();
 
       const matchesSearch =
-        fullName.includes(q) || user.email.toLowerCase().includes(q) || user.role.toLowerCase().includes(q);
+        fullName.includes(q) ||
+        u.email.toLowerCase().includes(q) ||
+        u.role.toLowerCase().includes(q);
 
-      const matchesRole = selectedRole === "All" || user.role === selectedRole;
-      const matchesStatus = selectedStatus === "All" || user.status === selectedStatus;
+      const matchesRole = selectedRole === "All" || u.role === selectedRole;
+      const matchesStatus = selectedStatus === "All" || u.status === selectedStatus;
 
       return matchesSearch && matchesRole && matchesStatus;
     });
@@ -398,47 +804,123 @@ const Users = () => {
   // ------- PAGINATION -------
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentUsers = filteredUsers.slice(indexOfFirstItem, indexOfLastItem);
+  const currentUsers = useMemo(
+    () => filteredUsers.slice(indexOfFirstItem, indexOfLastItem),
+    [filteredUsers, indexOfFirstItem, indexOfLastItem]
+  );
   const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
 
-  // ------- ACTIONS -------
-  const handleEdit = (userData) => {
-    setLoading(true);
-    setTimeout(() => {
-      setUsers((prev) => prev.map((user) => (user.id === selectedUser.id ? { ...user, ...userData } : user)));
+  /* =========================
+     ACTIONS (BACKEND)
+  ========================= */
+
+  // ✅ Edit User (supports name/email/role/status/phone/permissions + avatar if backend supports multipart)
+  const handleEditSubmit = async (formData) => {
+    try {
+      setLoading(true);
+
+      const payloadName = formData.fullName;
+
+      // If you want to keep first/middle/last in UI,
+      // we store only `name` in DB as string.
+      const updateBase = {
+        name: payloadName,
+        email: formData.email,
+        role: formData.role,
+        status: formData.status,
+        phone: formData.phone,
+        permissions: formData.role === "Admin" ? ["Full Access"] : formData.permissions,
+      };
+
+      // If user selected a file, send FormData (requires multer backend)
+      if (formData.avatarFile instanceof File) {
+        const fd = new FormData();
+        Object.entries(updateBase).forEach(([k, v]) => {
+          if (v === undefined || v === null) return;
+          if (typeof v === "object") fd.append(k, JSON.stringify(v));
+          else fd.append(k, v);
+        });
+        fd.append("avatar", formData.avatarFile);
+
+        const res = await fetch(`${API_ORIGIN}/api/users/${formData.id}`, {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("admin_token")}`,
+          },
+          body: fd,
+        });
+
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.message || "Failed to update user.");
+      } else {
+        await authFetch(`/users/${formData.id}`, {
+          method: "PUT",
+          body: JSON.stringify({
+            ...updateBase,
+            avatar_url: formData.avatarUrl || "", // optional if you store url
+          }),
+        });
+      }
+
+      await fetchUsers();
       setIsEditModalOpen(false);
       setSelectedUser(null);
+    } catch (err) {
+      console.error(err);
+      alert(err.message || "Failed to update user.");
+    } finally {
       setLoading(false);
-    }, 800);
+    }
   };
 
-  const handleDelete = () => {
-    setLoading(true);
-    setTimeout(() => {
-      setUsers((prev) => prev.filter((user) => user.id !== selectedUser.id));
+  const handleDelete = async () => {
+    try {
+      setLoading(true);
+
+      await authFetch(`/users/${selectedUser.id}`, { method: "DELETE" });
+
+      await fetchUsers();
       setIsDeleteModalOpen(false);
       setSelectedUser(null);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to delete user.");
+    } finally {
       setLoading(false);
-    }, 800);
+    }
   };
 
-  const handleToggleStatus = (user) => {
-    setUsers((prev) =>
-      prev.map((u) => (u.id === user.id ? { ...u, status: u.status === "Active" ? "Suspended" : "Active" } : u))
-    );
+  // ✅ Status toggle (backend route exists now)
+  const handleToggleStatus = async (user) => {
+    try {
+      setLoading(true);
+      const res = await authFetch(`/users/${user.id}/toggle-status`, { method: "PATCH" });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.message || "Failed to toggle status");
+      await fetchUsers();
+    } catch (e) {
+      console.error(e);
+      alert(e.message || "Failed to toggle status");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleResetPassword = (user) => alert(`Password reset email would be sent to ${user.email}`);
-  const handleViewDetails = (user) => alert(`View details for ${user.firstName} ${user.lastName}`);
 
-  const openEditModal = (user) => {
-    setSelectedUser(user);
+  const openEditModal = (u) => {
+    setSelectedUser(u);
     setIsEditModalOpen(true);
   };
 
-  const openDeleteModal = (user) => {
-    setSelectedUser(user);
+  const openDeleteModal = (u) => {
+    setSelectedUser(u);
     setIsDeleteModalOpen(true);
+  };
+
+  const openDetailsModal = (u) => {
+    setSelectedUser(u);
+    setIsDetailsModalOpen(true);
   };
 
   // Add User modal helpers
@@ -451,54 +933,88 @@ const Users = () => {
     }));
   };
 
-  const handleAvatarChange = (e) => {
-    const file = e.target.files && e.target.files[0];
+    const handleAvatarChange = (e) => {
+    const file = e.target.files?.[0];
     if (!file) return;
+
     const url = URL.createObjectURL(file);
-    setNewUser((prev) => ({ ...prev, avatarUrl: url }));
+
+    setNewUser((prev) => {
+      if (prev.avatarUrl?.startsWith("blob:")) URL.revokeObjectURL(prev.avatarUrl);
+      return { ...prev, avatarUrl: url, avatarFile: file };
+    });
   };
 
-  const handleCreateUser = () => {
-    if (!newUser.firstName.trim() || !newUser.lastName.trim() || !newUser.email.trim() || !newUser.role) {
-      alert("Please fill in all required fields (First Name, Last Name, Email, Role).");
-      return;
-    }
 
+  const handleCreateUser = async () => {
+  if (!newUser.firstName.trim() || !newUser.lastName.trim() || !newUser.email.trim() || !newUser.role) {
+    alert("Please fill in all required fields (First Name, Last Name, Email, Role).");
+    return;
+  }
+
+  if (!newUser.password.trim()) {
+    alert("Please enter a password for the new user.");
+    return;
+  }
+
+  try {
     setLoading(true);
 
-    setTimeout(() => {
-      const newId = users.length ? Math.max(...users.map((u) => u.id)) + 1 : 1;
+    const hasAvatar = newUser.avatarFile instanceof File;
 
-      const userToAdd = {
-        id: newId,
-        firstName: newUser.firstName.trim(),
-        middleName: newUser.middleName.trim(),
-        lastName: newUser.lastName.trim(),
+    let res;
+
+    if (hasAvatar) {
+      const fd = new FormData();
+      fd.append("name", joinName(newUser));
+      fd.append("email", newUser.email.trim());
+      fd.append("role", newUser.role);
+      fd.append("password", newUser.password.trim());
+      fd.append("phone", newUser.phone || "");
+      fd.append("status", "Active");
+      fd.append("permissions", JSON.stringify(newUser.permissions || []));
+      fd.append("avatar", newUser.avatarFile);
+
+      res = await authFetch("/users", { method: "POST", body: fd });
+    } else {
+      const payload = {
+        name: joinName(newUser),
         email: newUser.email.trim(),
         role: newUser.role,
+        password: newUser.password.trim(),
+        phone: newUser.phone || "",
         status: "Active",
-        createdAt: new Date().toISOString().split("T")[0],
-        lastLogin: new Date().toISOString(),
-        phone: newUser.phone.trim(),
-        avatarUrl: newUser.avatarUrl,
-        permissions: newUser.permissions.length > 0 ? newUser.permissions : rolePermissions[newUser.role] || [],
+        permissions: newUser.permissions || [],
       };
 
-      setUsers((prev) => [userToAdd, ...prev]);
-      setIsAddModalOpen(false);
-      setLoading(false);
-      setNewUser({
-        firstName: "",
-        middleName: "",
-        lastName: "",
-        email: "",
-        phone: "",
-        role: "",
-        permissions: [],
-        avatarUrl: "",
-      });
-    }, 800);
-  };
+      res = await authFetch("/users", { method: "POST", body: JSON.stringify(payload) });
+    }
+
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.message || "Failed to create user");
+
+    await fetchUsers();
+
+    setIsAddModalOpen(false);
+    setNewUser({
+      firstName: "",
+      middleName: "",
+      lastName: "",
+      email: "",
+      phone: "",
+      role: "",
+      permissions: [],
+      avatarUrl: "",
+      avatarFile: null,
+      password: "",
+    });
+  } catch (err) {
+    console.error(err);
+    alert(err.message || "Failed to create user. (Email may already exist)");
+  } finally {
+    setLoading(false);
+  }
+};
 
   // ------- STATS -------
   const totalUsers = users.length;
@@ -508,7 +1024,6 @@ const Users = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 transition-colors">
-      {/* ✅ aligned container like your other pages */}
       <div className="mx-auto w-full max-w-[1200px] p-4 sm:p-6 space-y-6">
         {/* HEADER */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -610,15 +1125,15 @@ const Users = () => {
 
         {/* USER CARDS GRID */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
-          {currentUsers.map((user) => (
+          {currentUsers.map((u) => (
             <UserCard
-              key={user.id}
-              user={user}
+              key={u.id}
+              user={u}
               onEdit={openEditModal}
               onDelete={openDeleteModal}
               onToggleStatus={handleToggleStatus}
               onResetPassword={handleResetPassword}
-              onViewDetails={handleViewDetails}
+              onViewDetails={openDetailsModal}
             />
           ))}
 
@@ -638,7 +1153,7 @@ const Users = () => {
             </div>
 
             <div className="flex flex-wrap gap-2">
-              <Button variant="outline" size="small" disabled={currentPage === 1} onClick={() => setCurrentPage((prev) => prev - 1)}>
+              <Button variant="outline" size="small" disabled={currentPage === 1} onClick={() => setCurrentPage((p) => p - 1)}>
                 Previous
               </Button>
 
@@ -648,14 +1163,14 @@ const Users = () => {
                 </Button>
               ))}
 
-              <Button variant="outline" size="small" disabled={currentPage === totalPages} onClick={() => setCurrentPage((prev) => prev + 1)}>
+              <Button variant="outline" size="small" disabled={currentPage === totalPages} onClick={() => setCurrentPage((p) => p + 1)}>
                 Next
               </Button>
             </div>
           </div>
         )}
 
-        {/* ADD USER MODAL */}
+        {/* ADD USER MODAL (unchanged) */}
         <AddUserModal
           isOpen={isAddModalOpen}
           onClose={() => setIsAddModalOpen(false)}
@@ -671,18 +1186,30 @@ const Users = () => {
           ACTION_BTN={ACTION_BTN}
         />
 
-        {/* EDIT USER MODAL */}
-        <FormModal
+        {/* ✅ NEW: VIEW DETAILS MODAL */}
+        <UserDetailsModal
+          isOpen={isDetailsModalOpen}
+          user={selectedUser}
+          onClose={() => {
+            setIsDetailsModalOpen(false);
+            // keep selectedUser if you want, but ok to clear:
+            // setSelectedUser(null);
+          }}
+          onEdit={(u) => {
+            setIsDetailsModalOpen(false);
+            openEditModal(u);
+          }}
+        />
+
+        {/* ✅ NEW: EDIT USER MODAL */}
+        <EditUserModal
           isOpen={isEditModalOpen}
+          user={selectedUser}
           onClose={() => {
             setIsEditModalOpen(false);
             setSelectedUser(null);
           }}
-          onSubmit={handleEdit}
-          title="Edit User"
-          fields={userFields}
-          initialData={selectedUser || {}}
-          submitText="Update User"
+          onSubmit={handleEditSubmit}
           loading={loading}
         />
 

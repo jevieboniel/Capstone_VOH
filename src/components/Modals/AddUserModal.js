@@ -1,5 +1,5 @@
-import React from "react";
-import { UserPlus } from "lucide-react";
+import React, { useEffect, useMemo, useState } from "react";
+import { UserPlus, Lock } from "lucide-react";
 import Button from "../UI/Button";
 
 const AddUserModal = ({
@@ -9,36 +9,67 @@ const AddUserModal = ({
     setNewUser,
     availablePermissions,
     togglePermission,
-    handleAvatarChange,
     handleCreateUser,
     loading,
     CONTROL,
     ACTION_BTN,
     }) => {
+    const [confirmPassword, setConfirmPassword] = useState("");
+
+    // ✅ reset confirm password when modal closes
+    useEffect(() => {
+        if (!isOpen) setConfirmPassword("");
+    }, [isOpen]);
+
+    const passwordMismatch = useMemo(() => {
+        const p = (newUser.password || "").trim();
+        const c = (confirmPassword || "").trim();
+        if (!p && !c) return false;
+        return p !== c;
+    }, [newUser.password, confirmPassword]);
+
     if (!isOpen) return null;
+
+    const setField = (key, value) => setNewUser((prev) => ({ ...prev, [key]: value }));
+
+    // ✅ handle avatar locally (store file + preview url)
+    const handleAvatarPick = (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const url = URL.createObjectURL(file);
+
+        setNewUser((prev) => {
+        // cleanup old preview blob if any
+        if (prev.avatarUrl?.startsWith("blob:")) URL.revokeObjectURL(prev.avatarUrl);
+
+        return {
+            ...prev,
+            avatarFile: file, // ✅ important
+            avatarUrl: url,   // preview
+        };
+        });
+    };
+
+    const initials =
+        `${newUser.firstName?.[0] || ""}${newUser.lastName?.[0] || ""}`.toUpperCase() || "?";
+
+    const onCreate = () => {
+        if (passwordMismatch) {
+        alert("Passwords do not match.");
+        return;
+        }
+        handleCreateUser();
+    };
 
     return (
         <div
-        className="
-            fixed inset-0 z-50 flex items-center justify-center
-            bg-black/40 dark:bg-black/60
-            px-3 sm:px-4 py-6
-        "
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 dark:bg-black/60 px-3 sm:px-4 py-6"
         role="dialog"
         aria-modal="true"
         >
-        {/* ✅ Panel */}
-        <div
-            className="
-            w-full max-w-3xl
-            bg-white dark:bg-gray-900
-            rounded-2xl shadow-2xl
-            border border-gray-200 dark:border-gray-800
-            max-h-[90vh] overflow-hidden
-            flex flex-col
-            "
-        >
-            {/* ✅ Header (fixed) */}
+        <div className="w-full max-w-3xl bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-800 max-h-[90vh] overflow-hidden flex flex-col">
+            {/* Header */}
             <div className="p-5 sm:p-6 border-b border-gray-100 dark:border-gray-800">
             <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0">
@@ -57,14 +88,12 @@ const AddUserModal = ({
                 </div>
 
                 <button onClick={onClose} className={ACTION_BTN} title="Close" type="button">
-                <span className="text-xl leading-none text-gray-700 dark:text-gray-200">
-                    ×
-                </span>
+                <span className="text-xl leading-none text-gray-700 dark:text-gray-200">×</span>
                 </button>
             </div>
             </div>
 
-            {/* ✅ Body (scrolls) */}
+            {/* Body */}
             <div className="flex-1 overflow-y-auto p-5 sm:p-6">
             <div className="space-y-5">
                 <div className="flex flex-col md:flex-row gap-6">
@@ -78,30 +107,59 @@ const AddUserModal = ({
                     />
                     ) : (
                     <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-indigo-950/30 dark:to-blue-950/20 flex items-center justify-center text-indigo-600 dark:text-indigo-200 text-xl sm:text-2xl font-semibold border border-indigo-100 dark:border-indigo-900/40">
-                        ?
+                        {initials}
                     </div>
                     )}
 
                     <div className="flex flex-col gap-2 w-full md:w-auto">
                     <label className="inline-flex items-center justify-center px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-700 dark:text-gray-200 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors w-full md:w-auto">
                         <span>Upload Photo</span>
-                        <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={handleAvatarChange}
-                        />
+                        <input type="file" accept="image/*" className="hidden" onChange={handleAvatarPick} />
                     </label>
 
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                        JPG or PNG, max ~2MB.
-                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">JPG or PNG, max ~2MB.</p>
                     </div>
                 </div>
 
                 {/* Inputs */}
                 <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {/* ... keep your inputs exactly the same ... */}
+                    <div className="space-y-1.5">
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                        First Name <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                        type="text"
+                        placeholder="Enter first name"
+                        value={newUser.firstName || ""}
+                        onChange={(e) => setField("firstName", e.target.value)}
+                        className={CONTROL}
+                    />
+                    </div>
+
+                    <div className="space-y-1.5">
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                        Last Name <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                        type="text"
+                        placeholder="Enter last name"
+                        value={newUser.lastName || ""}
+                        onChange={(e) => setField("lastName", e.target.value)}
+                        className={CONTROL}
+                    />
+                    </div>
+
+                    <div className="space-y-1.5">
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-200">Middle Name</label>
+                    <input
+                        type="text"
+                        placeholder="Enter middle name"
+                        value={newUser.middleName || ""}
+                        onChange={(e) => setField("middleName", e.target.value)}
+                        className={CONTROL}
+                    />
+                    </div>
+
                     <div className="space-y-1.5">
                     <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
                         Email Address <span className="text-red-500">*</span>
@@ -109,46 +167,67 @@ const AddUserModal = ({
                     <input
                         type="email"
                         placeholder="Enter email address"
-                        value={newUser.email}
-                        onChange={(e) =>
-                        setNewUser((prev) => ({ ...prev, email: e.target.value }))
-                        }
+                        value={newUser.email || ""}
+                        onChange={(e) => setField("email", e.target.value)}
+                        className={CONTROL}
+                    />
+                    </div>
+
+                    <div className="space-y-1.5">
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-200">Phone Number</label>
+                    <input
+                        type="text"
+                        placeholder="Enter phone number"
+                        value={newUser.phone || ""}
+                        onChange={(e) => setField("phone", e.target.value)}
                         className={CONTROL}
                     />
                     </div>
 
                     <div className="space-y-1.5">
                     <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
-                        Phone Number
-                    </label>
-                    <input
-                        type="text"
-                        placeholder="Enter phone number"
-                        value={newUser.phone}
-                        onChange={(e) =>
-                        setNewUser((prev) => ({ ...prev, phone: e.target.value }))
-                        }
-                        className={CONTROL}
-                    />
-                    </div>
-
-                    <div className="space-y-1.5 sm:col-span-2">
-                    <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
                         Role <span className="text-red-500">*</span>
                     </label>
-                    <select
-                        value={newUser.role}
-                        onChange={(e) =>
-                        setNewUser((prev) => ({ ...prev, role: e.target.value }))
-                        }
-                        className={CONTROL}
-                    >
+                    <select value={newUser.role || ""} onChange={(e) => setField("role", e.target.value)} className={CONTROL}>
                         <option value="">Select role</option>
                         <option value="Staff">Staff</option>
                         <option value="Social Worker">Social Worker</option>
                         <option value="House Parent">House Parent</option>
                         <option value="Admin">Admin</option>
                     </select>
+                    </div>
+
+                    <div className="space-y-1.5 sm:col-span-1">
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                        Password <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                        <input
+                        type="password"
+                        placeholder="Enter password"
+                        value={newUser.password || ""}
+                        onChange={(e) => setField("password", e.target.value)}
+                        className={`${CONTROL} pl-10`}
+                        />
+                    </div>
+                    </div>
+
+                    <div className="space-y-1.5 sm:col-span-1">
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                        Confirm Password <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                        <input
+                        type="password"
+                        placeholder="Confirm password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        className={`${CONTROL} pl-10 ${passwordMismatch ? "border-red-400 focus:ring-red-500" : ""}`}
+                        />
+                    </div>
+                    {passwordMismatch ? <p className="text-xs text-red-500">Passwords do not match.</p> : null}
                     </div>
                 </div>
                 </div>
@@ -164,14 +243,11 @@ const AddUserModal = ({
 
                 <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {availablePermissions.map((permission) => (
-                    <label
-                        key={permission}
-                        className="inline-flex items-start gap-2 text-sm text-gray-700 dark:text-gray-200"
-                    >
+                    <label key={permission} className="inline-flex items-start gap-2 text-sm text-gray-700 dark:text-gray-200">
                         <input
                         type="checkbox"
                         className="mt-0.5 h-4 w-4 rounded border-gray-300 dark:border-gray-700 text-indigo-600 focus:ring-indigo-500 bg-white dark:bg-gray-900"
-                        checked={newUser.permissions.includes(permission)}
+                        checked={newUser.permissions?.includes(permission)}
                         onChange={() => togglePermission(permission)}
                         />
                         <span className="break-words">{permission}</span>
@@ -182,12 +258,9 @@ const AddUserModal = ({
             </div>
             </div>
 
-            {/* ✅ Footer (always visible) */}
+            {/* Footer */}
             <div
-            className="
-                p-5 sm:p-6 border-t border-gray-100 dark:border-gray-800
-                bg-white/95 dark:bg-gray-900/95 backdrop-blur
-            "
+            className="p-5 sm:p-6 border-t border-gray-100 dark:border-gray-800 bg-white/95 dark:bg-gray-900/95 backdrop-blur"
             style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 1rem)" }}
             >
             <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
@@ -196,7 +269,7 @@ const AddUserModal = ({
                 </Button>
 
                 <Button
-                onClick={handleCreateUser}
+                onClick={onCreate}
                 disabled={loading}
                 loading={loading}
                 className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white"

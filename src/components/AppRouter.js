@@ -66,37 +66,49 @@ const AppRouter = () => {
   const allRoutes = getAllRoutes();
 
   return (
-    <MainLayout>
-      <Routes>
-        <Route 
-          path="/login" 
-          element={
-            <PublicRoute>
-              <Login />
-            </PublicRoute>
-          } 
-        />
-        
-        {allRoutes.map((route) => {
-          const Component = componentMap[route.component];
-          
-          return (
-            <Route 
-              key={route.path}
-              path={route.path} 
-              element={
-                <ProtectedRoute>
-                  {Component ? <Component /> : <div>Component not found: {route.component}</div>}
-                </ProtectedRoute>
-              } 
-            />
-          );
-        })}
-        
-        <Route path="/" element={<Navigate to="/dashboard" />} />
-      </Routes>
-    </MainLayout>
+    <Routes>
+
+      {/* PUBLIC ROUTE (NO LAYOUT) */}
+      <Route 
+        path="/login" 
+        element={
+          <PublicRoute>
+            <Login />
+          </PublicRoute>
+        } 
+      />
+
+      {/* PROTECTED ROUTES (WITH LAYOUT) */}
+      <Route 
+        path="/*"
+        element={
+          <ProtectedRoute>
+            <MainLayout>
+              <Routes>
+                {allRoutes.map((route) => {
+                  const Component = componentMap[route.component];
+                  return (
+                    <Route
+                      key={route.path}
+                      path={route.path}
+                      element={
+                        Component
+                          ? <Component />
+                          : <div>Component not found: {route.component}</div>
+                      }
+                    />
+                  );
+                })}
+                <Route path="/" element={<Navigate to="/dashboard" />} />
+              </Routes>
+            </MainLayout>
+          </ProtectedRoute>
+        }
+      />
+
+    </Routes>
   );
 };
+
 
 export default AppRouter;
