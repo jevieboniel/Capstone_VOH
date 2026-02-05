@@ -2,7 +2,6 @@
     import {
     AlertTriangle,
     Plus,
-    Send,
     Users,
     Calendar,
     Search,
@@ -407,7 +406,7 @@
                 Alert Management
                 </h1>
                 <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
-                Send and manage system alerts and notifications (Email only)
+                Send and manage system alerts and notifications
                 </p>
             </div>
 

@@ -163,7 +163,7 @@
             {/* Notification Method - Email Only (display only) */}
             <div>
                 <label className="mb-2 block text-xs font-semibold text-gray-700 dark:text-gray-200">
-                Notification Method
+                Notification
                 </label>
 
                 <div className="inline-flex items-center gap-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-3 py-2 text-xs text-gray-800 dark:text-gray-200">

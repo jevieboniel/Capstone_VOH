@@ -113,10 +113,7 @@ const BaseModal = ({ isOpen, title, subtitle, onClose, children, footer }) => {
   return (
     <div className="fixed inset-0 z-50">
       {/* overlay */}
-      <div
-        className="absolute inset-0 bg-black/40"
-        onClick={onClose}
-      />
+      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
 
       {/* wrapper */}
       <div className="absolute inset-0 flex items-end sm:items-center justify-center p-0 sm:p-4">
@@ -159,9 +156,7 @@ const BaseModal = ({ isOpen, title, subtitle, onClose, children, footer }) => {
           </div>
 
           {/* body (scrollable) */}
-          <div className="flex-1 overflow-y-auto p-4 sm:p-6">
-            {children}
-          </div>
+          <div className="flex-1 overflow-y-auto p-4 sm:p-6">{children}</div>
 
           {/* footer (sticky on mobile) */}
           {footer ? (
@@ -172,7 +167,9 @@ const BaseModal = ({ isOpen, title, subtitle, onClose, children, footer }) => {
                 p-4 sm:p-6
                 sticky bottom-0
               "
-              style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 1rem)" }}
+              style={{
+                paddingBottom: "calc(env(safe-area-inset-bottom) + 1rem)",
+              }}
             >
               {footer}
             </div>
@@ -183,12 +180,13 @@ const BaseModal = ({ isOpen, title, subtitle, onClose, children, footer }) => {
   );
 };
 
-
-// ======================= VIEW DETAILS MODAL (matches screenshot) =======================
+// ======================= VIEW DETAILS MODAL =======================
 const UserDetailsModal = ({ isOpen, user, onClose, onEdit }) => {
   if (!isOpen || !user) return null;
 
-  const fullName = `${user.firstName} ${user.middleName} ${user.lastName}`.replace(/\s+/g, " ").trim();
+  const fullName = `${user.firstName} ${user.middleName} ${user.lastName}`
+    .replace(/\s+/g, " ")
+    .trim();
   const initials = `${user.firstName?.[0] || ""}${user.lastName?.[0] || ""}`.toUpperCase();
   const avatar = toAbsoluteAvatarUrl(user.avatarUrl || "");
 
@@ -232,10 +230,18 @@ const UserDetailsModal = ({ isOpen, user, onClose, onEdit }) => {
           </h3>
 
           <div className="mt-2 flex flex-wrap items-center gap-2">
-            <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${getRoleBadgeClasses(user.role)}`}>
+            <span
+              className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${getRoleBadgeClasses(
+                user.role
+              )}`}
+            >
               {String(user.role || "").toLowerCase()}
             </span>
-            <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${getStatusBadgeClasses(user.status)}`}>
+            <span
+              className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${getStatusBadgeClasses(
+                user.status
+              )}`}
+            >
               {user.status}
             </span>
           </div>
@@ -263,7 +269,9 @@ const UserDetailsModal = ({ isOpen, user, onClose, onEdit }) => {
           <Calendar className="h-4 w-4 text-gray-500 dark:text-gray-400" />
           <div>
             <span className="font-medium">Joined:</span>{" "}
-            <span className="text-gray-600 dark:text-gray-300">{formatDateShort(user.createdAt)}</span>
+            <span className="text-gray-600 dark:text-gray-300">
+              {formatDateShort(user.createdAt)}
+            </span>
           </div>
         </div>
 
@@ -271,7 +279,9 @@ const UserDetailsModal = ({ isOpen, user, onClose, onEdit }) => {
           <Clock className="h-4 w-4 text-gray-500 dark:text-gray-400" />
           <div>
             <span className="font-medium">Last Login:</span>{" "}
-            <span className="text-gray-600 dark:text-gray-300">{formatDateShort(user.lastLogin)}</span>
+            <span className="text-gray-600 dark:text-gray-300">
+              {formatDateShort(user.lastLogin)}
+            </span>
           </div>
         </div>
       </div>
@@ -297,7 +307,7 @@ const UserDetailsModal = ({ isOpen, user, onClose, onEdit }) => {
   );
 };
 
-// ======================= EDIT USER MODAL (matches screenshot) =======================
+// ======================= EDIT USER MODAL (UPDATED: First/Middle/Last) =======================
 const EditUserModal = ({ isOpen, user, onClose, onSubmit, loading }) => {
   const [form, setForm] = useState(null);
   const [avatarPreview, setAvatarPreview] = useState("");
@@ -306,13 +316,11 @@ const EditUserModal = ({ isOpen, user, onClose, onSubmit, loading }) => {
   useEffect(() => {
     if (!user) return;
 
-    const fullName = `${user.firstName} ${user.middleName} ${user.lastName}`
-      .replace(/\s+/g, " ")
-      .trim();
-
     setForm({
       id: user.id,
-      fullName,
+      firstName: user.firstName || "",
+      middleName: user.middleName || "",
+      lastName: user.lastName || "",
       email: user.email || "",
       phone: user.phone || "",
       role: user.role || "Staff",
@@ -335,7 +343,6 @@ const EditUserModal = ({ isOpen, user, onClose, onSubmit, loading }) => {
 
   const CONTROL =
     "h-11 w-full rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/40 px-4 text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500";
-
   const LABEL = "block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2";
 
   const togglePerm = (perm) => {
@@ -360,17 +367,16 @@ const EditUserModal = ({ isOpen, user, onClose, onSubmit, loading }) => {
   };
 
   const submit = () => {
+    if (!form.firstName.trim() || !form.lastName.trim() || !form.email.trim()) {
+      alert("First Name, Last Name, and Email Address are required.");
+      return;
+    }
     onSubmit?.({ ...form, avatarFile });
   };
 
   // initials fallback
   const initials =
-    (form.fullName || "?")
-      .split(" ")
-      .filter(Boolean)
-      .slice(0, 2)
-      .map((s) => s[0]?.toUpperCase())
-      .join("") || "?";
+    `${form.firstName?.[0] || ""}${form.lastName?.[0] || ""}`.toUpperCase() || "?";
 
   return (
     <BaseModal
@@ -418,12 +424,32 @@ const EditUserModal = ({ isOpen, user, onClose, onSubmit, loading }) => {
       {/* Fields (1 col on mobile, 2 col on desktop) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="sm:col-span-1">
-          <label className={LABEL}>Full Name *</label>
+          <label className={LABEL}>First Name *</label>
           <input
             className={CONTROL}
-            value={form.fullName}
-            onChange={(e) => setForm((p) => ({ ...p, fullName: e.target.value }))}
-            placeholder="e.g. Sarah Johnson"
+            value={form.firstName}
+            onChange={(e) => setForm((p) => ({ ...p, firstName: e.target.value }))}
+            placeholder="e.g. Sarah"
+          />
+        </div>
+
+        <div className="sm:col-span-1">
+          <label className={LABEL}>Middle Name</label>
+          <input
+            className={CONTROL}
+            value={form.middleName}
+            onChange={(e) => setForm((p) => ({ ...p, middleName: e.target.value }))}
+            placeholder="e.g. Marie"
+          />
+        </div>
+
+        <div className="sm:col-span-2">
+          <label className={LABEL}>Last Name *</label>
+          <input
+            className={CONTROL}
+            value={form.lastName}
+            onChange={(e) => setForm((p) => ({ ...p, lastName: e.target.value }))}
+            placeholder="e.g. Johnson"
           />
         </div>
 
@@ -457,7 +483,12 @@ const EditUserModal = ({ isOpen, user, onClose, onSubmit, loading }) => {
               setForm((p) => ({
                 ...p,
                 role,
-                permissions: role === "Admin" ? ["Full Access"] : (p.permissions?.length ? p.permissions : (rolePermissions[role] || [])),
+                permissions:
+                  role === "Admin"
+                    ? ["Full Access"]
+                    : p.permissions?.length
+                    ? p.permissions
+                    : rolePermissions[role] || [],
               }));
             }}
           >
@@ -468,7 +499,7 @@ const EditUserModal = ({ isOpen, user, onClose, onSubmit, loading }) => {
           </select>
         </div>
 
-        <div className="sm:col-span-2">
+        <div className="sm:col-span-1">
           <label className={LABEL}>Status</label>
           <select
             className={CONTROL}
@@ -497,7 +528,10 @@ const EditUserModal = ({ isOpen, user, onClose, onSubmit, loading }) => {
         ) : (
           <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
             {availablePermissions.map((perm) => (
-              <label key={perm} className="flex items-center gap-3 text-sm text-gray-700 dark:text-gray-200">
+              <label
+                key={perm}
+                className="flex items-center gap-3 text-sm text-gray-700 dark:text-gray-200"
+              >
                 <input
                   type="checkbox"
                   className="h-4 w-4 rounded border-gray-300"
@@ -514,12 +548,13 @@ const EditUserModal = ({ isOpen, user, onClose, onSubmit, loading }) => {
   );
 };
 
-
 // ----- USER CARD COMPONENT -----
 const UserCard = ({ user, onEdit, onDelete, onToggleStatus, onResetPassword, onViewDetails }) => {
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const fullName = `${user.firstName} ${user.middleName} ${user.lastName}`.replace(/\s+/g, " ").trim();
+  const fullName = `${user.firstName} ${user.middleName} ${user.lastName}`
+    .replace(/\s+/g, " ")
+    .trim();
   const initials = `${user.firstName?.[0] || ""}${user.lastName?.[0] || ""}`.toUpperCase();
   const hasAvatar = !!user.avatarUrl;
   const avatar = toAbsoluteAvatarUrl(user.avatarUrl || "");
@@ -551,14 +586,24 @@ const UserCard = ({ user, onEdit, onDelete, onToggleStatus, onResetPassword, onV
           )}
 
           <div className="min-w-0">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 truncate">{fullName}</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 truncate">
+              {fullName}
+            </h3>
 
             <div className="mt-2 flex flex-wrap items-center gap-2">
-              <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${getRoleBadgeClasses(user.role)}`}>
+              <span
+                className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${getRoleBadgeClasses(
+                  user.role
+                )}`}
+              >
                 {user.role}
               </span>
 
-              <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${getStatusBadgeClasses(user.status)}`}>
+              <span
+                className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${getStatusBadgeClasses(
+                  user.status
+                )}`}
+              >
                 {user.status}
               </span>
             </div>
@@ -628,7 +673,9 @@ const UserCard = ({ user, onEdit, onDelete, onToggleStatus, onResetPassword, onV
 
               <button
                 className={`w-full flex items-center gap-2 px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-800 text-left ${
-                  user.status === "Active" ? "text-orange-600 dark:text-orange-300" : "text-emerald-600 dark:text-emerald-300"
+                  user.status === "Active"
+                    ? "text-orange-600 dark:text-orange-300"
+                    : "text-emerald-600 dark:text-emerald-300"
                 }`}
                 onClick={() => handleMenuItem(onToggleStatus)}
               >
@@ -661,7 +708,9 @@ const UserCard = ({ user, onEdit, onDelete, onToggleStatus, onResetPassword, onV
 
       {user.permissions && user.permissions.length > 0 && (
         <div className="mt-6 pt-4 border-t border-gray-100 dark:border-gray-800">
-          <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Permissions</p>
+          <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">
+            Permissions
+          </p>
           <div className="flex flex-wrap gap-2">
             {user.permissions.map((perm) => (
               <span
@@ -702,7 +751,7 @@ const Users = () => {
   const [loading, setLoading] = useState(false);
 
   // Add User modal state — add password because backend requires it
-    const [newUser, setNewUser] = useState({
+  const [newUser, setNewUser] = useState({
     firstName: "",
     middleName: "",
     lastName: "",
@@ -711,10 +760,9 @@ const Users = () => {
     role: "",
     permissions: [],
     avatarUrl: "",
-    avatarFile: null, // ✅ ADD THIS
+    avatarFile: null,
     password: "",
   });
-
 
   const CONTROL_H = "h-11";
   const CONTROL =
@@ -739,7 +787,7 @@ const Users = () => {
       const data = await res.json();
 
       // backend returns normalized objects (after your mapUser)
-      const rows = Array.isArray(data) ? data : (data.users || []);
+      const rows = Array.isArray(data) ? data : data.users || [];
 
       const mapped = rows.map((u) => {
         const parts = splitName(u.name || "");
@@ -784,12 +832,13 @@ const Users = () => {
     const q = searchTerm.toLowerCase();
 
     const filtered = users.filter((u) => {
-      const fullName = `${u.firstName} ${u.middleName} ${u.lastName}`.replace(/\s+/g, " ").trim().toLowerCase();
+      const fullName = `${u.firstName} ${u.middleName} ${u.lastName}`
+        .replace(/\s+/g, " ")
+        .trim()
+        .toLowerCase();
 
       const matchesSearch =
-        fullName.includes(q) ||
-        u.email.toLowerCase().includes(q) ||
-        u.role.toLowerCase().includes(q);
+        fullName.includes(q) || u.email.toLowerCase().includes(q) || u.role.toLowerCase().includes(q);
 
       const matchesRole = selectedRole === "All" || u.role === selectedRole;
       const matchesStatus = selectedStatus === "All" || u.status === selectedStatus;
@@ -814,15 +863,17 @@ const Users = () => {
      ACTIONS (BACKEND)
   ========================= */
 
-  // ✅ Edit User (supports name/email/role/status/phone/permissions + avatar if backend supports multipart)
+  // ✅ Edit User (UPDATED: expects firstName/middleName/lastName from modal)
   const handleEditSubmit = async (formData) => {
     try {
       setLoading(true);
 
-      const payloadName = formData.fullName;
+      const payloadName = joinName({
+        firstName: formData.firstName,
+        middleName: formData.middleName,
+        lastName: formData.lastName,
+      });
 
-      // If you want to keep first/middle/last in UI,
-      // we store only `name` in DB as string.
       const updateBase = {
         name: payloadName,
         email: formData.email,
@@ -906,7 +957,8 @@ const Users = () => {
     }
   };
 
-  const handleResetPassword = (user) => alert(`Password reset email would be sent to ${user.email}`);
+  const handleResetPassword = (user) =>
+    alert(`Password reset email would be sent to ${user.email}`);
 
   const openEditModal = (u) => {
     setSelectedUser(u);
@@ -933,7 +985,7 @@ const Users = () => {
     }));
   };
 
-    const handleAvatarChange = (e) => {
+  const handleAvatarChange = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -945,76 +997,75 @@ const Users = () => {
     });
   };
 
-
   const handleCreateUser = async () => {
-  if (!newUser.firstName.trim() || !newUser.lastName.trim() || !newUser.email.trim() || !newUser.role) {
-    alert("Please fill in all required fields (First Name, Last Name, Email, Role).");
-    return;
-  }
-
-  if (!newUser.password.trim()) {
-    alert("Please enter a password for the new user.");
-    return;
-  }
-
-  try {
-    setLoading(true);
-
-    const hasAvatar = newUser.avatarFile instanceof File;
-
-    let res;
-
-    if (hasAvatar) {
-      const fd = new FormData();
-      fd.append("name", joinName(newUser));
-      fd.append("email", newUser.email.trim());
-      fd.append("role", newUser.role);
-      fd.append("password", newUser.password.trim());
-      fd.append("phone", newUser.phone || "");
-      fd.append("status", "Active");
-      fd.append("permissions", JSON.stringify(newUser.permissions || []));
-      fd.append("avatar", newUser.avatarFile);
-
-      res = await authFetch("/users", { method: "POST", body: fd });
-    } else {
-      const payload = {
-        name: joinName(newUser),
-        email: newUser.email.trim(),
-        role: newUser.role,
-        password: newUser.password.trim(),
-        phone: newUser.phone || "",
-        status: "Active",
-        permissions: newUser.permissions || [],
-      };
-
-      res = await authFetch("/users", { method: "POST", body: JSON.stringify(payload) });
+    if (!newUser.firstName.trim() || !newUser.lastName.trim() || !newUser.email.trim() || !newUser.role) {
+      alert("Please fill in all required fields (First Name, Last Name, Email, Role).");
+      return;
     }
 
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(data.message || "Failed to create user");
+    if (!newUser.password.trim()) {
+      alert("Please enter a password for the new user.");
+      return;
+    }
 
-    await fetchUsers();
+    try {
+      setLoading(true);
 
-    setIsAddModalOpen(false);
-    setNewUser({
-      firstName: "",
-      middleName: "",
-      lastName: "",
-      email: "",
-      phone: "",
-      role: "",
-      permissions: [],
-      avatarUrl: "",
-      avatarFile: null,
-      password: "",
-    });
-  } catch (err) {
-    console.error(err);
-    alert(err.message || "Failed to create user. (Email may already exist)");
-  } finally {
-    setLoading(false);
-  }
-};
+      const hasAvatar = newUser.avatarFile instanceof File;
+
+      let res;
+
+      if (hasAvatar) {
+        const fd = new FormData();
+        fd.append("name", joinName(newUser));
+        fd.append("email", newUser.email.trim());
+        fd.append("role", newUser.role);
+        fd.append("password", newUser.password.trim());
+        fd.append("phone", newUser.phone || "");
+        fd.append("status", "Active");
+        fd.append("permissions", JSON.stringify(newUser.permissions || []));
+        fd.append("avatar", newUser.avatarFile);
+
+        res = await authFetch("/users", { method: "POST", body: fd });
+      } else {
+        const payload = {
+          name: joinName(newUser),
+          email: newUser.email.trim(),
+          role: newUser.role,
+          password: newUser.password.trim(),
+          phone: newUser.phone || "",
+          status: "Active",
+          permissions: newUser.permissions || [],
+        };
+
+        res = await authFetch("/users", { method: "POST", body: JSON.stringify(payload) });
+      }
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.message || "Failed to create user");
+
+      await fetchUsers();
+
+      setIsAddModalOpen(false);
+      setNewUser({
+        firstName: "",
+        middleName: "",
+        lastName: "",
+        email: "",
+        phone: "",
+        role: "",
+        permissions: [],
+        avatarUrl: "",
+        avatarFile: null,
+        password: "",
+      });
+    } catch (err) {
+      console.error(err);
+      alert(err.message || "Failed to create user. (Email may already exist)");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // ------- STATS -------
   const totalUsers = users.length;
@@ -1028,8 +1079,12 @@ const Users = () => {
         {/* HEADER */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div className="min-w-0">
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">User Management</h1>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Manage system users, roles, and permissions</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">
+              User Management
+            </h1>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+              Manage system users, roles, and permissions
+            </p>
           </div>
 
           <Button
@@ -1046,8 +1101,12 @@ const Users = () => {
           <div className={`${CARD} ${CARD_HOVER} p-6 border-l-4 border-l-indigo-500`}>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Total Users</p>
-                <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-gray-100">{totalUsers}</p>
+                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                  Total Users
+                </p>
+                <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-gray-100">
+                  {totalUsers}
+                </p>
               </div>
               <div className="bg-gradient-to-br from-indigo-500 to-blue-600 p-3 rounded-2xl shadow-md">
                 <UsersIcon className="h-6 w-6 text-white" />
@@ -1058,8 +1117,12 @@ const Users = () => {
           <div className={`${CARD} ${CARD_HOVER} p-6 border-l-4 border-l-emerald-500`}>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Active Users</p>
-                <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-gray-100">{activeUsers}</p>
+                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                  Active Users
+                </p>
+                <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-gray-100">
+                  {activeUsers}
+                </p>
               </div>
               <div className="bg-gradient-to-br from-emerald-500 to-green-600 p-3 rounded-2xl shadow-md">
                 <UserCheck className="h-6 w-6 text-white" />
@@ -1070,8 +1133,12 @@ const Users = () => {
           <div className={`${CARD} ${CARD_HOVER} p-6 border-l-4 border-l-slate-500`}>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Inactive/Suspended</p>
-                <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-gray-100">{inactiveSuspended}</p>
+                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                  Inactive/Suspended
+                </p>
+                <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-gray-100">
+                  {inactiveSuspended}
+                </p>
               </div>
               <div className="bg-gradient-to-br from-slate-500 to-gray-600 p-3 rounded-2xl shadow-md">
                 <UserX className="h-6 w-6 text-white" />
@@ -1082,8 +1149,12 @@ const Users = () => {
           <div className={`${CARD} ${CARD_HOVER} p-6 border-l-4 border-l-red-500`}>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Admins</p>
-                <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-gray-100">{adminCount}</p>
+                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                  Admins
+                </p>
+                <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-gray-100">
+                  {adminCount}
+                </p>
               </div>
               <div className="bg-gradient-to-br from-red-500 to-rose-600 p-3 rounded-2xl shadow-md">
                 <Shield className="h-6 w-6 text-white" />
@@ -1148,29 +1219,44 @@ const Users = () => {
         {totalPages > 1 && (
           <div className={`${CARD} p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3`}>
             <div className="text-sm text-gray-600 dark:text-gray-400">
-              Showing {filteredUsers.length === 0 ? 0 : indexOfFirstItem + 1} to {Math.min(indexOfLastItem, filteredUsers.length)} of{" "}
-              {filteredUsers.length} users
+              Showing {filteredUsers.length === 0 ? 0 : indexOfFirstItem + 1} to{" "}
+              {Math.min(indexOfLastItem, filteredUsers.length)} of {filteredUsers.length} users
             </div>
 
             <div className="flex flex-wrap gap-2">
-              <Button variant="outline" size="small" disabled={currentPage === 1} onClick={() => setCurrentPage((p) => p - 1)}>
+              <Button
+                variant="outline"
+                size="small"
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage((p) => p - 1)}
+              >
                 Previous
               </Button>
 
               {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                <Button key={page} variant={currentPage === page ? "primary" : "outline"} size="small" onClick={() => setCurrentPage(page)}>
+                <Button
+                  key={page}
+                  variant={currentPage === page ? "primary" : "outline"}
+                  size="small"
+                  onClick={() => setCurrentPage(page)}
+                >
                   {page}
                 </Button>
               ))}
 
-              <Button variant="outline" size="small" disabled={currentPage === totalPages} onClick={() => setCurrentPage((p) => p + 1)}>
+              <Button
+                variant="outline"
+                size="small"
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage((p) => p + 1)}
+              >
                 Next
               </Button>
             </div>
           </div>
         )}
 
-        {/* ADD USER MODAL (unchanged) */}
+        {/* ADD USER MODAL */}
         <AddUserModal
           isOpen={isAddModalOpen}
           onClose={() => setIsAddModalOpen(false)}
@@ -1186,14 +1272,12 @@ const Users = () => {
           ACTION_BTN={ACTION_BTN}
         />
 
-        {/* ✅ NEW: VIEW DETAILS MODAL */}
+        {/* VIEW DETAILS MODAL */}
         <UserDetailsModal
           isOpen={isDetailsModalOpen}
           user={selectedUser}
           onClose={() => {
             setIsDetailsModalOpen(false);
-            // keep selectedUser if you want, but ok to clear:
-            // setSelectedUser(null);
           }}
           onEdit={(u) => {
             setIsDetailsModalOpen(false);
@@ -1201,7 +1285,7 @@ const Users = () => {
           }}
         />
 
-        {/* ✅ NEW: EDIT USER MODAL */}
+        {/* EDIT USER MODAL (UPDATED) */}
         <EditUserModal
           isOpen={isEditModalOpen}
           user={selectedUser}
@@ -1223,7 +1307,9 @@ const Users = () => {
           onConfirm={handleDelete}
           title="Delete User"
           message={`Are you sure you want to delete ${
-            selectedUser ? `${selectedUser.firstName} ${selectedUser.middleName} ${selectedUser.lastName}`.replace(/\s+/g, " ") : "this user"
+            selectedUser
+              ? `${selectedUser.firstName} ${selectedUser.middleName} ${selectedUser.lastName}`.replace(/\s+/g, " ")
+              : "this user"
           }? This action cannot be undone.`}
           confirmText="Delete User"
           loading={loading}
