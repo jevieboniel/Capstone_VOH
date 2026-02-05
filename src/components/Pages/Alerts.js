@@ -1,5 +1,5 @@
-import React, { useMemo, useState } from "react";
-import {
+    import React, { useEffect, useMemo, useState } from "react";
+    import {
     AlertTriangle,
     Plus,
     Send,
@@ -16,31 +16,9 @@ import {
     import Button from "../UI/Button";
     import CreateAlertModal from "../Modals/CreateAlertModal";
     import AlertViewDetailsModal from "../Modals/AlertViewDetailsModal";
+    import { useAuth } from "../../contexts/AuthContext";
 
-    /* ---------------- Mock Data ---------------- */
-    const mockAlerts = [
-    {
-        id: 1,
-        title: "Health Check-up Reminder",
-        message:
-        "Health check-ups are due for Sarah M., John D., and Maria L. Please schedule appointments with Dr. Chen by September 12th.",
-        type: "health",
-        priority: "high",
-        recipients: ["All Staff", "House Parents"],
-        sentDate: "2025-09-05",
-        sentTime: "09:30",
-        sentBy: "Dr. Michael Chen",
-        status: "sent",
-        readCount: 8,
-        totalRecipients: 12,
-        deliveryStatus: { delivered: 10, read: 8, failed: 2 },
-        notificationMethods: ["email", "sms"], // ✅ inApp removed (email + sms only)
-        readBy: [],
-        unreadBy: [],
-        failedDelivery: [],
-    },
-    ];
-
+    /* ---------------- Alert Types / Roles ---------------- */
     const alertTypes = [
     { value: "health", label: "Health & Medical", icon: "🏥" },
     { value: "education", label: "Education", icon: "📚" },
@@ -50,10 +28,10 @@ import {
     { value: "maintenance", label: "Maintenance", icon: "🔧" },
     ];
 
-    const recipientGroups = ["Staff", "House Parents", "Social Workers", "Administrator"];
+    // IMPORTANT: must match your DB roles in users table
+    const recipientGroups = ["Staff", "House Parent", "Social Worker", "Admin"];
 
     /* ---------------- UI helpers ---------------- */
-
     const Card = ({ className = "", children }) => (
     <div
         className={`bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 ${className}`}
@@ -98,8 +76,7 @@ import {
     </div>
     );
 
-    /* ---------------- Your existing pills (kept) ---------------- */
-
+    /* ---------------- Pills ---------------- */
     const priorityPill = {
     high: "bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-300 border-red-200 dark:border-red-500/20",
     medium:
@@ -113,9 +90,11 @@ import {
         "bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-200 border-gray-200 dark:border-gray-700",
     scheduled:
         "bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-500/20",
+    failed:
+        "bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-300 border-red-200 dark:border-red-500/20",
     };
 
-    /* -------- date/time helpers (kept) -------- */
+    /* -------- date/time helpers -------- */
     const formatDateUS = (dateStr) => {
     if (!dateStr) return "—";
     const d = new Date(`${dateStr}T00:00:00`);
@@ -125,7 +104,7 @@ import {
 
     const formatTime12 = (timeStr) => {
     if (!timeStr) return "";
-    const [hh, mm] = timeStr.split(":").map((x) => parseInt(x, 10));
+    const [hh, mm] = String(timeStr).split(":").map((x) => parseInt(x, 10));
     if (Number.isNaN(hh) || Number.isNaN(mm)) return timeStr;
     const d = new Date(2000, 0, 1, hh, mm, 0);
     return d.toLocaleTimeString("en-US", {
@@ -135,16 +114,28 @@ import {
     });
     };
 
+    // supports (dateStr,timeStr) AND ISO string
     const formatDateTime = (dateStr, timeStr) => {
+    // if dateStr is ISO
+    if (dateStr && typeof dateStr === "string" && dateStr.includes("T") && !timeStr) {
+        const d = new Date(dateStr);
+        if (!Number.isNaN(d.getTime())) {
+        return d.toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" });
+        }
+    }
+
     const d = formatDateUS(dateStr);
     const t = formatTime12(timeStr);
     return t ? `${d} at ${t}` : d;
     };
 
     export default function Alerts() {
-    const userRole = "admin";
+    const { user, authFetch } = useAuth();
+    const userRole = (user?.role || "admin").toLowerCase();
 
-    const [alerts, setAlerts] = useState(mockAlerts);
+    const [alerts, setAlerts] = useState([]);
+    const [loadingAlerts, setLoadingAlerts] = useState(false);
+
     const [showCreateAlert, setShowCreateAlert] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
     const [filterType, setFilterType] = useState("all");
@@ -156,7 +147,7 @@ import {
     const [sendingAlert, setSendingAlert] = useState(null);
     const [feedback, setFeedback] = useState("");
 
-    // ✅ notificationMethods now only has email + sms
+    // ✅ Email-only newAlert state (NO SMS)
     const [newAlert, setNewAlert] = useState({
         title: "",
         message: "",
@@ -165,9 +156,88 @@ import {
         recipients: [],
         scheduleDate: "",
         scheduleTime: "",
-        notificationMethods: { email: true, sms: false },
     });
 
+    /* =========================
+        BACKEND: LOAD ALERTS
+    ========================= */
+    const normalizeAlertRow = (row) => {
+        // row from backend might be:
+        // { id,title,message,type,priority,status,recipient_roles,created_by,sent_at,scheduled_at,delivered,failed,total_recipients,created_at }
+        let roles = [];
+        try {
+        roles = row.recipient_roles
+            ? typeof row.recipient_roles === "string"
+            ? JSON.parse(row.recipient_roles)
+            : row.recipient_roles
+            : [];
+        } catch {
+        roles = [];
+        }
+
+        // Create "sentDate/sentTime" fallback so old UI can still use
+        const baseDate = row.sent_at || row.scheduled_at || row.created_at || null;
+        let sentDate = "";
+        let sentTime = "";
+        if (baseDate) {
+        const d = new Date(baseDate);
+        if (!Number.isNaN(d.getTime())) {
+            sentDate = d.toISOString().slice(0, 10);
+            sentTime = d.toTimeString().slice(0, 5);
+        }
+        }
+
+        const totalRecipients =
+        Number(row.total_recipients ?? row.totalRecipients ?? 0) || 0;
+
+        const delivered = Number(row.delivered ?? 0) || 0;
+        const failed = Number(row.failed ?? 0) || 0;
+
+        return {
+        id: row.id,
+        title: row.title,
+        message: row.message,
+        type: row.type,
+        priority: row.priority,
+        recipients: roles, // roles list
+        sentDate,
+        sentTime,
+        sentBy: row.created_by || "Admin",
+        status: row.status || "sent",
+        readCount: 0, // email-only; unless you implement tracking
+        totalRecipients,
+        deliveryStatus: { delivered, read: 0, failed },
+        notificationMethods: ["email"], // forced email only
+        // backend details will be fetched on view:
+        recipientsList: row.recipientsList || [],
+        };
+    };
+
+    const fetchAlerts = async () => {
+        try {
+        setLoadingAlerts(true);
+        const res = await authFetch("/alerts"); // => /api/alerts
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.message || "Failed to load alerts.");
+
+        const rows = Array.isArray(data) ? data : data.alerts || [];
+        setAlerts(rows.map(normalizeAlertRow));
+        } catch (e) {
+        console.error(e);
+        setFeedback(e.message || "Failed to load alerts.");
+        } finally {
+        setLoadingAlerts(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchAlerts();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    /* =========================
+        FILTERING + SORT
+    ========================= */
     const filteredAlerts = useMemo(() => {
         const toTimestamp = (a) => {
         const date = a.sentDate || "1970-01-01";
@@ -178,16 +248,20 @@ import {
         return alerts
         .filter((alert) => {
             const matchesSearch =
-            alert.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            alert.message.toLowerCase().includes(searchTerm.toLowerCase());
+            (alert.title || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (alert.message || "").toLowerCase().includes(searchTerm.toLowerCase());
+
             const matchesType = filterType === "all" || alert.type === filterType;
-            const matchesPriority =
-            filterPriority === "all" || alert.priority === filterPriority;
+            const matchesPriority = filterPriority === "all" || alert.priority === filterPriority;
+
             return matchesSearch && matchesType && matchesPriority;
         })
         .sort((a, b) => toTimestamp(b) - toTimestamp(a));
     }, [alerts, searchTerm, filterType, filterPriority]);
 
+    /* =========================
+        UI HANDLERS
+    ========================= */
     const toggleRecipient = (group) => {
         setNewAlert((prev) => ({
         ...prev,
@@ -197,133 +271,127 @@ import {
         }));
     };
 
-    const toggleNotificationMethod = (method) => {
-        setNewAlert((prev) => ({
-        ...prev,
-        notificationMethods: {
-            ...prev.notificationMethods,
-            [method]: !prev.notificationMethods[method],
-        },
-        }));
-    };
-
-    const handleCreateAlert = () => {
+    /* =========================
+        CREATE / SEND ALERT (BACKEND)
+    ========================= */
+    const handleCreateAlert = async () => {
         if (!newAlert.title || !newAlert.message || newAlert.recipients.length === 0) {
-        setFeedback(
-            "Please fill in title, message, and select at least one recipient group."
-        );
+        setFeedback("Please fill in title, message, and select at least one recipient role.");
         return;
         }
 
         const isScheduled = Boolean(newAlert.scheduleDate && newAlert.scheduleTime);
 
-        const now = new Date();
-        const today = now.toISOString().slice(0, 10);
-        const currentTime = now.toTimeString().slice(0, 5);
+        try {
+        setSendingAlert("create");
+        setFeedback("");
 
-        // ✅ Will only produce ["email"] or ["sms"] or ["email","sms"]
-        const methods = Object.entries(newAlert.notificationMethods)
-        .filter(([, enabled]) => enabled)
-        .map(([key]) => key);
-
-        const createdAlert = {
-        id: Date.now(),
-        title: newAlert.title,
-        message: newAlert.message,
-        type: newAlert.type,
-        priority: newAlert.priority,
-        recipients: newAlert.recipients,
-        sentDate: isScheduled ? newAlert.scheduleDate : today,
-        sentTime: isScheduled ? newAlert.scheduleTime : currentTime,
-        sentBy: userRole === "admin" ? "Admin" : "Staff",
-        status: isScheduled ? "scheduled" : "sent",
-        readCount: 0,
-        totalRecipients: newAlert.recipients.length,
-        deliveryStatus: {
-            delivered: isScheduled ? 0 : newAlert.recipients.length,
-            read: 0,
-            failed: 0,
-        },
-        notificationMethods: methods,
-        readBy: [],
-        unreadBy: [],
-        failedDelivery: [],
+        const payload = {
+            title: newAlert.title,
+            message: newAlert.message,
+            type: newAlert.type,
+            priority: newAlert.priority,
+            recipient_roles: newAlert.recipients, // roles array
+            scheduled_at: isScheduled ? `${newAlert.scheduleDate}T${newAlert.scheduleTime}:00` : null,
         };
 
-        setAlerts((prev) => [createdAlert, ...prev]);
+        const res = await authFetch("/alerts", {
+            method: "POST",
+            body: JSON.stringify(payload),
+        });
+
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.message || "Failed to send alert.");
 
         setFeedback(
-        isScheduled
-            ? `Alert scheduled for ${newAlert.scheduleDate} at ${formatTime12(
-                newAlert.scheduleTime
-            )} to ${newAlert.recipients.length} groups.`
-            : `Alert "${newAlert.title}" sent to ${newAlert.recipients.length} recipient groups.`
+            isScheduled
+            ? `Alert scheduled for ${newAlert.scheduleDate} at ${formatTime12(newAlert.scheduleTime)}.`
+            : `Alert "${newAlert.title}" sent successfully via Email.`
         );
 
-        // ✅ reset only email + sms
+        // reset
         setNewAlert({
-        title: "",
-        message: "",
-        type: "general",
-        priority: "medium",
-        recipients: [],
-        scheduleDate: "",
-        scheduleTime: "",
-        notificationMethods: { email: true, sms: false },
+            title: "",
+            message: "",
+            type: "general",
+            priority: "medium",
+            recipients: [],
+            scheduleDate: "",
+            scheduleTime: "",
         });
 
         setShowCreateAlert(false);
+        await fetchAlerts();
+        } catch (e) {
+        console.error(e);
+        setFeedback(e.message || "Failed to send alert.");
+        } finally {
+        setSendingAlert(null);
+        }
     };
 
-    const handleViewDetails = (alert) => {
+    /* =========================
+        VIEW DETAILS (fetch /alerts/:id)
+    ========================= */
+    const handleViewDetails = async (alert) => {
+        try {
         setSelectedAlert(alert);
         setShowViewDetails(true);
+
+        // fetch full details (recipientsList etc.)
+        const res = await authFetch(`/alerts/${alert.id}`);
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.message || "Failed to load alert details.");
+
+        const full = data.alert || data;
+        const normalized = normalizeAlertRow(full);
+
+        // if backend returns recipientsList in full alert
+        normalized.recipientsList = Array.isArray(full.recipientsList) ? full.recipientsList : [];
+
+        setSelectedAlert(normalized);
+        } catch (e) {
+        console.error(e);
+        setFeedback(e.message || "Failed to load details.");
+        }
     };
 
-    const handleSendDraftAlert = (alertId) => {
+    /* =========================
+        RESEND FAILED (BACKEND)
+    ========================= */
+    const handleResendAlert = async (alertId) => {
+        try {
         setSendingAlert(alertId);
         setFeedback("");
-        setTimeout(() => {
-        setSendingAlert(null);
-        setAlerts((prev) =>
-            prev.map((a) =>
-            a.id === alertId
-                ? {
-                    ...a,
-                    status: "sent",
-                    sentDate: a.sentDate || new Date().toISOString().slice(0, 10),
-                    sentTime: a.sentTime || new Date().toTimeString().slice(0, 5),
-                    deliveryStatus: {
-                    ...a.deliveryStatus,
-                    delivered: a.totalRecipients,
-                    failed: 0,
-                    },
-                }
-                : a
-            )
-        );
-        setFeedback("Draft alert sent successfully to all recipients.");
-        }, 1500);
-    };
 
-    const handleResendAlert = (alertId) => {
-        setSendingAlert(alertId);
-        setFeedback("");
-        setTimeout(() => {
-        setSendingAlert(null);
-        setAlerts((prev) =>
-            prev.map((a) =>
-            a.id === alertId
-                ? { ...a, deliveryStatus: { ...a.deliveryStatus, failed: 0 }, failedDelivery: [] }
-                : a
-            )
-        );
+        const res = await authFetch(`/alerts/${alertId}/resend-failed`, { method: "POST" });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.message || "Failed to resend.");
+
         setFeedback("Alert resent to failed recipients.");
-        }, 1500);
+        await fetchAlerts();
+
+        // refresh selected alert details if modal open
+        if (selectedAlert?.id === alertId) {
+            const res2 = await authFetch(`/alerts/${alertId}`);
+            const data2 = await res2.json().catch(() => ({}));
+            if (res2.ok) {
+            const full = data2.alert || data2;
+            const normalized = normalizeAlertRow(full);
+            normalized.recipientsList = Array.isArray(full.recipientsList) ? full.recipientsList : [];
+            setSelectedAlert(normalized);
+            }
+        }
+        } catch (e) {
+        console.error(e);
+        setFeedback(e.message || "Failed to resend.");
+        } finally {
+        setSendingAlert(null);
+        }
     };
 
     const getReadRate = (alert) =>
-        !alert.deliveryStatus.delivered
+        !alert?.deliveryStatus?.delivered
         ? 0
         : Math.round((alert.deliveryStatus.read / alert.deliveryStatus.delivered) * 100);
 
@@ -331,7 +399,6 @@ import {
 
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
-        {/* ✅ aligned container sizing like your other pages */}
         <div className="mx-auto w-full max-w-[1200px] p-4 sm:p-6 space-y-6">
             {/* Header */}
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -340,7 +407,7 @@ import {
                 Alert Management
                 </h1>
                 <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
-                Send and manage system alerts and notifications
+                Send and manage system alerts and notifications (Email only)
                 </p>
             </div>
 
@@ -350,6 +417,7 @@ import {
                 size="medium"
                 onClick={() => setShowCreateAlert(true)}
                 className="inline-flex w-full items-center justify-center gap-2 sm:w-auto"
+                disabled={sendingAlert === "create"}
                 >
                 <Plus className="h-4 w-4" />
                 Create Alert
@@ -396,10 +464,7 @@ import {
                     ))}
                     </Select>
 
-                    <Select
-                    value={filterPriority}
-                    onChange={(e) => setFilterPriority(e.target.value)}
-                    >
+                    <Select value={filterPriority} onChange={(e) => setFilterPriority(e.target.value)}>
                     <option value="all">All Priorities</option>
                     <option value="high">High Priority</option>
                     <option value="medium">Medium Priority</option>
@@ -409,6 +474,13 @@ import {
                 </div>
             </CardBody>
             </Card>
+
+            {/* Loading */}
+            {loadingAlerts && (
+            <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-6 text-sm text-gray-600 dark:text-gray-300">
+                Loading alerts...
+            </div>
+            )}
 
             {/* Alerts list */}
             <div className="space-y-4">
@@ -428,7 +500,7 @@ import {
                             </h3>
 
                             <Pill className={priorityPill[alert.priority]}>{alert.priority}</Pill>
-                            <Pill className={statusPill[alert.status]}>{alert.status}</Pill>
+                            <Pill className={statusPill[alert.status] || statusPill.sent}>{alert.status}</Pill>
                         </div>
 
                         <p className="mt-2 text-sm leading-relaxed text-gray-700 dark:text-gray-200">
@@ -438,7 +510,7 @@ import {
                         <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-gray-600 dark:text-gray-400">
                             <span className="inline-flex items-center gap-2">
                             <Users className="h-4 w-4 text-gray-500 dark:text-gray-400" />
-                            {alert.recipients.join(", ")}
+                            {alert.recipients?.length ? alert.recipients.join(", ") : "—"}
                             </span>
 
                             <span className="inline-flex items-center gap-2">
@@ -448,7 +520,7 @@ import {
 
                             <span className="inline-flex items-center gap-2">
                             <Target className="h-4 w-4 text-gray-500 dark:text-gray-400" />
-                            {alert.readCount}/{alert.totalRecipients} read
+                            {alert.deliveryStatus?.delivered || 0}/{alert.totalRecipients || 0} delivered
                             </span>
                         </div>
                         </div>
@@ -464,23 +536,6 @@ import {
                         <Eye className="h-4 w-4" />
                         View Details
                         </Button>
-
-                        {alert.status === "draft" && (userRole === "admin" || userRole === "staff") && (
-                        <Button
-                            variant="primary"
-                            size="medium"
-                            onClick={() => handleSendDraftAlert(alert.id)}
-                            disabled={sendingAlert === alert.id}
-                            className="inline-flex items-center gap-2"
-                        >
-                            {sendingAlert === alert.id ? (
-                            <Clock3 className="h-4 w-4 animate-spin" />
-                            ) : (
-                            <Send className="h-4 w-4" />
-                            )}
-                            Send
-                        </Button>
-                        )}
 
                         {alert.status === "sent" &&
                         alert.deliveryStatus?.failed > 0 &&
@@ -506,7 +561,7 @@ import {
                 </Card>
             ))}
 
-            {filteredAlerts.length === 0 && (
+            {!loadingAlerts && filteredAlerts.length === 0 && (
                 <div className="rounded-2xl border border-dashed border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 p-10 text-center text-gray-600 dark:text-gray-400 shadow-sm">
                 <AlertTriangle className="mx-auto mb-3 h-8 w-8 text-gray-400" />
                 No alerts match your current search and filters.
@@ -523,7 +578,6 @@ import {
             alertTypes={alertTypes}
             recipientGroups={recipientGroups}
             toggleRecipient={toggleRecipient}
-            toggleNotificationMethod={toggleNotificationMethod} // ✅ keep, but modal must only call email/sms
             formatTime12={formatTime12}
             handleCreateAlert={handleCreateAlert}
             Input={Input}
@@ -551,4 +605,4 @@ import {
         </div>
         </div>
     );
-}
+    }
