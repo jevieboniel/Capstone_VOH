@@ -10,11 +10,18 @@ const milestoneRoutes = require("./routes/milestones");
 const settingsRoutes = require("./routes/settings");
 const alertsRoutes = require("./routes/alerts");
 
+// ✅ NEW
+const donationsRoutes = require("./routes/donations");
+const paymongoWebhookRoutes = require("./routes/paymongoWebhook");
+
 const app = express();
 
 app.use(cors({ origin: true, credentials: false }));
 
-// ✅ IMPORTANT: json middleware is fine, multer routes will override it for those endpoints
+// ✅ 1) Webhook FIRST (raw body inside its route)
+app.use("/webhook/paymongo", paymongoWebhookRoutes);
+
+// ✅ 2) JSON for normal API routes
 app.use(express.json());
 
 // ✅ serve uploaded images
@@ -26,6 +33,9 @@ app.use("/api/children", childrenRoutes);
 app.use("/api/milestones", milestoneRoutes);
 app.use("/api/settings", settingsRoutes);
 app.use("/api/alerts", alertsRoutes);
+
+// ✅ NEW donation APIs
+app.use("/api/donations", donationsRoutes);
 
 app.get("/", (_req, res) => res.send("Backend running ✅"));
 

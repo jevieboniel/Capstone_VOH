@@ -59,6 +59,21 @@ export const ROUTES = [
     showInNav: true,
   },
   {
+  path: "/donate",
+  name: "Donate",
+  icon: "DollarSignIcon",
+  component: "DonateCheckout",
+  showInNav: false, // ✅ not in sidebar
+},
+{
+  path: "/donate-success",
+  name: "Donate Success",
+  icon: "CheckCircleIcon", // not in ICON_MAP right now; you can keep DollarSignIcon
+  component: "DonateSuccess",
+  showInNav: false, // ✅ not in sidebar
+},
+
+  {
     path: '/setting',
     name: 'Setting',
     icon: 'Cog6ToothIcon', // settings cog

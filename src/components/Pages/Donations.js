@@ -1,4 +1,4 @@
-    import React, { useMemo, useState } from "react";
+    import React, { useEffect, useMemo, useState } from "react";
     import { auditLogger } from "../../utils/auditLogger";
 
     import {
@@ -28,23 +28,18 @@
     Cell,
     } from "recharts";
 
-    // ✅ Use your UI Button
     import Button from "../UI/Button";
 
-    /* ------------------------------ Dashboard-like UI helpers ------------------------------ */
+    /* ------------------------------ UI helpers ------------------------------ */
 
     const Card = ({ children, className = "" }) => (
-    <div
-        className={`bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 ${className}`}
-    >
+    <div className={`bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 ${className}`}>
         {children}
     </div>
     );
 
     const CardHeader = ({ children, className = "" }) => (
-    <div
-        className={`px-5 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between gap-2 ${className}`}
-    >
+    <div className={`px-5 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between gap-2 ${className}`}>
         {children}
     </div>
     );
@@ -55,9 +50,7 @@
     </h2>
     );
 
-    const CardContent = ({ children, className = "" }) => (
-    <div className={`px-5 py-5 ${className}`}>{children}</div>
-    );
+    const CardContent = ({ children, className = "" }) => <div className={`px-5 py-5 ${className}`}>{children}</div>;
 
     const Badge = ({ className = "", children }) => (
     <span
@@ -95,95 +88,6 @@
     </div>
     );
 
-    /* ------------------------------ Mock Data ------------------------------ */
-
-    const mockDonations = [
-    {
-        id: 1,
-        amount: 500,
-        currency: "PHP",
-        date: "2025-09-03",
-        time: "14:23:45",
-        type: "One-time",
-        purpose: "Education Support",
-        method: "Credit Card",
-        paymentId: "pay_xyz123abc",
-        status: "Completed",
-    },
-    {
-        id: 2,
-        amount: 2500,
-        currency: "PHP",
-        date: "2025-10-07",
-        time: "10:15:32",
-        type: "One-time",
-        purpose: "General Support",
-        method: "GCash",
-        paymentId: "pay_abc789xyz",
-        status: "Completed",
-    },
-    {
-        id: 3,
-        amount: 1000,
-        currency: "PHP",
-        date: "2025-10-06",
-        time: "16:45:20",
-        type: "One-time",
-        purpose: "Healthcare",
-        method: "GCash",
-        paymentId: "pay_def456ghi",
-        status: "Completed",
-    },
-    {
-        id: 4,
-        amount: 750,
-        currency: "USD",
-        date: "2025-10-05",
-        time: "09:30:15",
-        type: "Monthly",
-        purpose: "Food & Nutrition",
-        method: "Credit Card",
-        paymentId: "pay_ghi123jkl",
-        recurring: true,
-        status: "Completed",
-    },
-    {
-        id: 5,
-        amount: 5000,
-        currency: "PHP",
-        date: "2025-10-04",
-        time: "13:20:50",
-        type: "One-time",
-        purpose: "Infrastructure",
-        method: "Bank Transfer",
-        paymentId: "pay_jkl456mno",
-        status: "Completed",
-    },
-    ];
-
-    const mockDonationTrends = [
-    { month: "Jan", amount: 12000, donors: 45 },
-    { month: "Feb", amount: 15000, donors: 52 },
-    { month: "Mar", amount: 18000, donors: 60 },
-    { month: "Apr", amount: 14000, donors: 48 },
-    { month: "May", amount: 20000, donors: 67 },
-    { month: "Jun", amount: 25000, donors: 78 },
-    { month: "Jul", amount: 22000, donors: 71 },
-    { month: "Aug", amount: 28000, donors: 85 },
-    { month: "Sep", amount: 32000, donors: 92 },
-    ];
-
-    const purposeData = [
-    { name: "Education Support", value: 35, color: "#3b82f6" },
-    { name: "Healthcare", value: 25, color: "#ef4444" },
-    { name: "Food & Nutrition", value: 20, color: "#10b981" },
-    { name: "Infrastructure", value: 12, color: "#f59e0b" },
-    { name: "General Support", value: 8, color: "#8b5cf6" },
-    ];
-
-    const monthlyGoal = 20000;
-    const currentMonthTotal = 32000;
-
     /* ------------------------------ Helpers ------------------------------ */
 
     const getTypeColor = (type) => {
@@ -205,10 +109,11 @@
 
     const fmtPeso = (amount) => `₱${Number(amount).toLocaleString()}`;
 
-    // Map your UI Button variants to the design used across pages
     const UiButton = ({ variant = "primary", size = "medium", className = "", ...props }) => (
     <Button variant={variant} size={size} className={className} {...props} />
     );
+
+    const API_BASE = "http://localhost:5000";
 
     /* ------------------------------ Component ------------------------------ */
 
@@ -216,37 +121,55 @@
     const [searchTerm, setSearchTerm] = useState("");
     const [activeView, setActiveView] = useState("overview");
 
-    const filteredDonations = useMemo(() => {
-        const q = searchTerm.toLowerCase();
-        return mockDonations.filter((d) => d.purpose.toLowerCase().includes(q) || d.method.toLowerCase().includes(q));
+    const [donations, setDonations] = useState([]);
+    const [metrics, setMetrics] = useState({
+        totals: { totalAmount: 0, totalTransactions: 0, recurringDonors: 0 },
+        trend: [],
+        purposes: [],
+        recent: [],
+    });
+
+    // Fetch metrics for Overview
+    useEffect(() => {
+        fetch(`${API_BASE}/api/donations/metrics`)
+        .then((r) => r.json())
+        .then((data) => setMetrics(data))
+        .catch(console.error);
+    }, []);
+
+    // Fetch donation list for Donations tab (and search)
+    useEffect(() => {
+        const url = `${API_BASE}/api/donations?q=${encodeURIComponent(searchTerm)}`;
+        fetch(url)
+        .then((r) => r.json())
+        .then((data) => setDonations(data))
+        .catch(console.error);
     }, [searchTerm]);
 
-    const totalDonations = useMemo(() => mockDonations.reduce((sum, d) => sum + d.amount, 0), []);
-    const totalTransactions = mockDonations.length;
-    const recurringDonors = useMemo(() => mockDonations.filter((d) => d.recurring).length, []);
+    const filteredDonations = useMemo(() => donations, [donations]);
+
+    const totalDonations = metrics.totals.totalAmount;
+    const totalTransactions = metrics.totals.totalTransactions;
+    const recurringDonors = metrics.totals.recurringDonors;
+
+    // Keep your thesis “goal” numbers (or you can pull from settings later)
+    const monthlyGoal = 20000;
+    const currentMonthTotal = totalDonations; // simple: total completed as “current”
     const goalProgress = (currentMonthTotal / monthlyGoal) * 100;
 
+    // Export from backend
     const handleExportData = () => {
-        const csvContent = [
-        ["Payment ID", "Amount", "Currency", "Date", "Time", "Purpose", "Method", "Status"],
-        ...filteredDonations.map((d) => [d.paymentId, d.amount, d.currency, d.date, d.time, d.purpose, d.method, d.status]),
-        ]
-        .map((row) => row.join(","))
-        .join("\n");
-
-        const blob = new Blob([csvContent], { type: "text/csv" });
-        const url = URL.createObjectURL(blob);
+        const url = `${API_BASE}/api/donations/export.csv?q=${encodeURIComponent(searchTerm)}`;
         const a = document.createElement("a");
         a.href = url;
         a.download = "donations_export.csv";
         a.click();
-        URL.revokeObjectURL(url);
 
         if (currentUser) {
         auditLogger.logView(
             currentUser,
             "Donation Export",
-            `Exported ${filteredDonations.length} donation records`,
+            `Exported donation records`,
             "Donation Management",
             "export_donations"
         );
@@ -255,13 +178,16 @@
 
     // Recharts theme helpers (dark-friendly)
     const axisTickClass = "fill-gray-500 dark:fill-gray-400";
-    const gridStroke = "rgba(148,163,184,0.35)"; // slate-400-ish
+    const gridStroke = "rgba(148,163,184,0.35)";
     const tooltipStyle = {
-        background: "rgba(17,24,39,0.95)", // gray-900
-        border: "1px solid rgba(55,65,81,1)", // gray-700
+        background: "rgba(17,24,39,0.95)",
+        border: "1px solid rgba(55,65,81,1)",
         borderRadius: 12,
         color: "#fff",
     };
+
+    // For pie colors (no DB colors)
+    const PIE_COLORS = ["#3b82f6", "#ef4444", "#10b981", "#f59e0b", "#8b5cf6", "#14b8a6", "#f97316", "#a855f7"];
 
     const OverviewView = () => (
         <div className="space-y-6">
@@ -281,7 +207,7 @@
             </div>
 
             <div className="space-y-3">
-                {mockDonations.slice(0, 3).map((donation) => (
+                {(metrics.recent || []).map((donation) => (
                 <div
                     key={donation.id}
                     className="bg-white dark:bg-gray-900 rounded-xl p-4 shadow-sm border border-blue-100 dark:border-gray-800 hover:shadow-md hover:border-blue-200 dark:hover:border-gray-700 transition-all duration-200"
@@ -293,13 +219,13 @@
                         </div>
                         <div className="flex-1 min-w-0">
                         <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm sm:text-base">
-                            Anonymous Donor
+                            {donation.donor_name || "Anonymous Donor"}
                         </p>
                         <div className="flex items-center gap-2 flex-wrap mt-1">
                             <Badge className="text-xs bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-200 dark:border-blue-900">
-                            {donation.method}
+                            {donation.method || "PayMongo"}
                             </Badge>
-                            <span className="text-xs text-gray-500 dark:text-gray-400">{donation.purpose}</span>
+                            <span className="text-xs text-gray-500 dark:text-gray-400">{donation.purpose || "Donation"}</span>
                         </div>
                         </div>
                     </div>
@@ -311,6 +237,9 @@
                     </div>
                 </div>
                 ))}
+                {(!metrics.recent || metrics.recent.length === 0) && (
+                <div className="text-sm text-gray-600 dark:text-gray-300">No completed donations yet.</div>
+                )}
             </div>
             </CardContent>
         </Card>
@@ -329,7 +258,7 @@
                     </p>
                     <p className="text-xs sm:text-sm text-green-600 dark:text-green-400 font-medium flex items-center gap-1">
                     <TrendingUp className="h-3 w-3" />
-                    +15% from last month
+                    Based on completed payments
                     </p>
                 </div>
                 <div className="bg-gradient-to-br from-green-500 to-emerald-600 p-3 sm:p-4 rounded-2xl shadow-lg">
@@ -350,7 +279,7 @@
                     {totalTransactions}
                     </p>
                     <p className="text-xs sm:text-sm text-blue-600 dark:text-blue-400 font-medium">
-                    {recurringDonors} recurring donors
+                    {recurringDonors} monthly donors
                     </p>
                 </div>
                 <div className="bg-gradient-to-br from-blue-500 to-indigo-600 p-3 sm:p-4 rounded-2xl shadow-lg">
@@ -389,7 +318,7 @@
                     Avg Donation
                     </p>
                     <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100 mb-1">
-                    {fmtPeso(Math.round(totalDonations / mockDonations.length))}
+                    {fmtPeso(totalTransactions ? Math.round(totalDonations / totalTransactions) : 0)}
                     </p>
                     <p className="text-xs sm:text-sm text-orange-600 dark:text-orange-400 font-medium">Per transaction</p>
                 </div>
@@ -408,7 +337,7 @@
                 <div className="bg-gradient-to-br from-purple-500 to-violet-600 p-2.5 rounded-xl shadow-md">
                 <Target className="h-5 w-5 text-white" />
                 </div>
-                <span className="text-lg sm:text-xl">October 2025 Goal Progress</span>
+                <span className="text-lg sm:text-xl">Goal Progress</span>
             </CardTitle>
 
             <div className="text-base sm:text-lg font-bold text-purple-600 dark:text-purple-300 bg-purple-100 dark:bg-purple-950/40 px-4 py-2 rounded-lg border border-purple-200 dark:border-purple-900">
@@ -426,13 +355,6 @@
                 </span>
                 </div>
             </div>
-
-            <div className="bg-green-50 dark:bg-green-950/35 border border-green-200 dark:border-green-900 rounded-lg p-3 flex items-center gap-3">
-                <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-300 shrink-0" />
-                <p className="text-sm text-green-800 dark:text-green-200 font-medium">
-                🎉 Congratulations! You've exceeded this month's goal!
-                </p>
-            </div>
             </CardContent>
         </Card>
 
@@ -448,7 +370,7 @@
             <CardContent>
                 <div className="h-[300px]">
                 <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={mockDonationTrends}>
+                    <LineChart data={metrics.trend || []}>
                     <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} />
                     <XAxis dataKey="month" tick={{ className: axisTickClass }} />
                     <YAxis tick={{ className: axisTickClass }} />
@@ -478,17 +400,9 @@
                 <div className="h-[300px]">
                 <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
-                    <Pie
-                        data={purposeData}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={65}
-                        outerRadius={105}
-                        paddingAngle={4}
-                        dataKey="value"
-                    >
-                        {purposeData.map((entry) => (
-                        <Cell key={entry.name} fill={entry.color} />
+                    <Pie data={metrics.purposes || []} cx="50%" cy="50%" innerRadius={65} outerRadius={105} paddingAngle={4} dataKey="value">
+                        {(metrics.purposes || []).map((entry, idx) => (
+                        <Cell key={entry.name} fill={PIE_COLORS[idx % PIE_COLORS.length]} />
                         ))}
                     </Pie>
                     <Tooltip contentStyle={tooltipStyle} formatter={(value) => [`${value}%`, "Percentage"]} />
@@ -497,10 +411,10 @@
                 </div>
 
                 <div className="mt-6 space-y-3">
-                {purposeData.map((item) => (
+                {(metrics.purposes || []).map((item, idx) => (
                     <div key={item.name} className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <div className="h-3 w-3 rounded-full" style={{ backgroundColor: item.color }} />
+                        <div className="h-3 w-3 rounded-full" style={{ backgroundColor: PIE_COLORS[idx % PIE_COLORS.length] }} />
                         <span className="text-sm text-gray-700 dark:text-gray-200">{item.name}</span>
                     </div>
                     <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{item.value}%</span>
@@ -550,70 +464,84 @@
         </Card>
 
         <div className="space-y-4">
-            {filteredDonations.map((donation) => (
-            <Card
+            {filteredDonations.map((donation) => {
+            const dt = donation.created_at ? new Date(donation.created_at) : null;
+            const dateText = dt ? dt.toLocaleDateString() : "-";
+            const timeText = dt ? dt.toLocaleTimeString() : "-";
+
+            return (
+                <Card
                 key={donation.id}
                 className="hover:shadow-xl transition-all duration-200 border-l-4 border-l-blue-500 dark:border-l-blue-400"
-            >
+                >
                 <CardContent className="p-5 sm:p-6">
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-start gap-4 sm:items-center flex-1 min-w-0">
-                    <div className="shrink-0 rounded-2xl bg-gradient-to-br from-green-500 to-emerald-600 p-3.5 shadow-lg">
+                        <div className="shrink-0 rounded-2xl bg-gradient-to-br from-green-500 to-emerald-600 p-3.5 shadow-lg">
                         <DollarSign className="h-6 w-6 text-white" />
-                    </div>
+                        </div>
 
-                    <div className="min-w-0 flex-1">
+                        <div className="min-w-0 flex-1">
                         <div className="font-bold text-gray-900 dark:text-gray-100 text-base sm:text-lg mb-1">
-                        Anonymous Donor
+                            {donation.donor_name || "Anonymous Donor"}
                         </div>
 
                         <div className="flex flex-col gap-2 text-sm text-gray-600 dark:text-gray-400">
-                        <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2">
                             <Calendar className="h-4 w-4 text-blue-500 dark:text-blue-400 shrink-0" />
                             <span className="font-medium">
-                            {new Date(donation.date).toLocaleDateString()} • {donation.time}
+                                {dateText} • {timeText}
                             </span>
-                        </div>
-                        <div className="flex items-center gap-2">
+                            </div>
+                            <div className="flex items-center gap-2">
                             <span className="text-xs text-gray-500 dark:text-gray-300 font-mono bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">
-                            {donation.paymentId}
+                                {donation.paymongo_payment_id || donation.paymongo_payment_intent_id || "-"}
                             </span>
-                        </div>
+                            </div>
                         </div>
 
                         <div className="mt-3 flex flex-wrap items-center gap-2">
-                        <Badge className="text-xs bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-200 dark:border-blue-900 font-semibold">
-                            {donation.method}
-                        </Badge>
-                        <span className="text-xs text-gray-600 dark:text-gray-200 bg-gray-100 dark:bg-gray-800 px-2.5 py-1 rounded-full font-medium">
-                            {donation.purpose}
+                            <Badge className="text-xs bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-200 dark:border-blue-900 font-semibold">
+                            {donation.method || "PayMongo"}
+                            </Badge>
+                            <span className="text-xs text-gray-600 dark:text-gray-200 bg-gray-100 dark:bg-gray-800 px-2.5 py-1 rounded-full font-medium">
+                            {donation.purpose || "Donation"}
+                            </span>
+                        </div>
+                        </div>
+                    </div>
+
+                    <div className="text-left sm:text-right shrink-0">
+                        <div className="text-2xl sm:text-3xl font-bold text-blue-900 dark:text-blue-200 mb-2">
+                        {formatCurrency(donation.amount, donation.currency)}
+                        </div>
+
+                        <div className="flex flex-wrap gap-2 sm:justify-end">
+                        <span className={`inline-flex items-center rounded-full border px-3 py-1.5 text-xs font-semibold shadow-sm ${getTypeColor(donation.type)}`}>
+                            {donation.type}
+                        </span>
+                        <span
+                            className={`inline-flex items-center rounded-full border px-3 py-1.5 text-xs font-semibold shadow-sm ${
+                            donation.status === "Completed"
+                                ? "border-green-300 dark:border-green-900 bg-green-100 dark:bg-green-950/40 text-green-800 dark:text-green-200"
+                                : donation.status === "Failed"
+                                ? "border-red-300 dark:border-red-900 bg-red-100 dark:bg-red-950/40 text-red-800 dark:text-red-200"
+                                : "border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200"
+                            }`}
+                        >
+                            {donation.status}
                         </span>
                         </div>
                     </div>
                     </div>
-
-                    <div className="text-left sm:text-right shrink-0">
-                    <div className="text-2xl sm:text-3xl font-bold text-blue-900 dark:text-blue-200 mb-2">
-                        {formatCurrency(donation.amount, donation.currency)}
-                    </div>
-
-                    <div className="flex flex-wrap gap-2 sm:justify-end">
-                        <span
-                        className={`inline-flex items-center rounded-full border px-3 py-1.5 text-xs font-semibold shadow-sm ${getTypeColor(
-                            donation.type
-                        )}`}
-                        >
-                        {donation.type}
-                        </span>
-                        <span className="inline-flex items-center rounded-full border border-green-300 dark:border-green-900 bg-green-100 dark:bg-green-950/40 px-3 py-1.5 text-xs font-semibold text-green-800 dark:text-green-200 shadow-sm">
-                        ✓ {donation.status}
-                        </span>
-                    </div>
-                    </div>
-                </div>
                 </CardContent>
-            </Card>
-            ))}
+                </Card>
+            );
+            })}
+
+            {filteredDonations.length === 0 && (
+            <div className="text-sm text-gray-600 dark:text-gray-300">No donations found.</div>
+            )}
         </div>
         </div>
     );
