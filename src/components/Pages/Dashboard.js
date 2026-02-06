@@ -1,4 +1,6 @@
-import React, { useMemo, useState } from "react";
+// src/components/Pages/Dashboard.js
+import React, { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Users,
   Heart,
@@ -18,8 +20,13 @@ import {
 // SEPARATED CHART COMPONENTS (Charts folder)
 import { ChartContainer, BarChart, LineChart, AreaChart } from "../Charts";
 
-//  Recharts ONLY for the Pie charts
+// Recharts ONLY for the Pie charts
 import { PieChart as RePieChart, Pie, Cell, ResponsiveContainer } from "recharts";
+
+/* ------------------- API helper ------------------- */
+// If you create src/config/api.js, you can replace this with: import { apiUrl } from "../../config/api";
+const API_BASE = process.env.REACT_APP_API_BASE || "http://localhost:5000";
+const apiUrl = (path) => `${API_BASE}${path}`;
 
 /* ------------------- Tiny UI Helpers (no external UI lib) ------------------- */
 
@@ -94,146 +101,6 @@ const Progress = ({ value = 0, className = "" }) => (
   </div>
 );
 
-/* ------------------------------ Mock Data ------------------------------ */
-
-const mockStats = {
-  totalChildren: 45,
-  newAdmissions: 3,
-  healthChecksDue: 8,
-  totalDonations: 125000,
-  monthlyDonations: 15000,
-  donationGoal: 20000,
-  developmentMilestones: 156,
-  completedMilestones: 134,
-};
-
-// Demographics Data
-const ageDistributionData = [
-  { ageGroup: "0-3 years", count: 8 },
-  { ageGroup: "4-6 years", count: 12 },
-  { ageGroup: "7-9 years", count: 10 },
-  { ageGroup: "10-12 years", count: 9 },
-  { ageGroup: "13-15 years", count: 4 },
-  { ageGroup: "16-18 years", count: 2 },
-];
-
-const gradeDistributionData = [
-  { grade: "Pre-school", count: 8 },
-  { grade: "Grade 1", count: 6 },
-  { grade: "Grade 2", count: 5 },
-  { grade: "Grade 3", count: 7 },
-  { grade: "Grade 4", count: 6 },
-  { grade: "Grade 5", count: 5 },
-  { grade: "Grade 6", count: 4 },
-  { grade: "Grade 7", count: 3 },
-  { grade: "Grade 8", count: 1 },
-];
-
-const genderData = [
-  { name: "Male", value: 24, color: "#3b82f6" },
-  { name: "Female", value: 21, color: "#ec4899" },
-];
-
-// Educational Analytics
-const performanceTrendsData = [
-  { month: "Jan", avgScore: 72, passingRate: 85 },
-  { month: "Feb", avgScore: 75, passingRate: 87 },
-  { month: "Mar", avgScore: 78, passingRate: 89 },
-  { month: "Apr", avgScore: 76, passingRate: 88 },
-  { month: "May", avgScore: 80, passingRate: 92 },
-  { month: "Jun", avgScore: 82, passingRate: 94 },
-];
-
-const subjectPerformanceData = [
-  { subject: "Math", avgScore: 78, improvement: 5 },
-  { subject: "English", avgScore: 82, improvement: 3 },
-  { subject: "Science", avgScore: 75, improvement: 8 },
-  { subject: "Social Studies", avgScore: 80, improvement: 4 },
-  { subject: "Arts", avgScore: 85, improvement: 2 },
-];
-
-// Developmental Progress
-const developmentProgressData = [
-  { category: "Physical", progress: 85 },
-  { category: "Cognitive", progress: 78 },
-  { category: "Emotional", progress: 82 },
-  { category: "Social", progress: 88 },
-  { category: "Language", progress: 80 },
-];
-
-const developmentVsAcademicData = [
-  { name: "High Dev", academicScore: 85, count: 12 },
-  { name: "Med Dev", academicScore: 75, count: 20 },
-  { name: "Low Dev", academicScore: 65, count: 13 },
-];
-
-// Health Analytics
-const healthStatusData = [
-  { status: "Excellent", count: 18, color: "#10b981" },
-  { status: "Good", count: 20, color: "#3b82f6" },
-  { status: "Needs Check-up", count: 5, color: "#f59e0b" },
-  { status: "Requires Attention", count: 2, color: "#ef4444" },
-];
-
-const vaccinationData = [
-  { vaccine: "BCG", completed: 43, pending: 2 },
-  { vaccine: "Polio", completed: 44, pending: 1 },
-  { vaccine: "MMR", completed: 42, pending: 3 },
-  { vaccine: "DPT", completed: 41, pending: 4 },
-  { vaccine: "Hepatitis B", completed: 43, pending: 2 },
-];
-
-// Donation Analytics
-const donationTrendsData = [
-  { month: "Jan", amount: 12000, donors: 45 },
-  { month: "Feb", amount: 14000, donors: 52 },
-  { month: "Mar", amount: 13500, donors: 48 },
-  { month: "Apr", amount: 15000, donors: 55 },
-  { month: "May", amount: 16500, donors: 60 },
-  { month: "Jun", amount: 15000, donors: 58 },
-];
-
-const donorTypeData = [
-  { type: "Individual", value: 60, color: "#3b82f6" },
-  { type: "Corporate", value: 30, color: "#8b5cf6" },
-  { type: "Foundation", value: 10, color: "#10b981" },
-];
-
-const mockAlerts = [
-  {
-    id: 1,
-    type: "health",
-    priority: "high",
-    message: "Health check-up due for Sarah M. and 2 others",
-    date: "2025-09-05",
-    children: ["Sarah M.", "John D.", "Maria L."],
-  },
-  {
-    id: 2,
-    type: "education",
-    priority: "medium",
-    message: "School enrollment deadline approaching",
-    date: "2025-09-10",
-    children: ["Alex P.", "Emma R."],
-  },
-  {
-    id: 3,
-    type: "milestone",
-    priority: "low",
-    message: "Development milestone updates needed",
-    date: "2025-09-08",
-    children: ["David K.", "Lisa S.", "Tom W."],
-  },
-];
-
-const recentActivities = [
-  { id: 1, action: "New child admission", user: "Sarah Johnson", time: "2 hours ago", type: "admission" },
-  { id: 2, action: "Health record updated", user: "Dr. Michael Chen", time: "4 hours ago", type: "health" },
-  { id: 3, action: "Donation received", user: "System", time: "6 hours ago", type: "donation" },
-  { id: 4, action: "Development milestone completed", user: "Emily Rodriguez", time: "8 hours ago", type: "milestone" },
-  { id: 5, action: "Report generated", user: "Sarah Johnson", time: "1 day ago", type: "report" },
-];
-
 /* ------------------------------ Helpers ------------------------------ */
 
 const getPriorityColor = (priority) => {
@@ -301,13 +168,75 @@ const withPercent = (data, valueKey) => {
   }));
 };
 
+// Safe number
+const num = (v, fallback = 0) => {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : fallback;
+};
+
+// Format date-ish values from backend
+const formatDate = (value) => {
+  if (!value) return "";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return String(value);
+  return d.toISOString().slice(0, 10);
+};
+
 /* ------------------------------ Dashboard ------------------------------ */
 
 const Dashboard = () => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("overview");
 
-  const donationProgress = (mockStats.monthlyDonations / mockStats.donationGoal) * 100;
-  const milestoneProgress = (mockStats.completedMilestones / mockStats.developmentMilestones) * 100;
+  // overview
+  const [loadingOverview, setLoadingOverview] = useState(true);
+  const [overviewError, setOverviewError] = useState("");
+  const [stats, setStats] = useState(null);
+  const [alerts, setAlerts] = useState([]);
+  const [recentActivities, setRecentActivities] = useState([]);
+
+  // demographics
+  const [loadingDemo, setLoadingDemo] = useState(false);
+  const [demoError, setDemoError] = useState("");
+  const [ageDistributionData, setAgeDistributionData] = useState([]);
+  const [gradeDistributionData, setGradeDistributionData] = useState([]);
+  const [genderData, setGenderData] = useState([]);
+
+  // health
+  const [loadingHealth, setLoadingHealth] = useState(false);
+  const [healthError, setHealthError] = useState("");
+  const [healthStatusData, setHealthStatusData] = useState([]);
+  const [vaccinationData, setVaccinationData] = useState([]);
+
+  // donations
+  const [loadingDonations, setLoadingDonations] = useState(false);
+  const [donationsError, setDonationsError] = useState("");
+  const [donationTrendsData, setDonationTrendsData] = useState([]);
+  const [donorTypeData, setDonorTypeData] = useState([]);
+
+  // development (optional from backend route)
+  const [loadingDevelopment, setLoadingDevelopment] = useState(false);
+  const [developmentError, setDevelopmentError] = useState("");
+  const [developmentProgressData, setDevelopmentProgressData] = useState([]);
+  // We keep your original “Dev vs Academic” chart shape but backend might not provide it.
+  const [developmentVsAcademicData, setDevelopmentVsAcademicData] = useState([]);
+
+  // education (you have tables, but we didn’t implement backend route here; keep placeholders)
+  const [performanceTrendsData] = useState([
+    { month: "Jan", avgScore: 72, passingRate: 85 },
+    { month: "Feb", avgScore: 75, passingRate: 87 },
+    { month: "Mar", avgScore: 78, passingRate: 89 },
+    { month: "Apr", avgScore: 76, passingRate: 88 },
+    { month: "May", avgScore: 80, passingRate: 92 },
+    { month: "Jun", avgScore: 82, passingRate: 94 },
+  ]);
+  const [subjectPerformanceData] = useState([
+    { subject: "Math", avgScore: 78, improvement: 5 },
+    { subject: "English", avgScore: 82, improvement: 3 },
+    { subject: "Science", avgScore: 75, improvement: 8 },
+    { subject: "Social Studies", avgScore: 80, improvement: 4 },
+    { subject: "Arts", avgScore: 85, improvement: 2 },
+  ]);
 
   const tabs = [
     { id: "overview", label: "Overview" },
@@ -318,10 +247,203 @@ const Dashboard = () => {
     { id: "donations", label: "Donations" },
   ];
 
-  // Attach percents for the Pie labels (does NOT change your original values)
-  const genderPie = useMemo(() => withPercent(genderData, "value"), []);
-  const healthPie = useMemo(() => withPercent(healthStatusData, "count"), []);
-  const donorPie = useMemo(() => withPercent(donorTypeData, "value"), []);
+  // ---------- Fetchers ----------
+  const fetchOverview = async () => {
+    setLoadingOverview(true);
+    setOverviewError("");
+    try {
+      const res = await fetch(apiUrl("/api/dashboard/overview"));
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || "Failed to load overview");
+
+      setStats(data.stats || null);
+      setAlerts(Array.isArray(data.alerts) ? data.alerts : []);
+      setRecentActivities(Array.isArray(data.recentActivities) ? data.recentActivities : []);
+    } catch (e) {
+      console.error(e);
+      setOverviewError(e.message || "Failed to load overview");
+      setStats(null);
+      setAlerts([]);
+      setRecentActivities([]);
+    } finally {
+      setLoadingOverview(false);
+    }
+  };
+
+  const fetchDemographics = async () => {
+    setLoadingDemo(true);
+    setDemoError("");
+    try {
+      const res = await fetch(apiUrl("/api/dashboard/demographics"));
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || "Failed to load demographics");
+
+      setAgeDistributionData(Array.isArray(data.ageDistribution) ? data.ageDistribution : []);
+      setGradeDistributionData(Array.isArray(data.gradeDistribution) ? data.gradeDistribution : []);
+
+      // add colors for pie slices
+      const g = Array.isArray(data.genderDistribution) ? data.genderDistribution : [];
+      const colored = g.map((row) => {
+        const name = String(row.name || "");
+        let color = "#3b82f6";
+        if (name.toLowerCase().includes("female")) color = "#ec4899";
+        if (name.toLowerCase().includes("male")) color = "#3b82f6";
+        return { ...row, color };
+      });
+      setGenderData(colored);
+    } catch (e) {
+      console.error(e);
+      setDemoError(e.message || "Failed to load demographics");
+      setAgeDistributionData([]);
+      setGradeDistributionData([]);
+      setGenderData([]);
+    } finally {
+      setLoadingDemo(false);
+    }
+  };
+
+  const fetchHealth = async () => {
+    setLoadingHealth(true);
+    setHealthError("");
+    try {
+      const res = await fetch(apiUrl("/api/dashboard/health"));
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || "Failed to load health");
+
+      // add colors for pie
+      const raw = Array.isArray(data.healthStatusDistribution) ? data.healthStatusDistribution : [];
+      const colored = raw.map((r) => {
+        const s = String(r.status || "");
+        let color = "#3b82f6";
+        if (s.toLowerCase().includes("excellent")) color = "#10b981";
+        else if (s.toLowerCase().includes("good")) color = "#3b82f6";
+        else if (s.toLowerCase().includes("need")) color = "#f59e0b";
+        else if (s.toLowerCase().includes("require")) color = "#ef4444";
+        return { ...r, color };
+      });
+
+      setHealthStatusData(colored);
+
+      // vaccinationCoverage currently empty (unless you add schema later)
+      setVaccinationData(Array.isArray(data.vaccinationCoverage) ? data.vaccinationCoverage : []);
+    } catch (e) {
+      console.error(e);
+      setHealthError(e.message || "Failed to load health");
+      setHealthStatusData([]);
+      setVaccinationData([]);
+    } finally {
+      setLoadingHealth(false);
+    }
+  };
+
+  const fetchDonations = async () => {
+    setLoadingDonations(true);
+    setDonationsError("");
+    try {
+      const res = await fetch(apiUrl("/api/dashboard/donations"));
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || "Failed to load donations");
+
+      setDonationTrendsData(Array.isArray(data.donationTrends) ? data.donationTrends : []);
+
+      // add colors for pie
+      const raw = Array.isArray(data.donorTypeDistribution) ? data.donorTypeDistribution : [];
+      const colored = raw.map((r) => {
+        const t = String(r.type || "");
+        let color = "#3b82f6";
+        if (t.toLowerCase().includes("corporate")) color = "#8b5cf6";
+        else if (t.toLowerCase().includes("foundation")) color = "#10b981";
+        else if (t.toLowerCase().includes("one")) color = "#3b82f6";
+        return { ...r, color };
+      });
+
+      setDonorTypeData(colored);
+    } catch (e) {
+      console.error(e);
+      setDonationsError(e.message || "Failed to load donations");
+      setDonationTrendsData([]);
+      setDonorTypeData([]);
+    } finally {
+      setLoadingDonations(false);
+    }
+  };
+
+  const fetchDevelopment = async () => {
+    setLoadingDevelopment(true);
+    setDevelopmentError("");
+    try {
+      const res = await fetch(apiUrl("/api/dashboard/development"));
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || "Failed to load development");
+
+      // developmentProgress: [{category, progress}]
+      const dp = Array.isArray(data.developmentProgress) ? data.developmentProgress : [];
+      setDevelopmentProgressData(dp);
+
+      // If you want the "Development vs Academic" chart, you can later compute it.
+      // For now, show a simple mapping from milestoneStatus if present.
+      const ms = Array.isArray(data.milestoneStatus) ? data.milestoneStatus : [];
+      const fallback = ms.map((r) => ({
+        name: r.name,
+        academicScore: 0,
+        count: r.count,
+      }));
+      setDevelopmentVsAcademicData(fallback);
+    } catch (e) {
+      console.error(e);
+      setDevelopmentError(e.message || "Failed to load development");
+      setDevelopmentProgressData([]);
+      setDevelopmentVsAcademicData([]);
+    } finally {
+      setLoadingDevelopment(false);
+    }
+  };
+
+  // ---------- initial load ----------
+  useEffect(() => {
+    fetchOverview();
+    // load overview only at start (fast). other tabs load on demand.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // ---------- on tab change, fetch if needed ----------
+  useEffect(() => {
+    if (activeTab === "demographics" && ageDistributionData.length === 0 && !loadingDemo && !demoError) {
+      fetchDemographics();
+    }
+    if (activeTab === "health" && healthStatusData.length === 0 && !loadingHealth && !healthError) {
+      fetchHealth();
+    }
+    if (activeTab === "donations" && donationTrendsData.length === 0 && !loadingDonations && !donationsError) {
+      fetchDonations();
+    }
+    if (activeTab === "development" && developmentProgressData.length === 0 && !loadingDevelopment && !developmentError) {
+      fetchDevelopment();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]);
+
+  // ---------- Derived values ----------
+  const donationProgress = stats ? (num(stats.monthlyDonations) / Math.max(num(stats.donationGoal), 1)) * 100 : 0;
+  const milestoneProgress = stats ? (num(stats.completedMilestones) / Math.max(num(stats.developmentMilestones), 1)) * 100 : 0;
+
+  // Pie data with percents
+  const genderPie = useMemo(() => withPercent(genderData, "value"), [genderData]);
+  const healthPie = useMemo(() => withPercent(healthStatusData, "count"), [healthStatusData]);
+  const donorPie = useMemo(() => withPercent(donorTypeData, "value"), [donorTypeData]);
+
+  // Loading / error state for overview
+  if (loadingOverview) return <div className="p-6">Loading dashboard...</div>;
+  if (overviewError) {
+    return (
+      <div className="p-6 space-y-3">
+        <div className="text-red-600 font-semibold">Failed to load dashboard.</div>
+        <div className="text-gray-700 dark:text-gray-300 text-sm">{overviewError}</div>
+        <Button onClick={fetchOverview} className="w-fit">Retry</Button>
+      </div>
+    );
+  }
+  if (!stats) return <div className="p-6">No dashboard data available.</div>;
 
   return (
     <div className="p-6 bg-gray-50 dark:bg-gray-950 min-h-screen space-y-6 transition-colors duration-300">
@@ -344,9 +466,11 @@ const Dashboard = () => {
                 <p className="text-xs sm:text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
                   Total Children
                 </p>
-                <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">{mockStats.totalChildren}</p>
+                <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">
+                  {num(stats.totalChildren)}
+                </p>
                 <p className="text-xs sm:text-sm text-green-600 dark:text-green-400 font-medium">
-                  +{mockStats.newAdmissions} new this month
+                  +{num(stats.newAdmissions)} new this month
                 </p>
               </div>
               <div className="bg-gradient-to-br from-blue-500 to-indigo-600 p-3 sm:p-4 rounded-2xl shadow-sm flex-shrink-0">
@@ -363,7 +487,9 @@ const Dashboard = () => {
                 <p className="text-xs sm:text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
                   Health Alerts
                 </p>
-                <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">{mockStats.healthChecksDue}</p>
+                <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">
+                  {num(stats.healthChecksDue)}
+                </p>
                 <p className="text-xs sm:text-sm text-orange-600 dark:text-orange-400 font-medium">Check-ups due</p>
               </div>
               <div className="bg-gradient-to-br from-red-500 to-rose-600 p-3 sm:p-4 rounded-2xl shadow-sm flex-shrink-0">
@@ -381,10 +507,10 @@ const Dashboard = () => {
                   Total Donations
                 </p>
                 <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">
-                  ${mockStats.totalDonations.toLocaleString()}
+                  ₱{num(stats.totalDonations).toLocaleString()}
                 </p>
                 <p className="text-xs sm:text-sm text-green-600 dark:text-green-400 font-medium">
-                  ${mockStats.monthlyDonations.toLocaleString()} this month
+                  ₱{num(stats.monthlyDonations).toLocaleString()} this month
                 </p>
               </div>
               <div className="bg-gradient-to-br from-green-500 to-emerald-600 p-3 sm:p-4 rounded-2xl shadow-sm flex-shrink-0">
@@ -402,7 +528,7 @@ const Dashboard = () => {
                   Milestones
                 </p>
                 <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">
-                  {mockStats.completedMilestones}/{mockStats.developmentMilestones}
+                  {num(stats.completedMilestones)}/{num(stats.developmentMilestones)}
                 </p>
                 <p className="text-xs sm:text-sm text-purple-600 dark:text-purple-400 font-medium">
                   {milestoneProgress.toFixed(0)}% completed
@@ -453,47 +579,64 @@ const Dashboard = () => {
                   </div>
                   Alerts &amp; Reminders
                 </CardTitle>
+                <Button size="sm" variant="outline" onClick={fetchOverview}>
+                  Refresh
+                </Button>
               </CardHeader>
               <CardContent className="space-y-4">
-                {mockAlerts.map((alert) => (
-                  <div
-                    key={alert.id}
-                    className="flex flex-col sm:flex-row sm:items-start gap-3 p-4
-                    bg-gray-50 dark:bg-gray-950/40 border border-gray-200 dark:border-gray-800 rounded-xl
-                    hover:bg-gray-50/60 dark:hover:bg-gray-800/40 transition"
-                  >
-                    <Badge className={`${getPriorityColor(alert.priority)} capitalize w-fit`}>
-                      {alert.priority}
-                    </Badge>
+                {alerts.length === 0 ? (
+                  <div className="text-sm text-gray-600 dark:text-gray-400">No scheduled alerts.</div>
+                ) : (
+                  alerts.map((alert) => (
+                    <div
+                      key={alert.id}
+                      className="flex flex-col sm:flex-row sm:items-start gap-3 p-4
+                      bg-gray-50 dark:bg-gray-950/40 border border-gray-200 dark:border-gray-800 rounded-xl
+                      hover:bg-gray-50/60 dark:hover:bg-gray-800/40 transition"
+                    >
+                      <Badge className={`${getPriorityColor(alert.priority)} capitalize w-fit`}>
+                        {alert.priority || "medium"}
+                      </Badge>
 
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm sm:text-base">
-                        {alert.message}
-                      </p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <Calendar className="h-3 w-3 sm:h-4 sm:w-4 text-gray-400" />
-                        <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">{alert.date}</span>
-                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm sm:text-base">
+                          {alert.message}
+                        </p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Calendar className="h-3 w-3 sm:h-4 sm:w-4 text-gray-400" />
+                          <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                            {formatDate(alert.date)}
+                          </span>
+                        </div>
 
-                      <div className="flex flex-wrap gap-1 mt-2">
-                        {alert.children.slice(0, 3).map((child, index) => (
-                          <Badge key={index} variant="outline" className="text-xs">
-                            {child}
-                          </Badge>
-                        ))}
-                        {alert.children.length > 3 && (
-                          <Badge variant="outline" className="text-xs">
-                            +{alert.children.length - 3} more
-                          </Badge>
+                        {/* If you later fill alert.children from alert_recipients, this will show */}
+                        {Array.isArray(alert.children) && alert.children.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-2">
+                            {alert.children.slice(0, 3).map((child, index) => (
+                              <Badge key={index} variant="outline" className="text-xs">
+                                {child}
+                              </Badge>
+                            ))}
+                            {alert.children.length > 3 && (
+                              <Badge variant="outline" className="text-xs">
+                                +{alert.children.length - 3} more
+                              </Badge>
+                            )}
+                          </div>
                         )}
                       </div>
-                    </div>
 
-                    <Button size="sm" variant="outline">
-                      View
-                    </Button>
-                  </div>
-                ))}
+                      {/* ✅ FUNCTIONAL VIEW BUTTON */}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => navigate("/children/alerts")}
+                      >
+                        View
+                      </Button>
+                    </div>
+                  ))
+                )}
               </CardContent>
             </Card>
 
@@ -515,7 +658,7 @@ const Dashboard = () => {
                       Monthly Donation Goal
                     </span>
                     <span className="text-sm text-gray-600 dark:text-gray-400">
-                      ${mockStats.monthlyDonations.toLocaleString()} / ${mockStats.donationGoal.toLocaleString()}
+                      ₱{num(stats.monthlyDonations).toLocaleString()} / ₱{num(stats.donationGoal).toLocaleString()}
                     </span>
                   </div>
                   <Progress value={donationProgress} />
@@ -530,7 +673,7 @@ const Dashboard = () => {
                       Development Milestones
                     </span>
                     <span className="text-sm text-gray-600 dark:text-gray-400">
-                      {mockStats.completedMilestones} / {mockStats.developmentMilestones}
+                      {num(stats.completedMilestones)} / {num(stats.developmentMilestones)}
                     </span>
                   </div>
                   <Progress value={milestoneProgress} />
@@ -542,10 +685,19 @@ const Dashboard = () => {
                 <div className="pt-4 border-t border-gray-100 dark:border-gray-800">
                   <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">Quick Actions</h4>
                   <div className="grid grid-cols-2 gap-2">
-                    <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
+                    <Button
+                      size="sm"
+                      className="bg-blue-600 hover:bg-blue-700"
+                      onClick={() => navigate("/children")}
+                    >
                       Add Child
                     </Button>
-                    <Button size="sm" variant="outline">
+
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => navigate("/children/reports")}
+                    >
                       Generate Report
                     </Button>
                   </div>
@@ -566,22 +718,30 @@ const Dashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {recentActivities.map((activity) => (
-                  <div
-                    key={activity.id}
-                    className="flex items-start gap-3 pb-4 border-b last:border-0 last:pb-0
-                    border-gray-100 dark:border-gray-800"
-                  >
-                    <div className="p-2.5 bg-gray-100 dark:bg-gray-800 rounded-full flex-shrink-0">
-                      {getActivityIcon(activity.type)}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{activity.action}</p>
-                      <p className="text-xs text-gray-600 dark:text-gray-400">by {activity.user}</p>
-                    </div>
-                    <span className="text-xs text-gray-500 dark:text-gray-400 flex-shrink-0">{activity.time}</span>
+                {recentActivities.length === 0 ? (
+                  <div className="text-sm text-gray-600 dark:text-gray-400">
+                    No recent activities yet.
                   </div>
-                ))}
+                ) : (
+                  recentActivities.map((activity) => (
+                    <div
+                      key={activity.id}
+                      className="flex items-start gap-3 pb-4 border-b last:border-0 last:pb-0
+                      border-gray-100 dark:border-gray-800"
+                    >
+                      <div className="p-2.5 bg-gray-100 dark:bg-gray-800 rounded-full flex-shrink-0">
+                        {getActivityIcon(activity.type)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{activity.action}</p>
+                        <p className="text-xs text-gray-600 dark:text-gray-400">by {activity.user}</p>
+                      </div>
+                      <span className="text-xs text-gray-500 dark:text-gray-400 flex-shrink-0">
+                        {formatDate(activity.time)}
+                      </span>
+                    </div>
+                  ))
+                )}
               </div>
             </CardContent>
           </Card>
@@ -591,105 +751,114 @@ const Dashboard = () => {
       {/* -------------------- DEMOGRAPHICS -------------------- */}
       {activeTab === "demographics" && (
         <div className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <ChartContainer title="Age Distribution" icon={Users} height={300}>
-              <BarChart data={ageDistributionData} xKey="ageGroup" bars={[{ key: "count", fill: "#3b82f6" }]} />
-            </ChartContainer>
+          {loadingDemo ? (
+            <div className="text-sm text-gray-600 dark:text-gray-400">Loading demographics...</div>
+          ) : demoError ? (
+            <div className="space-y-2">
+              <div className="text-sm text-red-600">{demoError}</div>
+              <Button size="sm" variant="outline" onClick={fetchDemographics}>Retry</Button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <ChartContainer title="Age Distribution" icon={Users} height={300}>
+                <BarChart data={ageDistributionData} xKey="ageGroup" bars={[{ key: "count", fill: "#3b82f6" }]} />
+              </ChartContainer>
 
-            <ChartContainer title="Children per Grade Level" icon={GraduationCap} height={300}>
-              <BarChart
-                data={gradeDistributionData}
-                xKey="grade"
-                xAngle={-45}
-                xHeight={80}
-                bars={[{ key: "count", fill: "#10b981" }]}
-              />
-            </ChartContainer>
+              <ChartContainer title="Children per Education Level" icon={GraduationCap} height={300}>
+                <BarChart
+                  data={gradeDistributionData}
+                  xKey="grade"
+                  xAngle={-45}
+                  xHeight={80}
+                  bars={[{ key: "count", fill: "#10b981" }]}
+                />
+              </ChartContainer>
 
-            {/* Gender Distribution */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <div className="rounded-xl bg-purple-100 dark:bg-purple-950/40 p-2">
-                    <PieChartIcon className="h-5 w-5 text-purple-600 dark:text-purple-300" />
-                  </div>
-                  Gender Distribution
-                </CardTitle>
-              </CardHeader>
-
-              <CardContent>
-                <div className="h-[300px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <RePieChart>
-                      <Pie
-                        data={genderPie}
-                        dataKey="value"
-                        nameKey="name"
-                        cx="50%"
-                        cy="50%"
-                        outerRadius={80}
-                        labelLine={false}
-                        label={renderPieLabel("name", "value")}
-                      >
-                        {genderPie.map((entry, idx) => (
-                          <Cell key={`gender-${idx}`} fill={entry.color} />
-                        ))}
-                      </Pie>
-                    </RePieChart>
-                  </ResponsiveContainer>
-                </div>
-
-                {/* Legend */}
-                <div className="mt-6 flex items-center justify-center gap-8">
-                  {genderPie.map((entry) => (
-                    <div key={entry.name} className="flex items-center gap-2">
-                      <span className="inline-block h-3 w-3 rounded-full" style={{ backgroundColor: entry.color }} />
-                      <span className="text-sm text-gray-700 dark:text-gray-300">
-                        {entry.name}: {entry.value}
-                      </span>
+              {/* Gender Distribution */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <div className="rounded-xl bg-purple-100 dark:bg-purple-950/40 p-2">
+                      <PieChartIcon className="h-5 w-5 text-purple-600 dark:text-purple-300" />
                     </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+                    Gender Distribution
+                  </CardTitle>
+                </CardHeader>
 
-            {/* Summary Stats */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Demographic Summary</CardTitle>
-              </CardHeader>
-
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="p-4 bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900 rounded-xl">
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Average Age</p>
-                    <p className="text-2xl font-bold text-blue-700 dark:text-blue-300">8.5 years</p>
+                <CardContent>
+                  <div className="h-[300px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <RePieChart>
+                        <Pie
+                          data={genderPie}
+                          dataKey="value"
+                          nameKey="name"
+                          cx="50%"
+                          cy="50%"
+                          outerRadius={80}
+                          labelLine={false}
+                          label={renderPieLabel("name")}
+                        >
+                          {genderPie.map((entry, idx) => (
+                            <Cell key={`gender-${idx}`} fill={entry.color || "#3b82f6"} />
+                          ))}
+                        </Pie>
+                      </RePieChart>
+                    </ResponsiveContainer>
                   </div>
 
-                  <div className="p-4 bg-green-50 dark:bg-green-950/30 border border-green-100 dark:border-green-900 rounded-xl">
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Most Common Grade</p>
-                    <p className="text-2xl font-bold text-green-700 dark:text-green-300">Grade 3</p>
+                  <div className="mt-6 flex items-center justify-center gap-8">
+                    {genderPie.map((entry) => (
+                      <div key={entry.name} className="flex items-center gap-2">
+                        <span className="inline-block h-3 w-3 rounded-full" style={{ backgroundColor: entry.color || "#3b82f6" }} />
+                        <span className="text-sm text-gray-700 dark:text-gray-300">
+                          {entry.name}: {entry.value}
+                        </span>
+                      </div>
+                    ))}
                   </div>
+                </CardContent>
+              </Card>
 
-                  <div className="p-4 bg-purple-50 dark:bg-purple-950/30 border border-purple-100 dark:border-purple-900 rounded-xl">
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Youngest Child</p>
-                    <p className="text-2xl font-bold text-purple-700 dark:text-purple-300">6 months</p>
-                  </div>
+              {/* Summary Stats (simple derived from current data) */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Demographic Summary</CardTitle>
+                </CardHeader>
 
-                  <div className="p-4 bg-orange-50 dark:bg-orange-950/25 border border-orange-100 dark:border-orange-900 rounded-xl">
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Oldest Child</p>
-                    <p className="text-2xl font-bold text-orange-700 dark:text-orange-300">17 years</p>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="p-4 bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900 rounded-xl">
+                      <p className="text-sm text-gray-600 dark:text-gray-400">Total Children</p>
+                      <p className="text-2xl font-bold text-blue-700 dark:text-blue-300">{num(stats.totalChildren)}</p>
+                    </div>
+
+                    <div className="p-4 bg-green-50 dark:bg-green-950/30 border border-green-100 dark:border-green-900 rounded-xl">
+                      <p className="text-sm text-gray-600 dark:text-gray-400">Education Levels</p>
+                      <p className="text-2xl font-bold text-green-700 dark:text-green-300">{gradeDistributionData.length}</p>
+                    </div>
+
+                    <div className="p-4 bg-purple-50 dark:bg-purple-950/30 border border-purple-100 dark:border-purple-900 rounded-xl">
+                      <p className="text-sm text-gray-600 dark:text-gray-400">Gender Types</p>
+                      <p className="text-2xl font-bold text-purple-700 dark:text-purple-300">{genderData.length}</p>
+                    </div>
+
+                    <div className="p-4 bg-orange-50 dark:bg-orange-950/25 border border-orange-100 dark:border-orange-900 rounded-xl">
+                      <p className="text-sm text-gray-600 dark:text-gray-400">New Admissions</p>
+                      <p className="text-2xl font-bold text-orange-700 dark:text-orange-300">+{num(stats.newAdmissions)}</p>
+                    </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
         </div>
       )}
 
       {/* -------------------- EDUCATION -------------------- */}
       {activeTab === "education" && (
         <div className="space-y-6">
+          {/* NOTE: these are still placeholders until you create /api/dashboard/education */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <ChartContainer title="Academic Performance Trends" icon={TrendingUp} height={300}>
               <LineChart
@@ -734,6 +903,10 @@ const Dashboard = () => {
                     </div>
                   ))}
                 </div>
+                <div className="mt-4 text-xs text-gray-500 dark:text-gray-400">
+                  To make this tab real, create a backend endpoint <code>/api/dashboard/education</code> using your
+                  <code> education_records</code> / <code>education_summaries</code> tables.
+                </div>
               </CardContent>
             </Card>
           </div>
@@ -743,300 +916,358 @@ const Dashboard = () => {
       {/* -------------------- DEVELOPMENT -------------------- */}
       {activeTab === "development" && (
         <div className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <div className="rounded-xl bg-purple-100 dark:bg-purple-950/40 p-2">
-                    <Award className="h-5 w-5 text-purple-600 dark:text-purple-300" />
-                  </div>
-                  Development Progress by Category
-                </CardTitle>
-              </CardHeader>
-
-              <CardContent className="space-y-4">
-                {developmentProgressData.map((category) => (
-                  <div key={category.category}>
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">
-                        {category.category}
-                      </span>
-                      <span className="text-sm text-gray-600 dark:text-gray-400">{category.progress}%</span>
+          {loadingDevelopment ? (
+            <div className="text-sm text-gray-600 dark:text-gray-400">Loading development...</div>
+          ) : developmentError ? (
+            <div className="space-y-2">
+              <div className="text-sm text-red-600">{developmentError}</div>
+              <Button size="sm" variant="outline" onClick={fetchDevelopment}>Retry</Button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <div className="rounded-xl bg-purple-100 dark:bg-purple-950/40 p-2">
+                      <Award className="h-5 w-5 text-purple-600 dark:text-purple-300" />
                     </div>
-                    <Progress value={category.progress} />
+                    Development Progress by Category
+                  </CardTitle>
+                </CardHeader>
+
+                <CardContent className="space-y-4">
+                  {developmentProgressData.length === 0 ? (
+                    <div className="text-sm text-gray-600 dark:text-gray-400">No milestone progress data yet.</div>
+                  ) : (
+                    developmentProgressData.map((category) => (
+                      <div key={category.category}>
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">
+                            {category.category}
+                          </span>
+                          <span className="text-sm text-gray-600 dark:text-gray-400">{num(category.progress)}%</span>
+                        </div>
+                        <Progress value={num(category.progress)} />
+                      </div>
+                    ))
+                  )}
+                </CardContent>
+              </Card>
+
+              <ChartContainer title="Milestone Status Breakdown" icon={BarChart3} height={300}>
+                <BarChart
+                  data={developmentVsAcademicData}
+                  xKey="name"
+                  showLegend={false}
+                  bars={[{ key: "count", fill: "#8b5cf6", name: "Count" }]}
+                />
+              </ChartContainer>
+
+              <Card className="lg:col-span-2">
+                <CardHeader>
+                  <CardTitle>Development Insights</CardTitle>
+                </CardHeader>
+
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="p-4 bg-purple-50 dark:bg-purple-950/30 border border-purple-100 dark:border-purple-900 rounded-xl">
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Milestones Completed</p>
+                      <p className="text-3xl font-bold text-purple-700 dark:text-purple-300 mb-1">
+                        {num(stats.completedMilestones)}
+                      </p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">Total completed milestones</p>
+                    </div>
+
+                    <div className="p-4 bg-green-50 dark:bg-green-950/30 border border-green-100 dark:border-green-900 rounded-xl">
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Total Milestones</p>
+                      <p className="text-2xl font-bold text-green-700 dark:text-green-300 mb-1">
+                        {num(stats.developmentMilestones)}
+                      </p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">Across all categories</p>
+                    </div>
+
+                    <div className="p-4 bg-orange-50 dark:bg-orange-950/25 border border-orange-100 dark:border-orange-900 rounded-xl">
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Completion Rate</p>
+                      <p className="text-2xl font-bold text-orange-700 dark:text-orange-300 mb-1">
+                        {milestoneProgress.toFixed(0)}%
+                      </p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">Completed vs total</p>
+                    </div>
                   </div>
-                ))}
-              </CardContent>
-            </Card>
-
-            <ChartContainer title="Development vs Academic Correlation" icon={BarChart3} height={300}>
-              <BarChart
-                data={developmentVsAcademicData}
-                xKey="name"
-                showLegend
-                bars={[
-                  { key: "academicScore", fill: "#8b5cf6", name: "Academic Score" },
-                  { key: "count", fill: "#06b6d4", name: "Number of Children" },
-                ]}
-              />
-            </ChartContainer>
-
-            <Card className="lg:col-span-2">
-              <CardHeader>
-                <CardTitle>Development Insights</CardTitle>
-              </CardHeader>
-
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="p-4 bg-purple-50 dark:bg-purple-950/30 border border-purple-100 dark:border-purple-900 rounded-xl">
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Overall Progress</p>
-                    <p className="text-3xl font-bold text-purple-700 dark:text-purple-300 mb-1">82.6%</p>
-                    <p className="text-xs text-gray-600 dark:text-gray-400">Average across all categories</p>
-                  </div>
-
-                  <div className="p-4 bg-green-50 dark:bg-green-950/30 border border-green-100 dark:border-green-900 rounded-xl">
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Highest Category</p>
-                    <p className="text-2xl font-bold text-green-700 dark:text-green-300 mb-1">Social (88%)</p>
-                    <p className="text-xs text-gray-600 dark:text-gray-400">Best performing area</p>
-                  </div>
-
-                  <div className="p-4 bg-orange-50 dark:bg-orange-950/25 border border-orange-100 dark:border-orange-900 rounded-xl">
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Needs Focus</p>
-                    <p className="text-2xl font-bold text-orange-700 dark:text-orange-300 mb-1">Cognitive (78%)</p>
-                    <p className="text-xs text-gray-600 dark:text-gray-400">Area for improvement</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
         </div>
       )}
 
       {/* -------------------- HEALTH -------------------- */}
       {activeTab === "health" && (
         <div className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Health Status Overview */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <div className="rounded-xl bg-red-100 dark:bg-red-950/35 p-2">
-                    <Stethoscope className="h-5 w-5 text-red-600 dark:text-red-300" />
-                  </div>
-                  Health Status Overview
-                </CardTitle>
-              </CardHeader>
-
-              <CardContent>
-                <div className="h-[300px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <RePieChart>
-                      <Pie
-                        data={healthPie}
-                        dataKey="count"
-                        nameKey="status"
-                        cx="50%"
-                        cy="50%"
-                        outerRadius={80}
-                        labelLine={false}
-                        label={renderPieLabel("status", "count")}
-                      >
-                        {healthPie.map((entry, idx) => (
-                          <Cell key={`health-${idx}`} fill={entry.color} />
-                        ))}
-                      </Pie>
-                    </RePieChart>
-                  </ResponsiveContainer>
-                </div>
-
-                {/* Legend bottom (2 columns) */}
-                <div className="mt-6 grid grid-cols-2 gap-x-10 gap-y-4">
-                  {healthPie.map((entry) => (
-                    <div key={entry.status} className="flex items-center gap-3">
-                      <span className="inline-block h-3 w-3 rounded-full" style={{ backgroundColor: entry.color }} />
-                      <span className="text-sm text-gray-700 dark:text-gray-300">
-                        {entry.status}: {entry.count}
-                      </span>
+          {loadingHealth ? (
+            <div className="text-sm text-gray-600 dark:text-gray-400">Loading health...</div>
+          ) : healthError ? (
+            <div className="space-y-2">
+              <div className="text-sm text-red-600">{healthError}</div>
+              <Button size="sm" variant="outline" onClick={fetchHealth}>Retry</Button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Health Status Overview */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <div className="rounded-xl bg-red-100 dark:bg-red-950/35 p-2">
+                      <Stethoscope className="h-5 w-5 text-red-600 dark:text-red-300" />
                     </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+                    Health Status Overview
+                  </CardTitle>
+                </CardHeader>
 
-            <ChartContainer title="Vaccination Coverage" icon={Heart} height={300}>
-              <BarChart
-                data={vaccinationData}
-                xKey="vaccine"
-                showLegend
-                bars={[
-                  { key: "completed", fill: "#10b981", name: "Completed", stackId: "a" },
-                  { key: "pending", fill: "#f59e0b", name: "Pending", stackId: "a" },
-                ]}
-              />
-            </ChartContainer>
-
-            <Card className="lg:col-span-2">
-              <CardHeader>
-                <CardTitle>Health Summary</CardTitle>
-              </CardHeader>
-
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <div className="p-4 bg-green-50 dark:bg-green-950/30 border border-green-100 dark:border-green-900 rounded-xl">
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Healthy Children</p>
-                    <p className="text-2xl font-bold text-green-700 dark:text-green-300">38/45</p>
-                    <p className="text-xs text-gray-600 dark:text-gray-400">84% of total</p>
+                <CardContent>
+                  <div className="h-[300px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <RePieChart>
+                        <Pie
+                          data={healthPie}
+                          dataKey="count"
+                          nameKey="status"
+                          cx="50%"
+                          cy="50%"
+                          outerRadius={80}
+                          labelLine={false}
+                          label={renderPieLabel("status")}
+                        >
+                          {healthPie.map((entry, idx) => (
+                            <Cell key={`health-${idx}`} fill={entry.color || "#3b82f6"} />
+                          ))}
+                        </Pie>
+                      </RePieChart>
+                    </ResponsiveContainer>
                   </div>
 
-                  <div className="p-4 bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900 rounded-xl">
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Vaccination Rate</p>
-                    <p className="text-2xl font-bold text-blue-700 dark:text-blue-300">94%</p>
-                    <p className="text-xs text-gray-600 dark:text-gray-400">Above target</p>
+                  <div className="mt-6 grid grid-cols-2 gap-x-10 gap-y-4">
+                    {healthPie.map((entry) => (
+                      <div key={entry.status} className="flex items-center gap-3">
+                        <span className="inline-block h-3 w-3 rounded-full" style={{ backgroundColor: entry.color || "#3b82f6" }} />
+                        <span className="text-sm text-gray-700 dark:text-gray-300">
+                          {entry.status}: {entry.count}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              <ChartContainer title="Vaccination Coverage" icon={Heart} height={300}>
+                <BarChart
+                  data={vaccinationData}
+                  xKey="vaccine"
+                  showLegend
+                  bars={[
+                    { key: "completed", fill: "#10b981", name: "Completed", stackId: "a" },
+                    { key: "pending", fill: "#f59e0b", name: "Pending", stackId: "a" },
+                  ]}
+                />
+              </ChartContainer>
+
+              <Card className="lg:col-span-2">
+                <CardHeader>
+                  <CardTitle>Health Summary</CardTitle>
+                </CardHeader>
+
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="p-4 bg-green-50 dark:bg-green-950/30 border border-green-100 dark:border-green-900 rounded-xl">
+                      <p className="text-sm text-gray-600 dark:text-gray-400">Total Active Children</p>
+                      <p className="text-2xl font-bold text-green-700 dark:text-green-300">{num(stats.totalChildren)}</p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">From Overview</p>
+                    </div>
+
+                    <div className="p-4 bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900 rounded-xl">
+                      <p className="text-sm text-gray-600 dark:text-gray-400">Health Status Types</p>
+                      <p className="text-2xl font-bold text-blue-700 dark:text-blue-300">{healthStatusData.length}</p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">Distinct statuses</p>
+                    </div>
+
+                    <div className="p-4 bg-orange-50 dark:bg-orange-950/25 border border-orange-100 dark:border-orange-900 rounded-xl">
+                      <p className="text-sm text-gray-600 dark:text-gray-400">Pending Check-ups</p>
+                      <p className="text-2xl font-bold text-orange-700 dark:text-orange-300">{num(stats.healthChecksDue)}</p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">Next 30 days</p>
+                    </div>
+
+                    <div className="p-4 bg-red-50 dark:bg-red-950/35 border border-red-100 dark:border-red-900 rounded-xl">
+                      <p className="text-sm text-gray-600 dark:text-gray-400">Vaccinations</p>
+                      <p className="text-2xl font-bold text-red-700 dark:text-red-300">{vaccinationData.length || 0}</p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">Rows loaded</p>
+                    </div>
                   </div>
 
-                  <div className="p-4 bg-orange-50 dark:bg-orange-950/25 border border-orange-100 dark:border-orange-900 rounded-xl">
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Pending Check-ups</p>
-                    <p className="text-2xl font-bold text-orange-700 dark:text-orange-300">8</p>
-                    <p className="text-xs text-gray-600 dark:text-gray-400">Due this month</p>
-                  </div>
-
-                  <div className="p-4 bg-red-50 dark:bg-red-950/35 border border-red-100 dark:border-red-900 rounded-xl">
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Requires Attention</p>
-                    <p className="text-2xl font-bold text-red-700 dark:text-red-300">2</p>
-                    <p className="text-xs text-gray-600 dark:text-gray-400">Immediate care needed</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+                  {vaccinationData.length === 0 && (
+                    <div className="mt-4 text-xs text-gray-500 dark:text-gray-400">
+                      Vaccination chart is empty because your current database schema doesn’t include vaccine fields.
+                      If you add a <code>vaccinations</code> table, we can fill this automatically.
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          )}
         </div>
       )}
 
       {/* -------------------- DONATIONS -------------------- */}
       {activeTab === "donations" && (
         <div className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <ChartContainer title="Monthly Donation Trends" icon={DollarSign} height={300}>
-              <AreaChart
-                data={donationTrendsData}
-                xKey="month"
-                areas={[
-                  {
-                    key: "amount",
-                    stroke: "#10b981",
-                    fill: "#10b981",
-                    fillOpacity: 0.3,
-                    name: "Amount ($)",
-                  },
-                ]}
-              />
-            </ChartContainer>
+          {loadingDonations ? (
+            <div className="text-sm text-gray-600 dark:text-gray-400">Loading donations...</div>
+          ) : donationsError ? (
+            <div className="space-y-2">
+              <div className="text-sm text-red-600">{donationsError}</div>
+              <Button size="sm" variant="outline" onClick={fetchDonations}>Retry</Button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <ChartContainer title="Monthly Donation Trends" icon={DollarSign} height={300}>
+                <AreaChart
+                  data={donationTrendsData}
+                  xKey="month"
+                  areas={[
+                    {
+                      key: "amount",
+                      stroke: "#10b981",
+                      fill: "#10b981",
+                      fillOpacity: 0.3,
+                      name: "Amount (₱)",
+                    },
+                  ]}
+                />
+              </ChartContainer>
 
-            {/* Donor Type Distribution */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <div className="rounded-xl bg-blue-100 dark:bg-blue-950/40 p-2">
-                    <Users className="h-5 w-5 text-blue-600 dark:text-blue-300" />
-                  </div>
-                  Donor Type Distribution
-                </CardTitle>
-              </CardHeader>
-
-              <CardContent>
-                <div className="h-[300px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <RePieChart>
-                      <Pie
-                        data={donorPie}
-                        dataKey="value"
-                        nameKey="type"
-                        cx="50%"
-                        cy="50%"
-                        outerRadius={80}
-                        labelLine={false}
-                        label={(props) => {
-                          const { cx, cy, midAngle, outerRadius, payload } = props;
-                          const radius = outerRadius + 22;
-                          const x = cx + radius * Math.cos(-midAngle * RADIAN);
-                          const y = cy + radius * Math.sin(-midAngle * RADIAN);
-                          return (
-                            <text
-                              x={x}
-                              y={y}
-                              fill={payload.color}
-                              textAnchor={x > cx ? "start" : "end"}
-                              dominantBaseline="central"
-                              style={{ fontSize: 18, fontWeight: 500 }}
-                            >
-                              {payload.__percent}%
-                            </text>
-                          );
-                        }}
-                      >
-                        {donorPie.map((entry, idx) => (
-                          <Cell key={`donor-${idx}`} fill={entry.color} />
-                        ))}
-                      </Pie>
-                    </RePieChart>
-                  </ResponsiveContainer>
-                </div>
-
-                {/* Legend list */}
-                <div className="mt-6 space-y-3">
-                  {donorPie.map((entry) => (
-                    <div key={entry.type} className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <span className="inline-block h-3 w-3 rounded-full" style={{ backgroundColor: entry.color }} />
-                        <span className="text-sm text-gray-700 dark:text-gray-300">{entry.type}</span>
-                      </div>
-                      <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">{entry.value}%</span>
+              {/* Donor Type Distribution */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <div className="rounded-xl bg-blue-100 dark:bg-blue-950/40 p-2">
+                      <Users className="h-5 w-5 text-blue-600 dark:text-blue-300" />
                     </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+                    Donor Type Distribution
+                  </CardTitle>
+                </CardHeader>
 
-            {/* Donation Overview Cards */}
-            <div className="lg:col-span-2">
-              <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 p-6 hover:shadow-md transition-shadow">
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Donation Overview</h2>
-
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <div className="p-4 bg-green-50 dark:bg-green-950/30 border border-green-100 dark:border-green-900 rounded-xl">
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Total This Year</p>
-                    <p className="text-2xl font-bold text-green-700 dark:text-green-300">$86,000</p>
-                    <p className="text-xs text-gray-600 dark:text-gray-400">Up 12% from last year</p>
+                <CardContent>
+                  <div className="h-[300px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <RePieChart>
+                        <Pie
+                          data={donorPie}
+                          dataKey="value"
+                          nameKey="type"
+                          cx="50%"
+                          cy="50%"
+                          outerRadius={80}
+                          labelLine={false}
+                          label={(props) => {
+                            const { cx, cy, midAngle, outerRadius, payload } = props;
+                            const radius = outerRadius + 22;
+                            const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                            const y = cy + radius * Math.sin(-midAngle * RADIAN);
+                            return (
+                              <text
+                                x={x}
+                                y={y}
+                                fill={payload.color || "#111827"}
+                                textAnchor={x > cx ? "start" : "end"}
+                                dominantBaseline="central"
+                                style={{ fontSize: 18, fontWeight: 500 }}
+                              >
+                                {payload.__percent}%
+                              </text>
+                            );
+                          }}
+                        >
+                          {donorPie.map((entry, idx) => (
+                            <Cell key={`donor-${idx}`} fill={entry.color || "#3b82f6"} />
+                          ))}
+                        </Pie>
+                      </RePieChart>
+                    </ResponsiveContainer>
                   </div>
 
-                  <div className="p-4 bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900 rounded-xl">
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Average Donation</p>
-                    <p className="text-2xl font-bold text-blue-700 dark:text-blue-300">$285</p>
-                    <p className="text-xs text-gray-600 dark:text-gray-400">Per donor</p>
+                  <div className="mt-6 space-y-3">
+                    {donorPie.length === 0 ? (
+                      <div className="text-sm text-gray-600 dark:text-gray-400">No donor type data yet.</div>
+                    ) : (
+                      donorPie.map((entry) => (
+                        <div key={entry.type} className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <span className="inline-block h-3 w-3 rounded-full" style={{ backgroundColor: entry.color || "#3b82f6" }} />
+                            <span className="text-sm text-gray-700 dark:text-gray-300">{entry.type}</span>
+                          </div>
+                          <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">{entry.value}</span>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Donation Overview Cards */}
+              <div className="lg:col-span-2">
+                <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 p-6 hover:shadow-md transition-shadow">
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Donation Overview</h2>
+
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="p-4 bg-green-50 dark:bg-green-950/30 border border-green-100 dark:border-green-900 rounded-xl">
+                      <p className="text-sm text-gray-600 dark:text-gray-400">Total Donations</p>
+                      <p className="text-2xl font-bold text-green-700 dark:text-green-300">
+                        ₱{num(stats.totalDonations).toLocaleString()}
+                      </p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">All-time</p>
+                    </div>
+
+                    <div className="p-4 bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900 rounded-xl">
+                      <p className="text-sm text-gray-600 dark:text-gray-400">This Month</p>
+                      <p className="text-2xl font-bold text-blue-700 dark:text-blue-300">
+                        ₱{num(stats.monthlyDonations).toLocaleString()}
+                      </p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">Current month</p>
+                    </div>
+
+                    <div className="p-4 bg-purple-50 dark:bg-purple-950/30 border border-purple-100 dark:border-purple-900 rounded-xl">
+                      <p className="text-sm text-gray-600 dark:text-gray-400">Donation Goal</p>
+                      <p className="text-2xl font-bold text-purple-700 dark:text-purple-300">
+                        ₱{num(stats.donationGoal).toLocaleString()}
+                      </p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">Monthly goal</p>
+                    </div>
+
+                    <div className="p-4 bg-orange-50 dark:bg-orange-950/25 border border-orange-100 dark:border-orange-900 rounded-xl">
+                      <p className="text-sm text-gray-600 dark:text-gray-400">Goal Progress</p>
+                      <p className="text-2xl font-bold text-orange-700 dark:text-orange-300">
+                        {donationProgress.toFixed(0)}%
+                      </p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">
+                        ₱{num(stats.monthlyDonations).toLocaleString()} / ₱{num(stats.donationGoal).toLocaleString()}
+                      </p>
+                    </div>
                   </div>
 
-                  <div className="p-4 bg-purple-50 dark:bg-purple-950/30 border border-purple-100 dark:border-purple-900 rounded-xl">
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Total Donors</p>
-                    <p className="text-2xl font-bold text-purple-700 dark:text-purple-300">318</p>
-                    <p className="text-xs text-gray-600 dark:text-gray-400">Active donors</p>
+                  <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900 rounded-xl">
+                    <p className="text-sm text-gray-700 dark:text-gray-200">
+                      <strong>Note:</strong> For detailed donation analytics including donor management, transaction
+                      history, and detailed reports, please visit the Donation Management module.
+                    </p>
                   </div>
 
-                  <div className="p-4 bg-orange-50 dark:bg-orange-950/25 border border-orange-100 dark:border-orange-900 rounded-xl">
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Monthly Goal</p>
-                    <p className="text-2xl font-bold text-orange-700 dark:text-orange-300">75%</p>
-                    <p className="text-xs text-gray-600 dark:text-gray-400">$15K / $20K</p>
+                  <div className="mt-3 text-xs text-gray-500 dark:text-gray-400">
+                    If your donation totals show 0, check your <code>donations.status</code> values. The backend query
+                    counts only <code>Paid</code> or <code>Success</code>.
                   </div>
-                </div>
-
-                <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900 rounded-xl">
-                  <p className="text-sm text-gray-700 dark:text-gray-200">
-                    <strong>Note:</strong> For detailed donation analytics including donor management, transaction
-                    history, and detailed reports, please visit the Donation Management module.
-                  </p>
                 </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
       )}
     </div>

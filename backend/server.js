@@ -14,6 +14,9 @@ const alertsRoutes = require("./routes/alerts");
 const donationsRoutes = require("./routes/donations");
 const paymongoWebhookRoutes = require("./routes/paymongoWebhook");
 
+// ✅ NEW DASHBOARD ROUTES
+const dashboardRoutes = require("./routes/dashboard");
+
 const app = express();
 
 app.use(cors({ origin: true, credentials: false }));
@@ -36,6 +39,9 @@ app.use("/api/alerts", alertsRoutes);
 
 // ✅ NEW donation APIs
 app.use("/api/donations", donationsRoutes);
+
+// ✅ NEW dashboard APIs
+app.use("/api/dashboard", dashboardRoutes);
 
 app.get("/", (_req, res) => res.send("Backend running ✅"));
 
