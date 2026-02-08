@@ -11,10 +11,10 @@
     const [method, setMethod] = useState("gcash"); // gcash or card
 
     // ✅ NEW: Card inputs
-    const [cardNumber, setCardNumber] = useState("4242 4242 4242 4242");
-    const [expMonth, setExpMonth] = useState("12");
-    const [expYear, setExpYear] = useState("30");
-    const [cvc, setCvc] = useState("123");
+    const [cardNumber, setCardNumber] = useState("");
+    const [expMonth, setExpMonth] = useState("");
+    const [expYear, setExpYear] = useState("");
+    const [cvc, setCvc] = useState("");
 
 
     const [loading, setLoading] = useState(false);
@@ -200,10 +200,7 @@
             {/* ✅ Card fields only show when Card is selected */}
             {method === "card" && (
                 <div className="mt-3 space-y-3">
-                <p className="text-xs text-gray-600 dark:text-gray-400">
-                    Use PayMongo test card (example): <b>4242 4242 4242 4242</b> • 12 • 30 • 123
-                </p>
-
+                
                 <div className="space-y-2">
                     <label className="text-sm text-gray-700 dark:text-gray-200">Card Number</label>
                     <input
