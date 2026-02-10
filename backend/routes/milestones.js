@@ -1,5 +1,6 @@
 const express = require("express");
 const pool = require("../db");
+const { logAudit } = require("../utils/audit");
 
 const router = express.Router();
 
@@ -110,6 +111,18 @@ router.post("/", async (req, res) => {
       );
     }
 
+    try {
+      await logAudit(req, {
+        action: "CREATE",
+        module: "Development Tracking",
+        resource: "Milestone",
+        resourceId: milestoneId,
+        details: `Created milestone "${title}" for childId=${childId}`,
+      });
+    } catch (e) {
+      console.error("Audit log failed (CREATE milestone):", e);
+    }
+
     await conn.commit();
     return res.json({ success: true, id: milestoneId });
   } catch (err) {
@@ -168,6 +181,18 @@ router.put("/:id", async (req, res) => {
         `INSERT INTO milestone_objectives (milestone_id, objective) VALUES ?`,
         [values]
       );
+    }
+
+    try {
+      await logAudit(req, {
+        action: "UPDATE",
+        module: "Development Tracking",
+        resource: "Milestone",
+        resourceId: id,
+        details: `Updated milestone "${milestone}"`,
+      });
+    } catch (e) {
+      console.error("Audit log failed (UPDATE milestone):", e);
     }
 
     await conn.commit();

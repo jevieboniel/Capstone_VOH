@@ -1,3 +1,4 @@
+// backend/middleware/auth.js
 const jwt = require("jsonwebtoken");
 
 const verifyToken = (req, res, next) => {
@@ -8,7 +9,7 @@ const verifyToken = (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded;
+    req.user = decoded; // {id,email,role,name}
     next();
   } catch {
     return res.status(401).json({ success: false, message: "Invalid or expired token" });
@@ -16,7 +17,7 @@ const verifyToken = (req, res, next) => {
 };
 
 const requireAdmin = (req, res, next) => {
-  const role = (req.user?.role || "").toLowerCase();
+  const role = String(req.user?.role || "").toLowerCase();
   if (role !== "admin") return res.status(403).json({ success: false, message: "Admin access required" });
   next();
 };

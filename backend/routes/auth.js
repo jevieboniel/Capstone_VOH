@@ -1,17 +1,15 @@
+// backend/routes/auth.js
 const express = require("express");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const pool = require("../db");
 const { verifyToken } = require("../middleware/auth");
+const { logAudit } = require("../utils/audit");
 
 const router = express.Router();
 
 function safeParse(txt) {
-  try {
-    return JSON.parse(txt);
-  } catch {
-    return txt ? [txt] : [];
-  }
+  try { return JSON.parse(txt); } catch { return txt ? [txt] : []; }
 }
 
 router.post("/login", async (req, res) => {
@@ -37,6 +35,17 @@ router.post("/login", async (req, res) => {
       process.env.JWT_SECRET,
       { expiresIn: "1d" }
     );
+
+    // ✅ Audit LOGIN (use override because req.user not set yet)
+    await logAudit(req, {
+      action: "LOGIN",
+      module: "Authentication",
+      resource: "System Access",
+      resourceId: `user_${user.id}`,
+      details: "User logged into the system",
+      severity: "info",
+      userOverride: { id: user.id, name: user.name, role: user.role },
+    });
 
     return res.json({
       success: true,
@@ -66,6 +75,15 @@ router.get("/me", verifyToken, async (req, res) => {
     if (!rows.length) return res.status(404).json({ success: false, error: "User not found" });
 
     const u = rows[0];
+
+    // optional audit (comment out if too noisy)
+    // await logAudit(req, {
+    //   action: "VIEW",
+    //   module: "Authentication",
+    //   resource: "Profile",
+    //   resourceId: u.id,
+    //   details: "Fetched current user profile",
+    // });
 
     return res.json({
       success: true,

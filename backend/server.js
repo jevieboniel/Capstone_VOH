@@ -1,3 +1,4 @@
+// backend/server.js
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
@@ -10,24 +11,26 @@ const milestoneRoutes = require("./routes/milestones");
 const settingsRoutes = require("./routes/settings");
 const alertsRoutes = require("./routes/alerts");
 
-// ✅ NEW
 const donationsRoutes = require("./routes/donations");
 const paymongoWebhookRoutes = require("./routes/paymongoWebhook");
-
-// ✅ NEW DASHBOARD ROUTES
 const dashboardRoutes = require("./routes/dashboard");
+
+// ✅ NEW
+const reportsRoutes = require("./routes/reports");
+const auditTrailRoutes = require("./routes/auditTrail");
+
 
 const app = express();
 
 app.use(cors({ origin: true, credentials: false }));
 
-// ✅ 1) Webhook FIRST (raw body inside its route)
+// Webhook FIRST
 app.use("/webhook/paymongo", paymongoWebhookRoutes);
 
-// ✅ 2) JSON for normal API routes
+// JSON for normal API routes
 app.use(express.json());
 
-// ✅ serve uploaded images
+// serve uploads
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 app.use("/api/auth", authRoutes);
@@ -37,11 +40,13 @@ app.use("/api/milestones", milestoneRoutes);
 app.use("/api/settings", settingsRoutes);
 app.use("/api/alerts", alertsRoutes);
 
-// ✅ NEW donation APIs
 app.use("/api/donations", donationsRoutes);
-
-// ✅ NEW dashboard APIs
 app.use("/api/dashboard", dashboardRoutes);
+
+// ✅ NEW
+app.use("/api/reports", reportsRoutes);
+app.use("/api/audit-trail", auditTrailRoutes);
+
 
 app.get("/", (_req, res) => res.send("Backend running ✅"));
 

@@ -1,7 +1,9 @@
+// src/context/AuthContext.js
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { apiUrl } from "../config/api";
 
 const AuthContext = createContext();
-const API_BASE = "http://localhost:5000/api";
+const API_BASE = apiUrl("/api");
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -66,7 +68,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   // ✅ supports JSON AND FormData
-    const authFetch = async (url, options = {}) => {
+  const authFetch = async (url, options = {}) => {
     const token = localStorage.getItem("admin_token");
 
     const headers = {
@@ -74,18 +76,13 @@ export const AuthProvider = ({ children }) => {
       ...(options.headers || {}),
     };
 
-    // ✅ If body is FormData, DO NOT set Content-Type (browser will set it)
     const isFormData = options.body instanceof FormData;
-    if (!isFormData) {
+    if (!isFormData && !headers["Content-Type"]) {
       headers["Content-Type"] = "application/json";
     }
 
-    return fetch(`${API_BASE}${url}`, {
-      ...options,
-      headers,
-    });
+    return fetch(`${API_BASE}${url}`, { ...options, headers });
   };
-
 
   return (
     <AuthContext.Provider value={{ user, setUser, login, logout, loading, authFetch }}>
