@@ -1,10 +1,10 @@
-import React, { useMemo, useState, useDeferredValue, memo } from "react";
+// src/Pages/Reports.js
+import React, { useEffect, useMemo, useState, useDeferredValue, memo } from "react";
 import {
   FileText,
   Download,
   Calendar,
   Users,
-  Heart,
   DollarSign,
   TrendingUp,
   Printer,
@@ -20,361 +20,13 @@ import {
   Plus,
   Trash2,
   Activity,
-  GraduationCap,
   Home,
-  BarChart3,
-  BookOpen,
 } from "lucide-react";
 
 import Button from "../UI/Button";
-
-/* ---------------- Mock Data ---------------- */
-
-const mockChildren = [
-  { id: 1, name: "Sarah Mwangi", age: 8, gender: "Female", house: "Sunshine House", education: "Grade 3", healthStatus: "Good" },
-  { id: 2, name: "John Kipchoge", age: 12, gender: "Male", house: "Rainbow House", education: "Grade 7", healthStatus: "Excellent" },
-  { id: 3, name: "Maria Wanjiku", age: 6, gender: "Female", house: "Hope House", education: "Pre-School", healthStatus: "Needs Check-up" },
-  { id: 4, name: "David Ochieng", age: 15, gender: "Male", house: "Unity House", education: "Form 2", healthStatus: "Good" },
-  { id: 5, name: "Grace Akinyi", age: 9, gender: "Female", house: "Sunshine House", education: "Grade 4", healthStatus: "Good" },
-];
-
-const mockMilestones = [
-  { id: 1, childId: 1, category: "Physical", status: "Completed" },
-  { id: 2, childId: 1, category: "Educational", status: "In Progress" },
-  { id: 3, childId: 2, category: "Educational", status: "Completed" },
-  { id: 4, childId: 3, category: "Health", status: "At Risk" },
-  { id: 5, childId: 4, category: "Social", status: "Completed" },
-];
-
-const mockAuditTrail = [
-  {
-    id: 1,
-    timestamp: "2025-10-08T10:30:00Z",
-    userId: "user_001",
-    userName: "Sarah Johnson",
-    userRole: "admin",
-    action: "CREATE",
-    resource: "Child Profile",
-    resourceId: "child_023",
-    details: "Created new child profile for Maria Santos, age 7",
-    ipAddress: "192.168.1.100",
-    severity: "info",
-    module: "Children Management",
-  },
-  {
-    id: 2,
-    timestamp: "2025-10-08T10:25:00Z",
-    userId: "user_002",
-    userName: "Michael Chen",
-    userRole: "staff",
-    action: "UPDATE",
-    resource: "Child Profile",
-    resourceId: "child_015",
-    details: 'Updated health status for John Doe from "Good" to "Excellent"',
-    ipAddress: "192.168.1.101",
-    severity: "info",
-    module: "Children Management",
-  },
-  {
-    id: 3,
-    timestamp: "2025-10-08T10:15:00Z",
-    userId: "user_001",
-    userName: "Sarah Johnson",
-    userRole: "admin",
-    action: "DELETE",
-    resource: "User Account",
-    resourceId: "user_024",
-    details: "Deleted inactive user account for former staff member Lisa Wilson",
-    ipAddress: "192.168.1.100",
-    severity: "warning",
-    module: "User Management",
-  },
-  {
-    id: 4,
-    timestamp: "2025-10-08T10:05:00Z",
-    userId: "user_004",
-    userName: "David Thompson",
-    userRole: "house_parent",
-    action: "CREATE",
-    resource: "Health Record",
-    resourceId: "health_078",
-    details: "Added routine check-up record for Sarah Mwangi",
-    ipAddress: "192.168.1.103",
-    severity: "info",
-    module: "Children Management",
-  },
-  {
-    id: 5,
-    timestamp: "2025-10-08T09:55:00Z",
-    userId: "user_003",
-    userName: "Emily Rodriguez",
-    userRole: "social_worker",
-    action: "UPDATE",
-    resource: "Development Milestone",
-    resourceId: "milestone_045",
-    details: 'Updated progress for milestone "Reading Grade Level 3" from 65% to 75%',
-    ipAddress: "192.168.1.102",
-    severity: "info",
-    module: "Development Tracking",
-  },
-  {
-    id: 6,
-    timestamp: "2025-10-08T09:50:00Z",
-    userId: "user_002",
-    userName: "Michael Chen",
-    userRole: "staff",
-    action: "CREATE",
-    resource: "Donation Record",
-    resourceId: "donation_156",
-    details: "Recorded new donation of $500 from Corporate Partner ABC Inc.",
-    ipAddress: "192.168.1.101",
-    severity: "info",
-    module: "Donation Management",
-  },
-  {
-    id: 7,
-    timestamp: "2025-10-08T09:45:00Z",
-    userId: "user_001",
-    userName: "Sarah Johnson",
-    userRole: "admin",
-    action: "LOGIN",
-    resource: "System Access",
-    resourceId: "session_891",
-    details: "User logged into the system",
-    ipAddress: "192.168.1.100",
-    severity: "info",
-    module: "Authentication",
-  },
-];
+import { apiUrl } from "../../config/api";
 
 /* ---------------- Helpers ---------------- */
-
-const calculateChildStats = (childId) => {
-  const ms = mockMilestones.filter((m) => m.childId === childId);
-  const total = ms.length;
-  const completed = ms.filter((m) => m.status === "Completed").length;
-  const inProgress = ms.filter((m) => m.status === "In Progress").length;
-  const overall = total === 0 ? 0 : Math.round((completed / total) * 100 + (inProgress * 25) / total);
-  return { totalMilestones: total, completedMilestones: completed, inProgressMilestones: inProgress, overall };
-};
-
-const generateAllReports = () => {
-  const reports = [];
-  const today = new Date();
-  const currentMonth = today.toLocaleString("default", { month: "long", year: "numeric" });
-  const todayStr = today.toISOString().split("T")[0];
-
-  mockChildren.forEach((child) => {
-    const childStats = calculateChildStats(child.id);
-
-    reports.push({
-      id: `child-profile-${child.id}`,
-      title: `${child.name} - Complete Profile Report`,
-      description: "Comprehensive profile including personal info, health records, education, and development milestones.",
-      category: "Children",
-      subcategory: "Individual Profiles",
-      type: "Child Profile",
-      generatedDate: todayStr,
-      period: currentMonth,
-      status: "Ready",
-      fileSize: "1.2 MB",
-      pages: 8,
-      format: "PDF",
-      icon: FileText,
-      childName: child.name,
-      metadata: { childId: child.id, age: child.age, house: child.house, totalMilestones: childStats.totalMilestones },
-    });
-
-    reports.push({
-      id: `child-health-${child.id}`,
-      title: `${child.name} - Health Records Report`,
-      description: "Medical history, vaccinations, check-ups, and overall health status.",
-      category: "Children",
-      subcategory: "Health Records",
-      type: "Health Report",
-      generatedDate: todayStr,
-      period: currentMonth,
-      status: "Ready",
-      fileSize: "0.8 MB",
-      pages: 4,
-      format: "PDF",
-      icon: Heart,
-      childName: child.name,
-      metadata: { healthStatus: child.healthStatus },
-    });
-
-    reports.push({
-      id: `child-education-${child.id}`,
-      title: `${child.name} - Education Progress Report`,
-      description: "Academic performance, grades, and teacher comments overview.",
-      category: "Children",
-      subcategory: "Education Records",
-      type: "Education Report",
-      generatedDate: todayStr,
-      period: currentMonth,
-      status: "Ready",
-      fileSize: "0.6 MB",
-      pages: 5,
-      format: "PDF",
-      icon: GraduationCap,
-      childName: child.name,
-      metadata: { currentGrade: child.education },
-    });
-  });
-
-  reports.push({
-    id: "children-overview",
-    title: "All Children Overview Report",
-    description: "Summary of all children including demographics, health status, and placement.",
-    category: "Children",
-    subcategory: "Summary Reports",
-    type: "Overview",
-    generatedDate: todayStr,
-    period: currentMonth,
-    status: "Ready",
-    fileSize: "2.5 MB",
-    pages: 12,
-    format: "PDF",
-    icon: Users,
-    metadata: { totalChildren: mockChildren.length },
-  });
-
-  reports.push({
-    id: "health-summary",
-    title: "Health Status Summary Report",
-    description: "Aggregated health data for all children including upcoming check-ups.",
-    category: "Children",
-    subcategory: "Summary Reports",
-    type: "Health Summary",
-    generatedDate: todayStr,
-    period: currentMonth,
-    status: "Ready",
-    fileSize: "1.8 MB",
-    pages: 8,
-    format: "PDF",
-    icon: Heart,
-    metadata: { needingCheckup: mockChildren.filter((c) => c.healthStatus === "Needs Check-up").length },
-  });
-
-  reports.push({
-    id: "development-overall",
-    title: "Overall Development Progress Report",
-    description: "Comprehensive analysis of development milestones across all children.",
-    category: "Development",
-    subcategory: "Summary Reports",
-    type: "Development Overview",
-    generatedDate: todayStr,
-    period: currentMonth,
-    status: "Ready",
-    fileSize: "3.2 MB",
-    pages: 18,
-    format: "PDF",
-    icon: TrendingUp,
-  });
-
-  reports.push({
-    id: "milestones-at-risk",
-    title: "At-Risk Milestones Report",
-    description: "Milestones falling behind schedule that require immediate attention.",
-    category: "Development",
-    subcategory: "Priority Reports",
-    type: "At-Risk Milestones",
-    generatedDate: todayStr,
-    period: currentMonth,
-    status: "Ready",
-    fileSize: "0.9 MB",
-    pages: 4,
-    format: "PDF",
-    icon: AlertTriangle,
-  });
-
-  reports.push({
-    id: "milestones-completed",
-    title: "Completed Milestones Report",
-    description: "Summary of milestones successfully achieved this period.",
-    category: "Development",
-    subcategory: "Achievement Reports",
-    type: "Completed Milestones",
-    generatedDate: todayStr,
-    period: currentMonth,
-    status: "Ready",
-    fileSize: "1.6 MB",
-    pages: 7,
-    format: "PDF",
-    icon: CheckCircle,
-  });
-
-  reports.push({
-    id: "donations-summary",
-    title: "Donation Summary Report",
-    description: "Overview of donations including trends, top donors, and fund allocation.",
-    category: "Financial",
-    subcategory: "Donation Reports",
-    type: "Donation Summary",
-    generatedDate: todayStr,
-    period: currentMonth,
-    status: "Ready",
-    fileSize: "2.1 MB",
-    pages: 11,
-    format: "PDF",
-    icon: DollarSign,
-  });
-
-  reports.push({
-    id: "financial-summary",
-    title: "Financial Summary Report",
-    description: "Income, expenses, and budget allocation overview for this period.",
-    category: "Financial",
-    subcategory: "Financial Reports",
-    type: "Financial Summary",
-    generatedDate: todayStr,
-    period: currentMonth,
-    status: "Ready",
-    fileSize: "2.8 MB",
-    pages: 15,
-    format: "PDF",
-    icon: BarChart3,
-  });
-
-  const houses = ["Sunshine House", "Rainbow House", "Hope House", "Unity House"];
-  houses.forEach((house) => {
-    const houseChildren = mockChildren.filter((c) => c.house === house);
-    reports.push({
-      id: `house-${house.toLowerCase().replace(/\s+/g, "-")}`,
-      title: `${house} - House Report`,
-      description: "Overview of children, activities, and needs for this house.",
-      category: "Houses",
-      subcategory: "House Reports",
-      type: "House Overview",
-      generatedDate: todayStr,
-      period: currentMonth,
-      status: "Ready",
-      fileSize: "1.0 MB",
-      pages: 5,
-      format: "PDF",
-      icon: Home,
-      metadata: { totalChildren: houseChildren.length },
-    });
-  });
-
-  reports.push({
-    id: "annual-summary",
-    title: "Annual Summary Report",
-    description: "Year-end summary covering major areas of operations.",
-    category: "System",
-    subcategory: "Annual Reports",
-    type: "Annual Summary",
-    generatedDate: todayStr,
-    period: "2025",
-    status: "Ready",
-    fileSize: "5.2 MB",
-    pages: 35,
-    format: "PDF",
-    icon: BookOpen,
-  });
-
-  return reports;
-};
 
 const getCategoryColor = (category) => {
   switch (category) {
@@ -480,19 +132,11 @@ const Pill = ({ children, className = "" }) => (
   </span>
 );
 
-// eslint-disable-next-line no-unused-vars
-const CardAlt = ({ children, className = "" }) => (
-  <div className={`bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 ${className}`}>
-    {children}
-  </div>
-);
-
 /* ---------------- Views ---------------- */
 
 const ReportsView = memo(function ReportsView({
   categories,
   allReports,
-  filteredReports,
   selectedCategory,
   setSelectedCategory,
   searchTerm,
@@ -501,22 +145,67 @@ const ReportsView = memo(function ReportsView({
   onDownload,
   onPrint,
   onShare,
+  loading,
+
+  // ✅ generator props
+  reportType,
+  setReportType,
+  reportFormat,
+  setReportFormat,
+  generating,
+  generateReport,
 }) {
+  const filteredReports = allReports;
+
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Ready-Made Reports</h2>
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Reports Generator</h2>
           <p className="text-sm text-gray-600 dark:text-gray-400">
-            All system reports are pre-generated and ready to view or download.
+            Generate reports from Children records, Donation summary, or Audit trail.
           </p>
         </div>
 
         <Pill className="bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-100 dark:border-emerald-500/20">
-          {filteredReports.length} reports available
+          {loading ? "Loading..." : `${filteredReports.length} reports available`}
         </Pill>
       </div>
 
+      {/* ✅ Generate Report Card */}
+      <Card>
+        <CardContent className="space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Generate Report</h3>
+              <p className="text-xs text-gray-600 dark:text-gray-400">
+                Select report type and output format (PDF or CSV).
+              </p>
+            </div>
+
+            <Button onClick={generateReport} disabled={generating} className="inline-flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              {generating ? "Generating..." : "Generate"}
+            </Button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Select value={reportType} onChange={(e) => setReportType(e.target.value)} onKeyDownCapture={stopKeys}>
+              <option value="children_records">Children Records Report</option>
+              <option value="donation_summary">Donation Summary Report</option>
+              <option value="audit_report">Audit Report</option>
+            </Select>
+
+            <Select value={reportFormat} onChange={(e) => setReportFormat(e.target.value)} onKeyDownCapture={stopKeys}>
+              <option value="pdf">PDF</option>
+              <option value="csv">CSV</option>
+            </Select>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Existing Filters (optional list) */}
       <Card>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -549,37 +238,23 @@ const ReportsView = memo(function ReportsView({
               ))}
             </Select>
           </div>
-
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
-            {categories
-              .filter((c) => c !== "all")
-              .map((category) => {
-                const count = allReports.filter((r) => r.category === category).length;
-                const isActive = selectedCategory === category;
-
-                return (
-                  <button
-                    key={category}
-                    type="button"
-                    onClick={() => setSelectedCategory(isActive ? "all" : category)}
-                    className={`rounded-2xl border bg-white dark:bg-gray-900 p-4 text-center text-xs shadow-sm transition hover:bg-gray-50 dark:hover:bg-gray-800 ${
-                      isActive
-                        ? "border-blue-500 ring-2 ring-blue-100 dark:ring-blue-500/30"
-                        : "border-gray-200 dark:border-gray-700"
-                    }`}
-                  >
-                    <p className="text-gray-600 dark:text-gray-400 font-medium">{category}</p>
-                    <p className="mt-1 text-xl font-bold text-gray-900 dark:text-gray-100">{count}</p>
-                  </button>
-                );
-              })}
-          </div>
         </CardContent>
       </Card>
 
+      {/* Optional: List previously generated reports if backend supports GET /api/reports */}
       <div className="max-h-[600px] space-y-3 overflow-y-auto pr-1">
         {filteredReports.map((report) => {
-          const Icon = report.icon || FileText;
+          const Icon =
+            report.category === "Children"
+              ? Users
+              : report.category === "Development"
+              ? TrendingUp
+              : report.category === "Financial"
+              ? DollarSign
+              : report.category === "Houses"
+              ? Home
+              : FileText;
+
           return (
             <Card key={report.id}>
               <CardContent>
@@ -611,7 +286,7 @@ const ReportsView = memo(function ReportsView({
                         </span>
 
                         <span className="text-gray-500 dark:text-gray-400">
-                          {report.fileSize} • {report.pages} pages
+                          {(report.fileSize || "—")} • {(report.pages || 0)} pages
                         </span>
                       </div>
                     </div>
@@ -657,12 +332,12 @@ const ReportsView = memo(function ReportsView({
           );
         })}
 
-        {filteredReports.length === 0 && (
+        {!loading && filteredReports.length === 0 && (
           <div className="mt-4 rounded-2xl border border-dashed border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 p-10 text-center text-sm text-gray-600 dark:text-gray-400 shadow-sm">
             <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800">
               <FileText className="h-6 w-6 text-gray-400" />
             </div>
-            No reports found. Try changing your search or filters.
+            No reports found. Generate one above.
           </div>
         )}
       </div>
@@ -671,7 +346,7 @@ const ReportsView = memo(function ReportsView({
 });
 
 const AuditTrailView = memo(function AuditTrailView({
-  filteredAuditTrail,
+  auditRows,
   auditSearchTerm,
   setAuditSearchTerm,
   auditFilterModule,
@@ -682,6 +357,8 @@ const AuditTrailView = memo(function AuditTrailView({
   criticalCount,
   activeUsersCount,
   exportAuditTrail,
+  loading,
+  totalCount,
 }) {
   return (
     <div className="space-y-6">
@@ -703,7 +380,9 @@ const AuditTrailView = memo(function AuditTrailView({
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Total Activities</p>
-                <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-gray-100">{filteredAuditTrail.length}</p>
+                <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-gray-100">
+                  {loading ? "…" : totalCount}
+                </p>
               </div>
               <div className="rounded-2xl bg-blue-50 dark:bg-blue-500/10 border border-blue-100 dark:border-blue-500/20 p-3">
                 <Activity className="h-6 w-6 text-blue-700 dark:text-blue-300" />
@@ -717,7 +396,7 @@ const AuditTrailView = memo(function AuditTrailView({
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Today&apos;s Actions</p>
-                <p className="mt-1 text-2xl font-bold text-emerald-700 dark:text-emerald-300">{todayCount}</p>
+                <p className="mt-1 text-2xl font-bold text-emerald-700 dark:text-emerald-300">{loading ? "…" : todayCount}</p>
               </div>
               <div className="rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/20 p-3">
                 <Clock className="h-6 w-6 text-emerald-700 dark:text-emerald-300" />
@@ -731,7 +410,7 @@ const AuditTrailView = memo(function AuditTrailView({
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Critical Events</p>
-                <p className="mt-1 text-2xl font-bold text-red-700 dark:text-red-300">{criticalCount}</p>
+                <p className="mt-1 text-2xl font-bold text-red-700 dark:text-red-300">{loading ? "…" : criticalCount}</p>
               </div>
               <div className="rounded-2xl bg-red-50 dark:bg-red-500/10 border border-red-100 dark:border-red-500/20 p-3">
                 <AlertTriangle className="h-6 w-6 text-red-700 dark:text-red-300" />
@@ -745,7 +424,7 @@ const AuditTrailView = memo(function AuditTrailView({
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Active Users</p>
-                <p className="mt-1 text-2xl font-bold text-purple-700 dark:text-purple-300">{activeUsersCount}</p>
+                <p className="mt-1 text-2xl font-bold text-purple-700 dark:text-purple-300">{loading ? "…" : activeUsersCount}</p>
               </div>
               <div className="rounded-2xl bg-purple-50 dark:bg-purple-500/10 border border-purple-100 dark:border-purple-500/20 p-3">
                 <Users className="h-6 w-6 text-purple-700 dark:text-purple-300" />
@@ -780,6 +459,7 @@ const AuditTrailView = memo(function AuditTrailView({
               <option value="Development Tracking">Development Tracking</option>
               <option value="Donation Management">Donation Management</option>
               <option value="Authentication">Authentication</option>
+              <option value="Reports">Reports</option>
             </Select>
 
             <Select value={auditFilterAction} onChange={(e) => setAuditFilterAction(e.target.value)} onKeyDownCapture={stopKeys}>
@@ -789,13 +469,15 @@ const AuditTrailView = memo(function AuditTrailView({
               <option value="DELETE">Delete</option>
               <option value="LOGIN">Login</option>
               <option value="LOGOUT">Logout</option>
+              <option value="VIEW">View</option>
+              <option value="EXPORT">Export</option>
             </Select>
           </div>
         </CardContent>
       </Card>
 
       <div className="max-h-[600px] space-y-3 overflow-y-auto pr-1">
-        {filteredAuditTrail.map((entry) => (
+        {auditRows.map((entry) => (
           <Card key={entry.id}>
             <CardContent>
               <div className="flex gap-3">
@@ -808,7 +490,7 @@ const AuditTrailView = memo(function AuditTrailView({
                     <span className="font-semibold text-gray-900 dark:text-gray-100">{entry.userName}</span>
 
                     <span className={`inline-flex items-center rounded-full border px-2.5 py-1 font-semibold ${getRoleColor(entry.userRole)}`}>
-                      {entry.userRole.replace("_", " ")}
+                      {String(entry.userRole || "").replace("_", " ")}
                     </span>
 
                     <span className={`inline-flex items-center rounded-full border px-2.5 py-1 font-semibold ${getSeverityColor(entry.severity)}`}>
@@ -825,7 +507,7 @@ const AuditTrailView = memo(function AuditTrailView({
                   <div className="flex flex-wrap gap-4 text-[11px] text-gray-500 dark:text-gray-400">
                     <span className="inline-flex items-center gap-1">
                       <Clock className="h-3 w-3" />
-                      {new Date(entry.timestamp).toLocaleString()}
+                      {entry.timestamp ? new Date(entry.timestamp).toLocaleString() : ""}
                     </span>
                     <span className="inline-flex items-center gap-1">
                       <Shield className="h-3 w-3" />
@@ -840,7 +522,7 @@ const AuditTrailView = memo(function AuditTrailView({
           </Card>
         ))}
 
-        {filteredAuditTrail.length === 0 && (
+        {!loading && auditRows.length === 0 && (
           <div className="mt-4 rounded-2xl border border-dashed border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 p-10 text-center text-sm text-gray-600 dark:text-gray-400 shadow-sm">
             <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800">
               <Search className="h-6 w-6 text-gray-400" />
@@ -857,8 +539,17 @@ const AuditTrailView = memo(function AuditTrailView({
 
 export default function Reports() {
   const [activeView, setActiveView] = useState("reports");
+
+  // reports filters (kept for compatibility if backend supports list endpoint)
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
+
+  // ✅ report generator
+  const [reportType, setReportType] = useState("children_records");
+  const [reportFormat, setReportFormat] = useState("pdf");
+  const [generating, setGenerating] = useState(false);
+
+  // audit filters
   const [auditSearchTerm, setAuditSearchTerm] = useState("");
   const [auditFilterModule, setAuditFilterModule] = useState("all");
   const [auditFilterAction, setAuditFilterAction] = useState("all");
@@ -866,102 +557,183 @@ export default function Reports() {
   const deferredSearch = useDeferredValue(searchTerm);
   const deferredAuditSearch = useDeferredValue(auditSearchTerm);
 
-  const allReports = useMemo(() => generateAllReports(), []);
   const categories = useMemo(() => ["all", "Children", "Development", "Financial", "Houses", "System"], []);
 
-  const filteredReports = useMemo(() => {
-    const q = deferredSearch.trim().toLowerCase();
-    return allReports.filter((r) => {
-      const catOk = selectedCategory === "all" || r.category === selectedCategory;
-      if (!q) return catOk;
-      const t = (r.title || "").toLowerCase();
-      const d = (r.description || "").toLowerCase();
-      const c = (r.childName || "").toLowerCase();
-      return catOk && (t.includes(q) || d.includes(q) || c.includes(q));
-    });
-  }, [allReports, selectedCategory, deferredSearch]);
+  const [reportsLoading, setReportsLoading] = useState(false);
+  const [auditLoading, setAuditLoading] = useState(false);
 
-  const filteredAuditTrail = useMemo(() => {
-    const q = deferredAuditSearch.trim().toLowerCase();
-    return mockAuditTrail.filter((e) => {
-      const searchOk =
-        !q ||
-        e.userName.toLowerCase().includes(q) ||
-        e.details.toLowerCase().includes(q) ||
-        e.resource.toLowerCase().includes(q);
+  const [allReports, setAllReports] = useState([]);
 
-      const moduleOk = auditFilterModule === "all" || e.module === auditFilterModule;
-      const actionOk = auditFilterAction === "all" || e.action === auditFilterAction;
+  const [auditRows, setAuditRows] = useState([]);
+  const [auditTotal, setAuditTotal] = useState(0);
 
-      return searchOk && moduleOk && actionOk;
-    });
-  }, [deferredAuditSearch, auditFilterModule, auditFilterAction]);
+  const token = useMemo(() => localStorage.getItem("token"), []);
 
-  const todayCount = useMemo(() => {
-    const today = new Date().toDateString();
-    return filteredAuditTrail.filter((e) => new Date(e.timestamp).toDateString() === today).length;
-  }, [filteredAuditTrail]);
+  // ✅ Generate report (PDF/CSV download)
+  const generateReport = async () => {
+    try {
+      setGenerating(true);
 
-  const criticalCount = useMemo(() => {
-    return filteredAuditTrail.filter((e) => e.severity === "warning" || e.severity === "error").length;
-  }, [filteredAuditTrail]);
+      const res = await fetch(apiUrl("/api/reports/generate"), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ type: reportType, format: reportFormat }),
+      });
 
-  const activeUsersCount = useMemo(() => new Set(filteredAuditTrail.map((e) => e.userId)).size, [filteredAuditTrail]);
+      if (!res.ok) {
+        const j = await res.json().catch(() => null);
+        throw new Error(j?.message || "Failed to generate report.");
+      }
 
-  const exportAuditTrail = () => {
-    const csvContent = [
-      ["Timestamp", "User", "Role", "Action", "Resource", "Resource ID", "Module", "Details", "IP Address"],
-      ...filteredAuditTrail.map((e) => [
-        e.timestamp,
-        e.userName,
-        e.userRole,
-        e.action,
-        e.resource,
-        e.resourceId || "",
-        e.module,
-        `"${(e.details || "").replace(/"/g, '""')}"`,
-        e.ipAddress,
-      ]),
-    ]
-      .map((row) => row.join(","))
-      .join("\n");
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
 
-    const blob = new Blob([csvContent], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "audit_trail.csv";
-    a.click();
-    URL.revokeObjectURL(url);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${reportType}.${reportFormat}`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+
+      window.URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error(e);
+      alert(e.message || "Report generation failed.");
+    } finally {
+      setGenerating(false);
+    }
   };
 
-  const onView = (r) => console.log("View report:", r.title);
-  const onDownload = (r) => console.log("Download report:", r.title);
-  const onPrint = (r) => console.log("Print report:", r.title);
-  const onShare = (r) => console.log("Share report:", r.title);
+  // ---------------- Fetch Reports (optional list if your backend supports GET /api/reports) ----------------
+  useEffect(() => {
+    if (activeView !== "reports") return;
+
+    const controller = new AbortController();
+    const run = async () => {
+      try {
+        setReportsLoading(true);
+
+        const res = await fetch(
+          apiUrl(
+            `/api/reports?category=${encodeURIComponent(selectedCategory)}&search=${encodeURIComponent(deferredSearch)}`
+          ),
+          {
+            headers: { Authorization: `Bearer ${token}` },
+            signal: controller.signal,
+          }
+        );
+
+        // If you haven't implemented GET /api/reports, this will fail silently and that's OK.
+        const json = await res.json().catch(() => null);
+
+        if (json?.success) setAllReports(json.data || []);
+        else setAllReports([]);
+      } catch (e) {
+        if (e.name !== "AbortError") {
+          console.error(e);
+          setAllReports([]);
+        }
+      } finally {
+        setReportsLoading(false);
+      }
+    };
+
+    run();
+    return () => controller.abort();
+  }, [activeView, selectedCategory, deferredSearch, token]);
+
+  // ---------------- Fetch Audit Trail ----------------
+  useEffect(() => {
+    if (activeView !== "audit") return;
+
+    const controller = new AbortController();
+    const run = async () => {
+      try {
+        setAuditLoading(true);
+        const res = await fetch(
+          apiUrl(
+            `/api/audit?module=${encodeURIComponent(auditFilterModule)}&action=${encodeURIComponent(
+              auditFilterAction
+            )}&search=${encodeURIComponent(deferredAuditSearch)}&limit=200&offset=0`
+          ),
+          {
+            headers: { Authorization: `Bearer ${token}` },
+            signal: controller.signal,
+          }
+        );
+
+        const json = await res.json();
+        if (json?.success) {
+          setAuditRows(json.data || []);
+          setAuditTotal(json.total || 0);
+        } else {
+          setAuditRows([]);
+          setAuditTotal(0);
+        }
+      } catch (e) {
+        if (e.name !== "AbortError") {
+          console.error(e);
+          setAuditRows([]);
+          setAuditTotal(0);
+        }
+      } finally {
+        setAuditLoading(false);
+      }
+    };
+
+    run();
+    return () => controller.abort();
+  }, [activeView, auditFilterModule, auditFilterAction, deferredAuditSearch, token]);
+
+  // ---------------- Stats from auditRows ----------------
+  const todayCount = useMemo(() => {
+    const today = new Date().toDateString();
+    return auditRows.filter((e) => (e.timestamp ? new Date(e.timestamp).toDateString() : "") === today).length;
+  }, [auditRows]);
+
+  const criticalCount = useMemo(() => {
+    return auditRows.filter((e) => e.severity === "warning" || e.severity === "error" || e.severity === "critical").length;
+  }, [auditRows]);
+
+  const activeUsersCount = useMemo(() => new Set(auditRows.map((e) => e.userId)).size, [auditRows]);
+
+  // ---------------- Actions ----------------
+  const exportAuditTrail = () => {
+    const url = apiUrl(
+      `/api/audit/export?module=${encodeURIComponent(auditFilterModule)}&action=${encodeURIComponent(
+        auditFilterAction
+      )}&search=${encodeURIComponent(auditSearchTerm)}`
+    );
+    window.open(url, "_blank");
+  };
+
+  // Optional list actions (kept)
+  const onView = (r) => console.log("View report:", r.title, r.id);
+  const onDownload = (r) => console.log("Download report:", r.title, r.id);
+  const onPrint = (r) => console.log("Print report:", r.title, r.id);
+  const onShare = (r) => console.log("Share report:", r.title, r.id);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
-      {/* ✅ aligned container sizing like your other pages */}
       <div className="mx-auto w-full max-w-[1200px] p-4 sm:p-6 space-y-6">
         {/* Header */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">Reports & Alerts</h1>
             <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-              View ready-made reports and review the system audit trail.
+              Generate reports and review the system audit trail.
             </p>
           </div>
 
-          {/* Top switch buttons (styled like tabs) */}
           <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-1 shadow-sm flex gap-2 w-full sm:w-auto">
             <Button
               variant={activeView === "reports" ? "primary" : "outline"}
               size="medium"
               onClick={() => setActiveView("reports")}
-              className={`inline-flex items-center gap-2 rounded-xl ${
-                activeView === "reports" ? "shadow-sm" : "border-transparent"
-              }`}
+              className={`inline-flex items-center gap-2 rounded-xl ${activeView === "reports" ? "shadow-sm" : "border-transparent"}`}
             >
               <FileText className="h-4 w-4" />
               Reports
@@ -971,9 +743,7 @@ export default function Reports() {
               variant={activeView === "audit" ? "primary" : "outline"}
               size="medium"
               onClick={() => setActiveView("audit")}
-              className={`inline-flex items-center gap-2 rounded-xl ${
-                activeView === "audit" ? "shadow-sm" : "border-transparent"
-              }`}
+              className={`inline-flex items-center gap-2 rounded-xl ${activeView === "audit" ? "shadow-sm" : "border-transparent"}`}
             >
               <Shield className="h-4 w-4" />
               Audit Trail
@@ -986,7 +756,6 @@ export default function Reports() {
           <ReportsView
             categories={categories}
             allReports={allReports}
-            filteredReports={filteredReports}
             selectedCategory={selectedCategory}
             setSelectedCategory={setSelectedCategory}
             searchTerm={searchTerm}
@@ -995,10 +764,17 @@ export default function Reports() {
             onDownload={onDownload}
             onPrint={onPrint}
             onShare={onShare}
+            loading={reportsLoading}
+            reportType={reportType}
+            setReportType={setReportType}
+            reportFormat={reportFormat}
+            setReportFormat={setReportFormat}
+            generating={generating}
+            generateReport={generateReport}
           />
         ) : (
           <AuditTrailView
-            filteredAuditTrail={filteredAuditTrail}
+            auditRows={auditRows}
             auditSearchTerm={auditSearchTerm}
             setAuditSearchTerm={setAuditSearchTerm}
             auditFilterModule={auditFilterModule}
@@ -1009,6 +785,8 @@ export default function Reports() {
             criticalCount={criticalCount}
             activeUsersCount={activeUsersCount}
             exportAuditTrail={exportAuditTrail}
+            loading={auditLoading}
+            totalCount={auditTotal}
           />
         )}
       </div>
