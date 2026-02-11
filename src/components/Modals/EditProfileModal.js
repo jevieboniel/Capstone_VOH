@@ -195,23 +195,23 @@
             </Field>
 
             <Field label="House *">
-            <Select value={form.house} onChange={(e) => update("house", e.target.value)} required>
-                <option value="">Select house</option>
-                <option>Sunshine House</option>
-                <option>Hope House</option>
-                <option>Rainbow House</option>
-            </Select>
-            </Field>
+                <Input
+                    value={form.house}
+                    onChange={(e) => update("house", e.target.value)}
+                    placeholder="Enter house (e.g., Sunshine House)"
+                    required
+                />
+                </Field>
 
-            <Field label="House Parent *">
-            <Select value={form.houseParent} onChange={(e) => update("houseParent", e.target.value)} required>
-                <option value="">Select house parent</option>
-                <option>David Thompson</option>
-                <option>Emily Rodriguez</option>
-                <option>Michael Chen</option>
-            </Select>
-            </Field>
-
+                <Field label="House Parent *">
+                <Input
+                    value={form.houseParent}
+                    onChange={(e) => update("houseParent", e.target.value)}
+                    placeholder="Enter house parent name"
+                    required
+                />
+                </Field>
+                
             <Field label="Health Status">
             <Select value={form.healthStatus} onChange={(e) => update("healthStatus", e.target.value)}>
                 <option>Excellent</option>

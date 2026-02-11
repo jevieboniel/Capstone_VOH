@@ -28,13 +28,14 @@ import {
 
 import Button from "../UI/Button";
 import { useAuth } from "../../contexts/AuthContext";
-import { apiUrl } from "../../config/api";
 
 const stopKeys = (e) => e.stopPropagation();
 
 /* ---------------- Small UI helpers ---------------- */
 const Card = ({ children, className = "" }) => (
-  <div className={`bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow ${className}`}>
+  <div
+    className={`bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow ${className}`}
+  >
     {children}
   </div>
 );
@@ -128,7 +129,7 @@ const getRoleColor = (role) => {
 };
 
 const iconByReportKey = (key, category) => {
-  const k = String(key || "");
+  const k = String(key || "").toLowerCase();
   if (k.includes("health")) return Heart;
   if (k.includes("donation")) return DollarSign;
   if (k.includes("development") || k.includes("milestone")) return TrendingUp;
@@ -138,6 +139,15 @@ const iconByReportKey = (key, category) => {
   if (category === "Houses") return Home;
   return FileText;
 };
+
+const REPORT_TYPES = [
+  { value: "children_overview", label: "Children: Overview (PDF)", category: "Children", needsChild: false },
+  { value: "child_profile", label: "Children: Single Child Profile (PDF)", category: "Children", needsChild: true },
+  { value: "development_overview", label: "Development: Milestones Summary (PDF)", category: "Development", needsChild: false },
+  { value: "donations_summary", label: "Financial: Donations Summary (PDF)", category: "Financial", needsChild: false },
+  { value: "houses_summary", label: "Houses: Summary (PDF)", category: "Houses", needsChild: false },
+  { value: "annual_summary", label: "System: Annual Summary (PDF)", category: "System", needsChild: false },
+];
 
 /* ---------------- Views ---------------- */
 const ReportsView = memo(function ReportsView({
@@ -152,13 +162,27 @@ const ReportsView = memo(function ReportsView({
   onDownload,
   onPrint,
   onShare,
+  // generate pdf props
+  reportType,
+  setReportType,
+  childId,
+  setChildId,
+  childrenOptions,
+  generating,
+  onGenerate,
+  generateError,
 }) {
+  const currentType = REPORT_TYPES.find((t) => t.value === reportType) || REPORT_TYPES[0];
+  const needsChild = !!currentType.needsChild;
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Ready-Made Reports</h2>
-          <p className="text-sm text-gray-600 dark:text-gray-400">All system reports are pre-generated and ready to view or download.</p>
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            You can view existing reports OR generate new PDF reports from live module data.
+          </p>
         </div>
 
         <Pill className="bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-100 dark:border-emerald-500/20">
@@ -166,6 +190,68 @@ const ReportsView = memo(function ReportsView({
         </Pill>
       </div>
 
+      {/* ✅ Generate PDF card */}
+      <Card>
+        <CardContent className="space-y-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Generate PDF</h3>
+              <p className="text-xs text-gray-600 dark:text-gray-400">
+                This creates a new PDF and saves it into the Reports list automatically.
+              </p>
+            </div>
+
+            <Button
+              variant="primary"
+              size="medium"
+              onClick={onGenerate}
+              disabled={generating || (needsChild && !childId)}
+              className="inline-flex items-center gap-2"
+            >
+              <FileText className="h-4 w-4" />
+              {generating ? "Generating..." : "Generate PDF"}
+            </Button>
+          </div>
+
+          {generateError ? (
+            <div className="rounded-2xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-500/10 px-4 py-3 text-sm text-red-700 dark:text-red-200">
+              {generateError}
+            </div>
+          ) : null}
+
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div>
+              <p className="mb-2 text-xs font-semibold text-gray-600 dark:text-gray-400">Report Type</p>
+              <Select value={reportType} onChange={(e) => setReportType(e.target.value)} onKeyDownCapture={stopKeys}>
+                {REPORT_TYPES.map((t) => (
+                  <option key={t.value} value={t.value}>
+                    {t.label}
+                  </option>
+                ))}
+              </Select>
+            </div>
+
+            <div>
+              <p className="mb-2 text-xs font-semibold text-gray-600 dark:text-gray-400">Child Name (for Single Child Report)</p>
+              <Select
+                value={childId}
+                onChange={(e) => setChildId(e.target.value)}
+                disabled={!needsChild}
+                onKeyDownCapture={stopKeys}
+              >
+                <option value="">{needsChild ? "Select a child..." : "Not required for this report"}</option>
+                {childrenOptions.map((c) => (
+                  <option key={c.id} value={String(c.id)}>
+                    {c.name}
+                  </option>
+                ))}
+              </Select>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Filters */}
       <Card>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -184,13 +270,7 @@ const ReportsView = memo(function ReportsView({
               />
             </div>
 
-            <Select
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              onKeyDownCapture={stopKeys}
-              onKeyUpCapture={stopKeys}
-              onKeyPressCapture={stopKeys}
-            >
+            <Select value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)} onKeyDownCapture={stopKeys}>
               {categories.map((cat) => (
                 <option key={cat} value={cat}>
                   {cat === "all" ? "All Categories" : cat}
@@ -224,6 +304,7 @@ const ReportsView = memo(function ReportsView({
         </CardContent>
       </Card>
 
+      {/* Reports list */}
       <div className="max-h-[600px] space-y-3 overflow-y-auto pr-1">
         {filteredReports.map((report) => {
           const Icon = report.icon || FileText;
@@ -285,7 +366,7 @@ const ReportsView = memo(function ReportsView({
                       type="button"
                       onClick={() => onPrint(report)}
                       className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800"
-                      title="Print"
+                      title="Print PDF"
                     >
                       <Printer className="h-4 w-4" />
                     </button>
@@ -516,7 +597,6 @@ const AuditTrailView = memo(function AuditTrailView({
 /* ---------------- Main Component ---------------- */
 export default function Reports() {
   const { authFetch } = useAuth();
-
   const [activeView, setActiveView] = useState("reports");
 
   // reports
@@ -536,6 +616,48 @@ export default function Reports() {
 
   const categories = useMemo(() => ["all", "Children", "Development", "Financial", "Houses", "System"], []);
 
+  // ✅ Generate PDF state
+  const [reportType, setReportType] = useState("children_overview");
+  const [childId, setChildId] = useState("");
+  const [childrenOptions, setChildrenOptions] = useState([]);
+  const [generating, setGenerating] = useState(false);
+  const [generateError, setGenerateError] = useState("");
+
+  // ✅ Load children list (for dropdown by name)
+  useEffect(() => {
+    let mounted = true;
+
+    (async () => {
+      try {
+        const res = await authFetch(`/children`, { method: "GET" });
+        const data = await res.json();
+
+        // supports either: {success:true, children:[...]} OR plain array
+        const list = Array.isArray(data) ? data : data.children || [];
+
+        const mapped = list.map((c) => ({
+          id: c.id,
+          name:
+            c.name ||
+            `${c.firstName || c.first_name || ""} ${c.middleName || c.middle_name ? (c.middleName || c.middle_name) + " " : ""}${c.lastName || c.last_name || ""}`.replace(/\s+/g, " ").trim() ||
+            `Child #${c.id}`,
+        }));
+
+        // sort A-Z
+        mapped.sort((a, b) => a.name.localeCompare(b.name));
+
+        if (mounted) setChildrenOptions(mapped);
+      } catch (e) {
+        console.error("Load children list failed:", e);
+        if (mounted) setChildrenOptions([]);
+      }
+    })();
+
+    return () => {
+      mounted = false;
+    };
+  }, [authFetch]);
+
   // Load reports from API
   useEffect(() => {
     if (activeView !== "reports") return;
@@ -549,6 +671,7 @@ export default function Reports() {
 
       const res = await authFetch(`/reports?${qs.toString()}`, { method: "GET" });
       const data = await res.json();
+
       if (data.success) {
         const mapped = (data.reports || []).map((r) => ({
           ...r,
@@ -596,17 +719,14 @@ export default function Reports() {
   }, [activeView, deferredAuditSearch, auditFilterModule, auditFilterAction, authFetch]);
 
   const filteredReports = useMemo(() => reports, [reports]);
-
   const filteredAuditTrail = useMemo(() => auditEntries, [auditEntries]);
 
   const exportAuditTrail = () => {
-    const base = apiUrl("/api/audit-trail/export.csv");
     const qs = new URLSearchParams();
     if (auditSearchTerm.trim()) qs.set("q", auditSearchTerm.trim());
     if (auditFilterModule !== "all") qs.set("module", auditFilterModule);
     if (auditFilterAction !== "all") qs.set("action", auditFilterAction);
 
-    // open CSV in new tab with auth token (use fetch then blob)
     (async () => {
       const res = await authFetch(`/audit-trail/export.csv?${qs.toString()}`, { method: "GET" });
       const blob = await res.blob();
@@ -619,21 +739,94 @@ export default function Reports() {
     })().catch(console.error);
   };
 
-  const onView = async (r) => {
-    await authFetch(`/reports/${r.id}/view`, { method: "POST" });
-    // If you have a fileUrl, you can open it:
-    if (r.fileUrl) window.open(r.fileUrl, "_blank");
+  // ✅ Generate PDF (NO refresh)
+  const onGenerate = async () => {
+    try {
+      setGenerateError("");
+      setGenerating(true);
+
+      const type = REPORT_TYPES.find((t) => t.value === reportType);
+      if (!type) throw new Error("Invalid report type");
+
+      if (type.needsChild && !childId) {
+        setGenerateError("Please select a child.");
+        return;
+      }
+
+      const res = await authFetch(`/reports/generate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          reportKey: reportType,
+          childId: type.needsChild ? Number(childId) : null,
+        }),
+      });
+
+      const data = await res.json();
+      if (!data.success) {
+        setGenerateError(data.message || "Failed to generate report.");
+        return;
+      }
+
+      const newReport = {
+        ...data.report,
+        icon: iconByReportKey(data.report.reportKey, data.report.category),
+      };
+
+      // add to top without refreshing
+      setReports((prev) => [newReport, ...prev]);
+    } catch (e) {
+      console.error(e);
+      setGenerateError("Failed to generate report. Check backend logs.");
+    } finally {
+      setGenerating(false);
+    }
   };
 
+  // ✅ View: use server fileUrl if returned
+  const onView = async (r) => {
+    const res = await authFetch(`/reports/${r.id}/view`, { method: "POST" });
+    const data = await res.json();
+    const url = data.fileUrl || r.fileUrl;
+    if (url) window.open(url, "_blank");
+  };
+
+  // ✅ Download: use server fileUrl if returned
   const onDownload = async (r) => {
     const res = await authFetch(`/reports/${r.id}/download`, { method: "POST" });
     const data = await res.json();
-    if (data.fileUrl) window.open(data.fileUrl, "_blank");
+    const url = data.fileUrl || r.fileUrl;
+    if (url) window.open(url, "_blank");
   };
 
+  // ✅ Print: print the PDF, NOT the page
   const onPrint = async (r) => {
     await authFetch(`/reports/${r.id}/print`, { method: "POST" });
-    window.print();
+
+    const url = r.fileUrl;
+    if (!url) {
+      alert("No PDF file URL found for this report.");
+      return;
+    }
+
+    const w = window.open(url, "_blank");
+    if (!w) return;
+
+    // best-effort print after load
+    const timer = setInterval(() => {
+      try {
+        if (w.document?.readyState === "complete") {
+          clearInterval(timer);
+          w.focus();
+          w.print();
+        }
+      } catch {
+        // cross-origin PDF viewer can block document access
+        // fallback: just focus; user can press print in viewer
+        clearInterval(timer);
+        w.focus();
+      }
+    }, 600);
   };
 
   const onShare = async (r) => {
@@ -646,7 +839,7 @@ export default function Reports() {
       <div className="mx-auto w-full max-w-[1200px] p-4 sm:p-6 space-y-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">Reports & Alerts</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">Reports & Audit Trails</h1>
             <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">View ready-made reports and review the system audit trail.</p>
           </div>
 
@@ -686,6 +879,14 @@ export default function Reports() {
             onDownload={onDownload}
             onPrint={onPrint}
             onShare={onShare}
+            reportType={reportType}
+            setReportType={setReportType}
+            childId={childId}
+            setChildId={setChildId}
+            childrenOptions={childrenOptions}
+            generating={generating}
+            onGenerate={onGenerate}
+            generateError={generateError}
           />
         ) : (
           <AuditTrailView

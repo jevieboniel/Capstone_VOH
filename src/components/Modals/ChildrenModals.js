@@ -211,27 +211,29 @@
             </Field>
             </div>
 
-            {/* House + House Parent */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Field label="House *">
-                <Select name="house" value={formData.house} onChange={handleChange} required>
-                <option value="">Select house</option>
-                <option>Sunshine House</option>
-                <option>Rainbow House</option>
-                <option>Hope House</option>
-                </Select>
-            </Field>
+            {/* House + House Parent (TEXT INPUTS) */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Field label="House *">
+                    <Input
+                    name="house"
+                    value={formData.house}
+                    onChange={handleChange}
+                    placeholder="Enter house (e.g., Sunshine House)"
+                    required
+                    />
+                </Field>
 
-            <Field label="House Parent *">
-                <Select name="houseParent" value={formData.houseParent} onChange={handleChange} required>
-                <option value="">Select house parent</option>
-                <option>David Thompson</option>
-                <option>Emily Rodriguez</option>
-                <option>Michael Chen</option>
-                </Select>
-            </Field>
-            </div>
-
+                <Field label="House Parent *">
+                    <Input
+                    name="houseParent"
+                    value={formData.houseParent}
+                    onChange={handleChange}
+                    placeholder="Enter house parent name"
+                    required
+                    />
+                </Field>
+                </div>
+                
             {/* Health + Education */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Field label="Health Status">
