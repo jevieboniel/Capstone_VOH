@@ -1,11 +1,14 @@
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { getNavItems, ICON_MAP } from "../../config/routes";
+import { getNavItemsForUser, ICON_MAP } from "../../config/routes";
+import { useAuth } from "../../contexts/AuthContext";
 
 const SideNav = ({ onClose }) => {
   const location = useLocation();
   const [expandedCategories, setExpandedCategories] = useState(["Content"]);
-  const navItems = getNavItems();
+  const { user } = useAuth();
+const navItems = getNavItemsForUser(user);
+
 
   const toggleCategory = (categoryName) => {
     setExpandedCategories((prev) =>

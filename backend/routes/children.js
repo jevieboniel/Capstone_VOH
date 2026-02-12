@@ -6,6 +6,9 @@ const path = require("path");
 const fs = require("fs");
 const { verifyToken } = require("../middleware/auth");
 const { logAudit } = require("../utils/audit");
+const { requirePermission } = require("../middleware/permissions");
+const CHILD_PERM = "Child Management";
+
 
 const router = express.Router();
 
@@ -31,7 +34,7 @@ const BASE_URL = process.env.BASE_URL || "http://localhost:5000";
 const toISODate = (d) => (d ? new Date(d).toISOString().slice(0, 10) : "");
 
 /* -------------------- GET all children -------------------- */
-router.get("/", async (_req, res) => {
+router.get("/", verifyToken, requirePermission(CHILD_PERM), async (_req, res) => {
   try {
     const [rows] = await pool.query("SELECT * FROM children ORDER BY id DESC");
 
@@ -338,7 +341,7 @@ router.put("/:id/reintegration", verifyToken, async (req, res) => {
     ========================================================= */
 
 /** GET health records for a child */
-router.get("/:id/health-records", async (req, res) => {
+router.get("/:id/health-records", verifyToken, requirePermission(CHILD_PERM), async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -531,7 +534,7 @@ router.delete("/health-records/:recordId", verifyToken, async (req, res) => {
     ========================================================= */
 
 /** GET education summary + subject details */
-router.get("/:id/education", async (req, res) => {
+router.get("/:id/education", verifyToken, requirePermission(CHILD_PERM), async (req, res) => {
   try {
     const { id } = req.params;
 

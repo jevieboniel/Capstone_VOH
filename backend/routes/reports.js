@@ -13,6 +13,10 @@ const BASE_URL = process.env.BASE_URL || "http://localhost:5000"; // adjust if n
 const uploadDir = path.join(__dirname, "..", "uploads");
 const reportsDir = path.join(uploadDir, "reports");
 
+const { requirePermission } = require("../middleware/permissions");
+const REP_PERM = "Reports";
+
+
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
 if (!fs.existsSync(reportsDir)) fs.mkdirSync(reportsDir);
 
@@ -37,7 +41,7 @@ function pdfPathToUrl(absPath) {
  * GET /api/reports
  * query: q, category
  */
-router.get("/", verifyToken, async (req, res) => {
+router.get("/", verifyToken, requirePermission(REP_PERM), async (req, res) => {
   try {
     const q = String(req.query.q || "").trim().toLowerCase();
     const category = String(req.query.category || "all");
@@ -109,7 +113,7 @@ router.get("/", verifyToken, async (req, res) => {
  * POST /api/reports/generate
  * body: { reportKey, childId? }
  */
-router.post("/generate", verifyToken, async (req, res) => {
+router.post("/generate", verifyToken, requirePermission(REP_PERM), async (req, res) => {
   try {
     const reportKey = String(req.body?.reportKey || "").trim();
     const childId = req.body?.childId ? Number(req.body.childId) : null;
@@ -445,7 +449,7 @@ router.post("/generate", verifyToken, async (req, res) => {
 /**
  * POST /api/reports/:id/view
  */
-router.post("/:id/view", verifyToken, async (req, res) => {
+router.post("/:id/view", verifyToken, requirePermission(REP_PERM), async (req, res) => {
   try {
     const { id } = req.params;
     const [[r]] = await pool.query(`SELECT * FROM generated_reports WHERE id=?`, [id]);
@@ -467,7 +471,7 @@ router.post("/:id/view", verifyToken, async (req, res) => {
   }
 });
 
-router.post("/:id/download", verifyToken, async (req, res) => {
+router.post("/:id/download", verifyToken, requirePermission(REP_PERM), async (req, res) => {
   try {
     const { id } = req.params;
     const [[r]] = await pool.query(`SELECT * FROM generated_reports WHERE id=?`, [id]);
@@ -489,7 +493,7 @@ router.post("/:id/download", verifyToken, async (req, res) => {
   }
 });
 
-router.post("/:id/print", verifyToken, async (req, res) => {
+router.post("/:id/print", verifyToken, requirePermission(REP_PERM), async (req, res) => {
   try {
     const { id } = req.params;
     const [[r]] = await pool.query(`SELECT * FROM generated_reports WHERE id=?`, [id]);
@@ -511,7 +515,7 @@ router.post("/:id/print", verifyToken, async (req, res) => {
   }
 });
 
-router.post("/:id/share", verifyToken, async (req, res) => {
+router.post("/:id/share", verifyToken, requirePermission(REP_PERM), async (req, res) => {
   try {
     const { id } = req.params;
     const [[r]] = await pool.query(`SELECT * FROM generated_reports WHERE id=?`, [id]);

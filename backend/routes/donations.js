@@ -3,6 +3,10 @@ const express = require("express");
 const axios = require("axios");
 const pool = require("../db");
 const { logAudit } = require("../utils/audit");
+const { verifyToken } = require("../middleware/auth");
+const { requirePermission } = require("../middleware/permissions");
+const DON_PERM = "Donations";
+
 
 const router = express.Router();
 
@@ -13,7 +17,7 @@ const paymongo = axios.create({
 });
 
 // ✅ Create PayMongo payment intent (Pending record in DB)
-router.post("/create-intent", async (req, res) => {
+router.post("/create-intent", verifyToken, requirePermission(DON_PERM), async (req, res) => {
   try {
     const {
       amount,
@@ -75,7 +79,7 @@ router.post("/create-intent", async (req, res) => {
 });
 
 // ✅ List donations (supports search query q)
-router.get("/", async (req, res) => {
+router.get("/", verifyToken, requirePermission(DON_PERM), async (req, res) => {
   try {
     const q = (req.query.q || "").toLowerCase();
 
@@ -95,7 +99,7 @@ router.get("/", async (req, res) => {
 });
 
 // ✅ Dashboard metrics (overview cards + charts)
-router.get("/metrics", async (_req, res) => {
+router.get("/metrics", verifyToken, requirePermission(DON_PERM), async (_req, res) => {
   try {
     // totals
     const [[totals]] = await pool.query(
@@ -165,7 +169,7 @@ router.get("/metrics", async (_req, res) => {
 
 // ✅ CSV export from backend (optional)
 // GET /api/donations/export.csv?q=...
-router.get("/export.csv", async (req, res) => {
+router.get("/export.csv", verifyToken, requirePermission(DON_PERM), async (req, res) => {
   try {
     const q = (req.query.q || "").toLowerCase();
 
@@ -206,7 +210,7 @@ router.get("/export.csv", async (req, res) => {
 });
 
 // ✅ Create Payment Method (backend calls PayMongo)
-router.post("/create-payment-method", async (req, res) => {
+router.post("/create-payment-method", verifyToken, requirePermission(DON_PERM), async (req, res) => {
   try {
     const { method, billing, card } = req.body;
 
@@ -246,7 +250,7 @@ router.post("/create-payment-method", async (req, res) => {
 });
 
 // ✅ Attach Payment Method to Payment Intent
-router.post("/attach-payment-method", async (req, res) => {
+router.post("/attach-payment-method", verifyToken, requirePermission(DON_PERM), async (req, res) => {
   try {
     const { payment_intent_id, payment_method_id } = req.body;
 

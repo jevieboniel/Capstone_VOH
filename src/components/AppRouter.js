@@ -1,7 +1,8 @@
+// src/components/AppRouter.js
 import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
-import { getAllRoutes } from "../config/routes";
+import { getAllRoutes, ROUTE_PERMISSION_MAP } from "../config/routes";
 import MainLayout from "./Layout/MainLayout";
 
 import Login from "./Pages/Login";
@@ -37,6 +38,14 @@ const componentMap = {
   Profile,
 };
 
+const hasFullAccess = (user) => Array.isArray(user?.permissions) && user.permissions.includes("Full Access");
+
+const hasPermission = (user, perm) => {
+  if (!perm) return true;
+  if (hasFullAccess(user)) return true;
+  return Array.isArray(user?.permissions) && user.permissions.includes(perm);
+};
+
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
 
@@ -63,6 +72,23 @@ const PublicRoute = ({ children }) => {
   }
 
   return !user ? children : <Navigate to="/dashboard" />;
+};
+
+const PermissionRoute = ({ permission, children }) => {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary-500" />
+      </div>
+    );
+  }
+
+  if (!user) return <Navigate to="/login" replace />;
+  if (!hasPermission(user, permission)) return <Navigate to="/dashboard" replace />;
+
+  return children;
 };
 
 export default function AppRouter() {
@@ -93,11 +119,17 @@ export default function AppRouter() {
               <Routes>
                 {allRoutes.map((route) => {
                   const Component = componentMap[route.component];
+                  const requiredPerm = ROUTE_PERMISSION_MAP[route.path] ?? null;
+
                   return (
                     <Route
                       key={route.path}
                       path={route.path}
-                      element={Component ? <Component /> : <div>Component not found</div>}
+                      element={
+                        <PermissionRoute permission={requiredPerm}>
+                          {Component ? <Component /> : <div>Component not found</div>}
+                        </PermissionRoute>
+                      }
                     />
                   );
                 })}

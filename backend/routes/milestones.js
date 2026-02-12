@@ -1,6 +1,10 @@
 const express = require("express");
 const pool = require("../db");
 const { logAudit } = require("../utils/audit");
+const { verifyToken } = require("../middleware/auth");
+const { requirePermission } = require("../middleware/permissions");
+const DEV_PERM = "Development Tracking";
+
 
 const router = express.Router();
 
@@ -8,7 +12,7 @@ const router = express.Router();
  * GET /api/milestones
  * returns milestones with objectives + child full name
  */
-router.get("/", async (_req, res) => {
+router.get("/", verifyToken, requirePermission(DEV_PERM), async (_req, res) => {
   try {
     const [rows] = await pool.query(
       `SELECT 
@@ -68,7 +72,7 @@ router.get("/", async (_req, res) => {
  * POST /api/milestones
  * body: { childId, category, title, description, targetDate, notes, objectives }
  */
-router.post("/", async (req, res) => {
+router.post("/", verifyToken, requirePermission(DEV_PERM), async (req, res) => {
   const {
     childId,
     category,
@@ -138,7 +142,7 @@ router.post("/", async (req, res) => {
  * PUT /api/milestones/:id
  * body uses your UI format: { category, milestone, description, targetDate, notes, status, progress, objectives }
  */
-router.put("/:id", async (req, res) => {
+router.put("/:id", verifyToken, requirePermission(DEV_PERM), async (req, res) => {
   const { id } = req.params;
 
   const {

@@ -33,13 +33,17 @@
     /* ------------------------------ UI helpers ------------------------------ */
 
     const Card = ({ children, className = "" }) => (
-    <div className={`bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 ${className}`}>
+    <div
+        className={`bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 ${className}`}
+    >
         {children}
     </div>
     );
 
     const CardHeader = ({ children, className = "" }) => (
-    <div className={`px-5 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between gap-2 ${className}`}>
+    <div
+        className={`px-5 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between gap-2 ${className}`}
+    >
         {children}
     </div>
     );
@@ -115,6 +119,25 @@
 
     const API_BASE = "http://localhost:5000";
 
+    /* ✅ ALWAYS SAFE METRICS SHAPE */
+    const EMPTY_METRICS = {
+    totals: { totalAmount: 0, totalTransactions: 0, recurringDonors: 0 },
+    trend: [],
+    purposes: [],
+    recent: [],
+    };
+
+    const normalizeMetrics = (data) => ({
+    totals: {
+        totalAmount: Number(data?.totals?.totalAmount ?? 0),
+        totalTransactions: Number(data?.totals?.totalTransactions ?? 0),
+        recurringDonors: Number(data?.totals?.recurringDonors ?? 0),
+    },
+    trend: Array.isArray(data?.trend) ? data.trend : [],
+    purposes: Array.isArray(data?.purposes) ? data.purposes : [],
+    recent: Array.isArray(data?.recent) ? data.recent : [],
+    });
+
     /* ------------------------------ Component ------------------------------ */
 
     export default function DonationManagement({ userRole, currentUser }) {
@@ -122,48 +145,148 @@
     const [activeView, setActiveView] = useState("overview");
 
     const [donations, setDonations] = useState([]);
-    const [metrics, setMetrics] = useState({
-        totals: { totalAmount: 0, totalTransactions: 0, recurringDonors: 0 },
-        trend: [],
-        purposes: [],
-        recent: [],
-    });
+    const [metrics, setMetrics] = useState(EMPTY_METRICS);
 
-    // Fetch metrics for Overview
+    const [metricsLoading, setMetricsLoading] = useState(false);
+    const [donationsLoading, setDonationsLoading] = useState(false);
+
+    // ✅ helper: authenticated fetch (because backend uses verifyToken)
+    const authFetch = async (url, options = {}) => {
+        const token = localStorage.getItem("admin_token");
+        const headers = {
+        ...(options.headers || {}),
+        Authorization: token ? `Bearer ${token}` : "",
+        };
+
+        // Only set JSON header when body is not FormData
+        if (!(options.body instanceof FormData)) {
+        headers["Content-Type"] = headers["Content-Type"] || "application/json";
+        }
+
+        return fetch(url, { ...options, headers });
+    };
+
+    // ✅ Fetch metrics for Overview (SAFE + AUTH)
     useEffect(() => {
-        fetch(`${API_BASE}/api/donations/metrics`)
-        .then((r) => r.json())
-        .then((data) => setMetrics(data))
-        .catch(console.error);
+        let alive = true;
+
+        (async () => {
+        try {
+            setMetricsLoading(true);
+
+            const res = await authFetch(`${API_BASE}/api/donations/metrics`);
+            const data = await res.json().catch(() => ({}));
+
+            if (!alive) return;
+
+            if (!res.ok) {
+            console.error("metrics fetch failed:", data);
+            setMetrics(EMPTY_METRICS);
+            return;
+            }
+
+            setMetrics(normalizeMetrics(data));
+        } catch (e) {
+            console.error("metrics fetch error:", e);
+            if (alive) setMetrics(EMPTY_METRICS);
+        } finally {
+            if (alive) setMetricsLoading(false);
+        }
+        })();
+
+        return () => {
+        alive = false;
+        };
     }, []);
 
-    // Fetch donation list for Donations tab (and search)
+    // ✅ Fetch donation list for Donations tab (SAFE + AUTH)
     useEffect(() => {
-        const url = `${API_BASE}/api/donations?q=${encodeURIComponent(searchTerm)}`;
-        fetch(url)
-        .then((r) => r.json())
-        .then((data) => setDonations(data))
-        .catch(console.error);
+        let alive = true;
+
+        (async () => {
+        try {
+            setDonationsLoading(true);
+
+            const url = `${API_BASE}/api/donations?q=${encodeURIComponent(searchTerm)}`;
+            const res = await authFetch(url);
+            const data = await res.json().catch(() => []);
+
+            if (!alive) return;
+
+            if (!res.ok) {
+            console.error("donations fetch failed:", data);
+            setDonations([]);
+            return;
+            }
+
+            // backend returns array rows
+            setDonations(Array.isArray(data) ? data : data?.donations || []);
+        } catch (e) {
+            console.error("donations fetch error:", e);
+            if (alive) setDonations([]);
+        } finally {
+            if (alive) setDonationsLoading(false);
+        }
+        })();
+
+        return () => {
+        alive = false;
+        };
     }, [searchTerm]);
 
     const filteredDonations = useMemo(() => donations, [donations]);
 
-    const totalDonations = metrics.totals.totalAmount;
-    const totalTransactions = metrics.totals.totalTransactions;
-    const recurringDonors = metrics.totals.recurringDonors;
+    // ✅ SAFE destructure (never crashes)
+    const totals = metrics?.totals || EMPTY_METRICS.totals;
+    const totalDonations = totals.totalAmount;
+    const totalTransactions = totals.totalTransactions;
+    const recurringDonors = totals.recurringDonors;
 
-    // Keep your thesis “goal” numbers (or you can pull from settings later)
+    // Keep your thesis “goal” numbers
     const monthlyGoal = 20000;
-    const currentMonthTotal = totalDonations; // simple: total completed as “current”
-    const goalProgress = (currentMonthTotal / monthlyGoal) * 100;
+    const currentMonthTotal = totalDonations;
+    const goalProgress = monthlyGoal ? (currentMonthTotal / monthlyGoal) * 100 : 0;
 
-    // Export from backend
-    const handleExportData = () => {
+    // Export from backend (AUTH so it doesn't download an HTML error page)
+    // Export from backend (AUTH REQUIRED)
+    const handleExportData = async () => {
+    try {
+        const token = localStorage.getItem("admin_token");
+        if (!token) {
+        alert("Not logged in.");
+        return;
+        }
+
         const url = `${API_BASE}/api/donations/export.csv?q=${encodeURIComponent(searchTerm)}`;
+
+        const res = await fetch(url, {
+        method: "GET",
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+        });
+
+        if (!res.ok) {
+        const text = await res.text().catch(() => "");
+        throw new Error(text || "Export failed");
+        }
+
+        const blob = await res.blob();
+
+        // Try to read filename from Content-Disposition
+        const cd = res.headers.get("content-disposition") || "";
+        const match = cd.match(/filename="?([^"]+)"?/i);
+        const filename = match?.[1] || "donations_export.csv";
+
+        // Trigger download
+        const blobUrl = window.URL.createObjectURL(blob);
         const a = document.createElement("a");
-        a.href = url;
-        a.download = "donations_export.csv";
+        a.href = blobUrl;
+        a.download = filename;
+        document.body.appendChild(a);
         a.click();
+        a.remove();
+        window.URL.revokeObjectURL(blobUrl);
 
         if (currentUser) {
         auditLogger.logView(
@@ -174,9 +297,13 @@
             "export_donations"
         );
         }
+    } catch (e) {
+        console.error(e);
+        alert(e.message || "Export failed.");
+    }
     };
-
-    // Recharts theme helpers (dark-friendly)
+    
+    // Recharts theme helpers
     const axisTickClass = "fill-gray-500 dark:fill-gray-400";
     const gridStroke = "rgba(148,163,184,0.35)";
     const tooltipStyle = {
@@ -186,7 +313,6 @@
         color: "#fff",
     };
 
-    // For pie colors (no DB colors)
     const PIE_COLORS = ["#3b82f6", "#ef4444", "#10b981", "#f59e0b", "#8b5cf6", "#14b8a6", "#f97316", "#a855f7"];
 
     const OverviewView = () => (
@@ -206,41 +332,47 @@
                 </div>
             </div>
 
-            <div className="space-y-3">
+            {metricsLoading ? (
+                <div className="text-sm text-gray-700 dark:text-gray-200">Loading metrics...</div>
+            ) : (
+                <div className="space-y-3">
                 {(metrics.recent || []).map((donation) => (
-                <div
+                    <div
                     key={donation.id}
                     className="bg-white dark:bg-gray-900 rounded-xl p-4 shadow-sm border border-blue-100 dark:border-gray-800 hover:shadow-md hover:border-blue-200 dark:hover:border-gray-700 transition-all duration-200"
-                >
+                    >
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
                         <div className="shrink-0 w-10 h-10 rounded-full bg-green-100 dark:bg-green-950/40 flex items-center justify-center">
-                        <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-300" />
+                            <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-300" />
                         </div>
                         <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm sm:text-base">
+                            <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm sm:text-base">
                             {donation.donor_name || "Anonymous Donor"}
-                        </p>
-                        <div className="flex items-center gap-2 flex-wrap mt-1">
+                            </p>
+                            <div className="flex items-center gap-2 flex-wrap mt-1">
                             <Badge className="text-xs bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-200 dark:border-blue-900">
-                            {donation.method || "PayMongo"}
+                                {donation.method || "PayMongo"}
                             </Badge>
-                            <span className="text-xs text-gray-500 dark:text-gray-400">{donation.purpose || "Donation"}</span>
+                            <span className="text-xs text-gray-500 dark:text-gray-400">
+                                {donation.purpose || "Donation"}
+                            </span>
+                            </div>
                         </div>
                         </div>
-                    </div>
-                    <div className="flex items-center justify-between sm:justify-end gap-3">
+                        <div className="flex items-center justify-between sm:justify-end gap-3">
                         <span className="font-bold text-lg sm:text-xl text-blue-900 dark:text-blue-200">
-                        {formatCurrency(donation.amount, donation.currency)}
+                            {formatCurrency(donation.amount, donation.currency)}
                         </span>
+                        </div>
                     </div>
                     </div>
-                </div>
                 ))}
                 {(!metrics.recent || metrics.recent.length === 0) && (
-                <div className="text-sm text-gray-600 dark:text-gray-300">No completed donations yet.</div>
+                    <div className="text-sm text-gray-600 dark:text-gray-300">No completed donations yet.</div>
                 )}
-            </div>
+                </div>
+            )}
             </CardContent>
         </Card>
 
@@ -463,86 +595,94 @@
             </CardContent>
         </Card>
 
-        <div className="space-y-4">
+        {donationsLoading ? (
+            <div className="text-sm text-gray-700 dark:text-gray-200">Loading donations...</div>
+        ) : (
+            <div className="space-y-4">
             {filteredDonations.map((donation) => {
-            const dt = donation.created_at ? new Date(donation.created_at) : null;
-            const dateText = dt ? dt.toLocaleDateString() : "-";
-            const timeText = dt ? dt.toLocaleTimeString() : "-";
+                const dt = donation.created_at ? new Date(donation.created_at) : null;
+                const dateText = dt ? dt.toLocaleDateString() : "-";
+                const timeText = dt ? dt.toLocaleTimeString() : "-";
 
-            return (
+                return (
                 <Card
-                key={donation.id}
-                className="hover:shadow-xl transition-all duration-200 border-l-4 border-l-blue-500 dark:border-l-blue-400"
+                    key={donation.id}
+                    className="hover:shadow-xl transition-all duration-200 border-l-4 border-l-blue-500 dark:border-l-blue-400"
                 >
-                <CardContent className="p-5 sm:p-6">
+                    <CardContent className="p-5 sm:p-6">
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="flex items-start gap-4 sm:items-center flex-1 min-w-0">
+                        <div className="flex items-start gap-4 sm:items-center flex-1 min-w-0">
                         <div className="shrink-0 rounded-2xl bg-gradient-to-br from-green-500 to-emerald-600 p-3.5 shadow-lg">
-                        <DollarSign className="h-6 w-6 text-white" />
+                            <DollarSign className="h-6 w-6 text-white" />
                         </div>
 
                         <div className="min-w-0 flex-1">
-                        <div className="font-bold text-gray-900 dark:text-gray-100 text-base sm:text-lg mb-1">
+                            <div className="font-bold text-gray-900 dark:text-gray-100 text-base sm:text-lg mb-1">
                             {donation.donor_name || "Anonymous Donor"}
-                        </div>
+                            </div>
 
-                        <div className="flex flex-col gap-2 text-sm text-gray-600 dark:text-gray-400">
+                            <div className="flex flex-col gap-2 text-sm text-gray-600 dark:text-gray-400">
                             <div className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4 text-blue-500 dark:text-blue-400 shrink-0" />
-                            <span className="font-medium">
+                                <Calendar className="h-4 w-4 text-blue-500 dark:text-blue-400 shrink-0" />
+                                <span className="font-medium">
                                 {dateText} • {timeText}
-                            </span>
+                                </span>
                             </div>
                             <div className="flex items-center gap-2">
-                            <span className="text-xs text-gray-500 dark:text-gray-300 font-mono bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">
+                                <span className="text-xs text-gray-500 dark:text-gray-300 font-mono bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">
                                 {donation.paymongo_payment_id || donation.paymongo_payment_intent_id || "-"}
-                            </span>
+                                </span>
                             </div>
-                        </div>
+                            </div>
 
-                        <div className="mt-3 flex flex-wrap items-center gap-2">
+                            <div className="mt-3 flex flex-wrap items-center gap-2">
                             <Badge className="text-xs bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-200 dark:border-blue-900 font-semibold">
-                            {donation.method || "PayMongo"}
+                                {donation.method || "PayMongo"}
                             </Badge>
                             <span className="text-xs text-gray-600 dark:text-gray-200 bg-gray-100 dark:bg-gray-800 px-2.5 py-1 rounded-full font-medium">
-                            {donation.purpose || "Donation"}
+                                {donation.purpose || "Donation"}
                             </span>
+                            </div>
                         </div>
                         </div>
-                    </div>
 
-                    <div className="text-left sm:text-right shrink-0">
+                        <div className="text-left sm:text-right shrink-0">
                         <div className="text-2xl sm:text-3xl font-bold text-blue-900 dark:text-blue-200 mb-2">
-                        {formatCurrency(donation.amount, donation.currency)}
+                            {formatCurrency(donation.amount, donation.currency)}
                         </div>
 
                         <div className="flex flex-wrap gap-2 sm:justify-end">
-                        <span className={`inline-flex items-center rounded-full border px-3 py-1.5 text-xs font-semibold shadow-sm ${getTypeColor(donation.type)}`}>
+                            <span
+                            className={`inline-flex items-center rounded-full border px-3 py-1.5 text-xs font-semibold shadow-sm ${getTypeColor(
+                                donation.type
+                            )}`}
+                            >
                             {donation.type}
-                        </span>
-                        <span
+                            </span>
+                            <span
                             className={`inline-flex items-center rounded-full border px-3 py-1.5 text-xs font-semibold shadow-sm ${
-                            donation.status === "Completed"
+                                donation.status === "Completed"
                                 ? "border-green-300 dark:border-green-900 bg-green-100 dark:bg-green-950/40 text-green-800 dark:text-green-200"
                                 : donation.status === "Failed"
                                 ? "border-red-300 dark:border-red-900 bg-red-100 dark:bg-red-950/40 text-red-800 dark:text-red-200"
                                 : "border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200"
                             }`}
-                        >
+                            >
                             {donation.status}
-                        </span>
+                            </span>
+                        </div>
                         </div>
                     </div>
-                    </div>
-                </CardContent>
+                    </CardContent>
                 </Card>
-            );
+                );
             })}
 
             {filteredDonations.length === 0 && (
-            <div className="text-sm text-gray-600 dark:text-gray-300">No donations found.</div>
+                <div className="text-sm text-gray-600 dark:text-gray-300">No donations found.</div>
             )}
-        </div>
+            </div>
+        )}
         </div>
     );
 

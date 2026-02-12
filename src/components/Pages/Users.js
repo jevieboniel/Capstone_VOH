@@ -1,3 +1,4 @@
+// src/components/Pages/Users.js
 import React, { useState, useEffect, useMemo } from "react";
 import {
   Users as UsersIcon,
@@ -27,6 +28,7 @@ import AddUserModal from "../Modals/AddUserModal";
 
 import { useAuth } from "../../contexts/AuthContext";
 import { splitName, joinName } from "../../utils/name";
+import { apiUrl } from "../../config/api";
 
 // ----- PERMISSIONS SETUP -----
 const availablePermissions = [
@@ -46,13 +48,27 @@ const rolePermissions = {
 };
 
 // ====== helpers: avatar url fix (so /uploads works) ======
-const API_ORIGIN = "http://localhost:5000";
+const API_ORIGIN = (() => {
+  // apiUrl("/api") => "http://localhost:5000/api"
+  // we want origin => "http://localhost:5000"
+  const full = apiUrl("/api");
+  return full.replace(/\/api\/?$/, "");
+})();
+
 const toAbsoluteAvatarUrl = (url) => {
   if (!url) return "";
   if (url.startsWith("blob:") || url.startsWith("data:")) return url;
   if (url.startsWith("http://") || url.startsWith("https://")) return url;
   if (url.startsWith("/")) return `${API_ORIGIN}${url}`;
   return url;
+};
+
+// ✅ Permission gate helper (frontend)
+const hasPermission = (user, perm) => {
+  const perms = Array.isArray(user?.permissions) ? user.permissions : [];
+  if (perms.includes("Full Access")) return true;
+  if (!perm) return true;
+  return perms.includes(perm);
 };
 
 // ----- HELPERS -----
@@ -112,27 +128,18 @@ const BaseModal = ({ isOpen, title, subtitle, onClose, children, footer }) => {
 
   return (
     <div className="fixed inset-0 z-50">
-      {/* overlay */}
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-
-      {/* wrapper */}
       <div className="absolute inset-0 flex items-end sm:items-center justify-center p-0 sm:p-4">
-        {/* panel */}
         <div
           className="
-            w-full
-            sm:max-w-2xl
+            w-full sm:max-w-2xl
             bg-white dark:bg-gray-900
             border border-gray-200 dark:border-gray-800
-            shadow-2xl
-            overflow-hidden
-            flex flex-col
+            shadow-2xl overflow-hidden flex flex-col
             h-[95vh] sm:h-auto
-            sm:rounded-2xl
-            rounded-t-2xl
+            sm:rounded-2xl rounded-t-2xl
           "
         >
-          {/* header */}
           <div className="p-4 sm:p-6 border-b border-gray-100 dark:border-gray-800 flex items-start justify-between gap-4">
             <div className="min-w-0">
               <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100">
@@ -155,21 +162,16 @@ const BaseModal = ({ isOpen, title, subtitle, onClose, children, footer }) => {
             </button>
           </div>
 
-          {/* body (scrollable) */}
           <div className="flex-1 overflow-y-auto p-4 sm:p-6">{children}</div>
 
-          {/* footer (sticky on mobile) */}
           {footer ? (
             <div
               className="
                 border-t border-gray-100 dark:border-gray-800
                 bg-white/95 dark:bg-gray-900/95 backdrop-blur
-                p-4 sm:p-6
-                sticky bottom-0
+                p-4 sm:p-6 sticky bottom-0
               "
-              style={{
-                paddingBottom: "calc(env(safe-area-inset-bottom) + 1rem)",
-              }}
+              style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 1rem)" }}
             >
               {footer}
             </div>
@@ -225,9 +227,7 @@ const UserDetailsModal = ({ isOpen, user, onClose, onEdit }) => {
         )}
 
         <div className="min-w-0">
-          <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-            {fullName}
-          </h3>
+          <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100">{fullName}</h3>
 
           <div className="mt-2 flex flex-wrap items-center gap-2">
             <span
@@ -269,9 +269,7 @@ const UserDetailsModal = ({ isOpen, user, onClose, onEdit }) => {
           <Calendar className="h-4 w-4 text-gray-500 dark:text-gray-400" />
           <div>
             <span className="font-medium">Joined:</span>{" "}
-            <span className="text-gray-600 dark:text-gray-300">
-              {formatDateShort(user.createdAt)}
-            </span>
+            <span className="text-gray-600 dark:text-gray-300">{formatDateShort(user.createdAt)}</span>
           </div>
         </div>
 
@@ -279,9 +277,7 @@ const UserDetailsModal = ({ isOpen, user, onClose, onEdit }) => {
           <Clock className="h-4 w-4 text-gray-500 dark:text-gray-400" />
           <div>
             <span className="font-medium">Last Login:</span>{" "}
-            <span className="text-gray-600 dark:text-gray-300">
-              {formatDateShort(user.lastLogin)}
-            </span>
+            <span className="text-gray-600 dark:text-gray-300">{formatDateShort(user.lastLogin)}</span>
           </div>
         </div>
       </div>
@@ -307,7 +303,7 @@ const UserDetailsModal = ({ isOpen, user, onClose, onEdit }) => {
   );
 };
 
-// ======================= EDIT USER MODAL (UPDATED: First/Middle/Last) =======================
+// ======================= EDIT USER MODAL =======================
 const EditUserModal = ({ isOpen, user, onClose, onSubmit, loading }) => {
   const [form, setForm] = useState(null);
   const [avatarPreview, setAvatarPreview] = useState("");
@@ -371,12 +367,12 @@ const EditUserModal = ({ isOpen, user, onClose, onSubmit, loading }) => {
       alert("First Name, Last Name, and Email Address are required.");
       return;
     }
-    onSubmit?.({ ...form, avatarFile });
+
+    const finalPerms = form.role === "Admin" ? ["Full Access"] : form.permissions;
+    onSubmit?.({ ...form, permissions: finalPerms, avatarFile });
   };
 
-  // initials fallback
-  const initials =
-    `${form.firstName?.[0] || ""}${form.lastName?.[0] || ""}`.toUpperCase() || "?";
+  const initials = `${form.firstName?.[0] || ""}${form.lastName?.[0] || ""}`.toUpperCase() || "?";
 
   return (
     <BaseModal
@@ -400,7 +396,6 @@ const EditUserModal = ({ isOpen, user, onClose, onSubmit, loading }) => {
         </div>
       }
     >
-      {/* Avatar row (responsive) */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6">
         {avatarPreview ? (
           <img
@@ -421,25 +416,22 @@ const EditUserModal = ({ isOpen, user, onClose, onSubmit, loading }) => {
         </label>
       </div>
 
-      {/* Fields (1 col on mobile, 2 col on desktop) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="sm:col-span-1">
+        <div>
           <label className={LABEL}>First Name *</label>
           <input
             className={CONTROL}
             value={form.firstName}
             onChange={(e) => setForm((p) => ({ ...p, firstName: e.target.value }))}
-            placeholder="e.g. Sarah"
           />
         </div>
 
-        <div className="sm:col-span-1">
+        <div>
           <label className={LABEL}>Middle Name</label>
           <input
             className={CONTROL}
             value={form.middleName}
             onChange={(e) => setForm((p) => ({ ...p, middleName: e.target.value }))}
-            placeholder="e.g. Marie"
           />
         </div>
 
@@ -449,31 +441,28 @@ const EditUserModal = ({ isOpen, user, onClose, onSubmit, loading }) => {
             className={CONTROL}
             value={form.lastName}
             onChange={(e) => setForm((p) => ({ ...p, lastName: e.target.value }))}
-            placeholder="e.g. Johnson"
           />
         </div>
 
-        <div className="sm:col-span-1">
+        <div>
           <label className={LABEL}>Email Address *</label>
           <input
             className={CONTROL}
             value={form.email}
             onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))}
-            placeholder="e.g. sarah@villageofhope.org"
           />
         </div>
 
-        <div className="sm:col-span-1">
+        <div>
           <label className={LABEL}>Phone Number</label>
           <input
             className={CONTROL}
             value={form.phone}
             onChange={(e) => setForm((p) => ({ ...p, phone: e.target.value }))}
-            placeholder="+63..."
           />
         </div>
 
-        <div className="sm:col-span-1">
+        <div>
           <label className={LABEL}>Role *</label>
           <select
             className={CONTROL}
@@ -483,12 +472,7 @@ const EditUserModal = ({ isOpen, user, onClose, onSubmit, loading }) => {
               setForm((p) => ({
                 ...p,
                 role,
-                permissions:
-                  role === "Admin"
-                    ? ["Full Access"]
-                    : p.permissions?.length
-                    ? p.permissions
-                    : rolePermissions[role] || [],
+                permissions: role === "Admin" ? ["Full Access"] : rolePermissions[role] || p.permissions || [],
               }));
             }}
           >
@@ -499,7 +483,7 @@ const EditUserModal = ({ isOpen, user, onClose, onSubmit, loading }) => {
           </select>
         </div>
 
-        <div className="sm:col-span-1">
+        <div>
           <label className={LABEL}>Status</label>
           <select
             className={CONTROL}
@@ -513,11 +497,8 @@ const EditUserModal = ({ isOpen, user, onClose, onSubmit, loading }) => {
         </div>
       </div>
 
-      {/* Permissions */}
       <div className="mt-6">
-        <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-          Permissions
-        </div>
+        <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">Permissions</div>
 
         {form.role === "Admin" ? (
           <div className="mt-3">
@@ -528,10 +509,7 @@ const EditUserModal = ({ isOpen, user, onClose, onSubmit, loading }) => {
         ) : (
           <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
             {availablePermissions.map((perm) => (
-              <label
-                key={perm}
-                className="flex items-center gap-3 text-sm text-gray-700 dark:text-gray-200"
-              >
+              <label key={perm} className="flex items-center gap-3 text-sm text-gray-700 dark:text-gray-200">
                 <input
                   type="checkbox"
                   className="h-4 w-4 rounded border-gray-300"
@@ -552,9 +530,7 @@ const EditUserModal = ({ isOpen, user, onClose, onSubmit, loading }) => {
 const UserCard = ({ user, onEdit, onDelete, onToggleStatus, onResetPassword, onViewDetails }) => {
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const fullName = `${user.firstName} ${user.middleName} ${user.lastName}`
-    .replace(/\s+/g, " ")
-    .trim();
+  const fullName = `${user.firstName} ${user.middleName} ${user.lastName}`.replace(/\s+/g, " ").trim();
   const initials = `${user.firstName?.[0] || ""}${user.lastName?.[0] || ""}`.toUpperCase();
   const hasAvatar = !!user.avatarUrl;
   const avatar = toAbsoluteAvatarUrl(user.avatarUrl || "");
@@ -586,24 +562,14 @@ const UserCard = ({ user, onEdit, onDelete, onToggleStatus, onResetPassword, onV
           )}
 
           <div className="min-w-0">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 truncate">
-              {fullName}
-            </h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 truncate">{fullName}</h3>
 
             <div className="mt-2 flex flex-wrap items-center gap-2">
-              <span
-                className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${getRoleBadgeClasses(
-                  user.role
-                )}`}
-              >
+              <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${getRoleBadgeClasses(user.role)}`}>
                 {user.role}
               </span>
 
-              <span
-                className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${getStatusBadgeClasses(
-                  user.status
-                )}`}
-              >
+              <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${getStatusBadgeClasses(user.status)}`}>
                 {user.status}
               </span>
             </div>
@@ -708,9 +674,7 @@ const UserCard = ({ user, onEdit, onDelete, onToggleStatus, onResetPassword, onV
 
       {user.permissions && user.permissions.length > 0 && (
         <div className="mt-6 pt-4 border-t border-gray-100 dark:border-gray-800">
-          <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">
-            Permissions
-          </p>
+          <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Permissions</p>
           <div className="flex flex-wrap gap-2">
             {user.permissions.map((perm) => (
               <span
@@ -729,7 +693,10 @@ const UserCard = ({ user, onEdit, onDelete, onToggleStatus, onResetPassword, onV
 
 // ======================= MAIN COMPONENT =======================
 const Users = () => {
-  const { authFetch } = useAuth();
+  const { authFetch, user: currentUser } = useAuth();
+
+  // ✅ compute access AFTER hooks (no conditional hooks)
+  const canAccess = hasPermission(currentUser, "User Management");
 
   const [users, setUsers] = useState([]);
   const [filteredUsers, setFilteredUsers] = useState([]);
@@ -750,7 +717,6 @@ const Users = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // Add User modal state — add password because backend requires it
   const [newUser, setNewUser] = useState({
     firstName: "",
     middleName: "",
@@ -786,11 +752,20 @@ const Users = () => {
       const res = await authFetch("/users");
       const data = await res.json();
 
-      // backend returns normalized objects (after your mapUser)
       const rows = Array.isArray(data) ? data : data.users || [];
 
       const mapped = rows.map((u) => {
         const parts = splitName(u.name || "");
+        const perms = Array.isArray(u.permissions)
+          ? u.permissions
+          : (() => {
+              try {
+                return u.permissions ? JSON.parse(u.permissions) : [];
+              } catch {
+                return [];
+              }
+            })();
+
         return {
           id: u.id,
           ...parts,
@@ -799,15 +774,7 @@ const Users = () => {
           status: u.status || "Active",
           phone: u.phone || "",
           avatarUrl: toAbsoluteAvatarUrl(u.avatarUrl || u.avatar_url || ""),
-          permissions: Array.isArray(u.permissions)
-            ? u.permissions
-            : (() => {
-                try {
-                  return u.permissions ? JSON.parse(u.permissions) : [];
-                } catch {
-                  return [];
-                }
-              })(),
+          permissions: perms,
           createdAt: u.createdAt || u.created_at || "",
           lastLogin: u.lastLogin || u.last_login || null,
         };
@@ -823,19 +790,18 @@ const Users = () => {
   };
 
   useEffect(() => {
+    // ✅ only fetch if allowed (still not conditional hook)
+    if (!canAccess) return;
     fetchUsers();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [canAccess]);
 
   // ------- FILTERING -------
   useEffect(() => {
     const q = searchTerm.toLowerCase();
 
     const filtered = users.filter((u) => {
-      const fullName = `${u.firstName} ${u.middleName} ${u.lastName}`
-        .replace(/\s+/g, " ")
-        .trim()
-        .toLowerCase();
+      const fullName = `${u.firstName} ${u.middleName} ${u.lastName}`.replace(/\s+/g, " ").trim().toLowerCase();
 
       const matchesSearch =
         fullName.includes(q) || u.email.toLowerCase().includes(q) || u.role.toLowerCase().includes(q);
@@ -863,7 +829,19 @@ const Users = () => {
      ACTIONS (BACKEND)
   ========================= */
 
-  // ✅ Edit User (UPDATED: expects firstName/middleName/lastName from modal)
+  // ✅ FormData-safe request (authFetch often forces JSON headers)
+  const authFormFetch = async (path, formData, method = "POST") => {
+    const token = localStorage.getItem("admin_token");
+    const res = await fetch(apiUrl(`/api${path}`), {
+      method,
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: formData,
+    });
+    return res;
+  };
+
   const handleEditSubmit = async (formData) => {
     try {
       setLoading(true);
@@ -874,16 +852,17 @@ const Users = () => {
         lastName: formData.lastName,
       });
 
+      const perms = formData.role === "Admin" ? ["Full Access"] : formData.permissions;
+
       const updateBase = {
         name: payloadName,
         email: formData.email,
         role: formData.role,
         status: formData.status,
         phone: formData.phone,
-        permissions: formData.role === "Admin" ? ["Full Access"] : formData.permissions,
+        permissions: perms,
       };
 
-      // If user selected a file, send FormData (requires multer backend)
       if (formData.avatarFile instanceof File) {
         const fd = new FormData();
         Object.entries(updateBase).forEach(([k, v]) => {
@@ -893,24 +872,16 @@ const Users = () => {
         });
         fd.append("avatar", formData.avatarFile);
 
-        const res = await fetch(`${API_ORIGIN}/api/users/${formData.id}`, {
-          method: "PUT",
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("admin_token")}`,
-          },
-          body: fd,
-        });
-
+        const res = await authFormFetch(`/users/${formData.id}`, fd, "PUT");
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(data.message || "Failed to update user.");
       } else {
-        await authFetch(`/users/${formData.id}`, {
+        const res = await authFetch(`/users/${formData.id}`, {
           method: "PUT",
-          body: JSON.stringify({
-            ...updateBase,
-            avatar_url: formData.avatarUrl || "", // optional if you store url
-          }),
+          body: JSON.stringify(updateBase),
         });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.message || "Failed to update user.");
       }
 
       await fetchUsers();
@@ -928,20 +899,21 @@ const Users = () => {
     try {
       setLoading(true);
 
-      await authFetch(`/users/${selectedUser.id}`, { method: "DELETE" });
+      const res = await authFetch(`/users/${selectedUser.id}`, { method: "DELETE" });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.message || "Failed to delete user.");
 
       await fetchUsers();
       setIsDeleteModalOpen(false);
       setSelectedUser(null);
     } catch (err) {
       console.error(err);
-      alert("Failed to delete user.");
+      alert(err.message || "Failed to delete user.");
     } finally {
       setLoading(false);
     }
   };
 
-  // ✅ Status toggle (backend route exists now)
   const handleToggleStatus = async (user) => {
     try {
       setLoading(true);
@@ -957,8 +929,7 @@ const Users = () => {
     }
   };
 
-  const handleResetPassword = (user) =>
-    alert(`Password reset email would be sent to ${user.email}`);
+  const handleResetPassword = (user) => alert(`Password reset email would be sent to ${user.email}`);
 
   const openEditModal = (u) => {
     setSelectedUser(u);
@@ -975,7 +946,6 @@ const Users = () => {
     setIsDetailsModalOpen(true);
   };
 
-  // Add User modal helpers
   const togglePermission = (permission) => {
     setNewUser((prev) => ({
       ...prev,
@@ -1011,6 +981,7 @@ const Users = () => {
     try {
       setLoading(true);
 
+      const perms = newUser.role === "Admin" ? ["Full Access"] : newUser.permissions || [];
       const hasAvatar = newUser.avatarFile instanceof File;
 
       let res;
@@ -1023,10 +994,10 @@ const Users = () => {
         fd.append("password", newUser.password.trim());
         fd.append("phone", newUser.phone || "");
         fd.append("status", "Active");
-        fd.append("permissions", JSON.stringify(newUser.permissions || []));
+        fd.append("permissions", JSON.stringify(perms));
         fd.append("avatar", newUser.avatarFile);
 
-        res = await authFetch("/users", { method: "POST", body: fd });
+        res = await authFormFetch("/users", fd, "POST");
       } else {
         const payload = {
           name: joinName(newUser),
@@ -1035,7 +1006,7 @@ const Users = () => {
           password: newUser.password.trim(),
           phone: newUser.phone || "",
           status: "Active",
-          permissions: newUser.permissions || [],
+          permissions: perms,
         };
 
         res = await authFetch("/users", { method: "POST", body: JSON.stringify(payload) });
@@ -1073,18 +1044,29 @@ const Users = () => {
   const inactiveSuspended = users.filter((u) => u.status !== "Active").length;
   const adminCount = users.filter((u) => u.role === "Admin").length;
 
+  // ✅ ACCESS DENIED UI (NO early return)
+  if (!canAccess) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 p-6 flex items-center justify-center">
+        <div className="max-w-lg w-full rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-8 text-center">
+          <Shield className="h-10 w-10 mx-auto text-gray-700 dark:text-gray-200" />
+          <h2 className="mt-4 text-xl font-bold text-gray-900 dark:text-gray-100">Access denied</h2>
+          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+            You don’t have permission to access <b>User Management</b>.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 transition-colors">
       <div className="mx-auto w-full max-w-[1200px] p-4 sm:p-6 space-y-6">
         {/* HEADER */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div className="min-w-0">
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">
-              User Management
-            </h1>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-              Manage system users, roles, and permissions
-            </p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">User Management</h1>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Manage system users, roles, and permissions</p>
           </div>
 
           <Button
@@ -1101,12 +1083,8 @@ const Users = () => {
           <div className={`${CARD} ${CARD_HOVER} p-6 border-l-4 border-l-indigo-500`}>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-                  Total Users
-                </p>
-                <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-gray-100">
-                  {totalUsers}
-                </p>
+                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Total Users</p>
+                <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-gray-100">{totalUsers}</p>
               </div>
               <div className="bg-gradient-to-br from-indigo-500 to-blue-600 p-3 rounded-2xl shadow-md">
                 <UsersIcon className="h-6 w-6 text-white" />
@@ -1117,12 +1095,8 @@ const Users = () => {
           <div className={`${CARD} ${CARD_HOVER} p-6 border-l-4 border-l-emerald-500`}>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-                  Active Users
-                </p>
-                <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-gray-100">
-                  {activeUsers}
-                </p>
+                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Active Users</p>
+                <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-gray-100">{activeUsers}</p>
               </div>
               <div className="bg-gradient-to-br from-emerald-500 to-green-600 p-3 rounded-2xl shadow-md">
                 <UserCheck className="h-6 w-6 text-white" />
@@ -1133,12 +1107,8 @@ const Users = () => {
           <div className={`${CARD} ${CARD_HOVER} p-6 border-l-4 border-l-slate-500`}>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-                  Inactive/Suspended
-                </p>
-                <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-gray-100">
-                  {inactiveSuspended}
-                </p>
+                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Inactive/Suspended</p>
+                <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-gray-100">{inactiveSuspended}</p>
               </div>
               <div className="bg-gradient-to-br from-slate-500 to-gray-600 p-3 rounded-2xl shadow-md">
                 <UserX className="h-6 w-6 text-white" />
@@ -1149,12 +1119,8 @@ const Users = () => {
           <div className={`${CARD} ${CARD_HOVER} p-6 border-l-4 border-l-red-500`}>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-                  Admins
-                </p>
-                <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-gray-100">
-                  {adminCount}
-                </p>
+                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Admins</p>
+                <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-gray-100">{adminCount}</p>
               </div>
               <div className="bg-gradient-to-br from-red-500 to-rose-600 p-3 rounded-2xl shadow-md">
                 <Shield className="h-6 w-6 text-white" />
@@ -1203,7 +1169,7 @@ const Users = () => {
               onEdit={openEditModal}
               onDelete={openDeleteModal}
               onToggleStatus={handleToggleStatus}
-              onResetPassword={handleResetPassword}
+              onResetPassword={() => handleResetPassword(u)}
               onViewDetails={openDetailsModal}
             />
           ))}
@@ -1224,12 +1190,7 @@ const Users = () => {
             </div>
 
             <div className="flex flex-wrap gap-2">
-              <Button
-                variant="outline"
-                size="small"
-                disabled={currentPage === 1}
-                onClick={() => setCurrentPage((p) => p - 1)}
-              >
+              <Button variant="outline" size="small" disabled={currentPage === 1} onClick={() => setCurrentPage((p) => p - 1)}>
                 Previous
               </Button>
 
@@ -1276,16 +1237,14 @@ const Users = () => {
         <UserDetailsModal
           isOpen={isDetailsModalOpen}
           user={selectedUser}
-          onClose={() => {
-            setIsDetailsModalOpen(false);
-          }}
+          onClose={() => setIsDetailsModalOpen(false)}
           onEdit={(u) => {
             setIsDetailsModalOpen(false);
             openEditModal(u);
           }}
         />
 
-        {/* EDIT USER MODAL (UPDATED) */}
+        {/* EDIT USER MODAL */}
         <EditUserModal
           isOpen={isEditModalOpen}
           user={selectedUser}
@@ -1307,9 +1266,7 @@ const Users = () => {
           onConfirm={handleDelete}
           title="Delete User"
           message={`Are you sure you want to delete ${
-            selectedUser
-              ? `${selectedUser.firstName} ${selectedUser.middleName} ${selectedUser.lastName}`.replace(/\s+/g, " ")
-              : "this user"
+            selectedUser ? `${selectedUser.firstName} ${selectedUser.middleName} ${selectedUser.lastName}`.replace(/\s+/g, " ") : "this user"
           }? This action cannot be undone.`}
           confirmText="Delete User"
           loading={loading}
