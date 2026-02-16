@@ -5,9 +5,8 @@ const pool = require("../db");
 const { logAudit } = require("../utils/audit");
 const { verifyToken } = require("../middleware/auth");
 const { requirePermission } = require("../middleware/permissions");
+
 const DON_PERM = "Donations";
-
-
 const router = express.Router();
 
 const paymongo = axios.create({
@@ -16,8 +15,13 @@ const paymongo = axios.create({
   headers: { "Content-Type": "application/json" },
 });
 
+/* -------------------------------------------
+   ✅ PUBLIC CHECKOUT ROUTES (NO TOKEN REQUIRED)
+   These are used by your public Donate page.
+-------------------------------------------- */
+
 // ✅ Create PayMongo payment intent (Pending record in DB)
-router.post("/create-intent", verifyToken, requirePermission(DON_PERM), async (req, res) => {
+router.post("/create-intent", async (req, res) => {
   try {
     const {
       amount,
@@ -32,7 +36,11 @@ router.post("/create-intent", verifyToken, requirePermission(DON_PERM), async (r
       return res.status(400).json({ message: "Amount must be greater than 0" });
     }
 
-    // PayMongo expects amount in smallest unit (PHP centavos)
+    // Optional safety: prevent crazy amounts (adjust if you want)
+    if (Number(amount) > 500000) {
+      return res.status(400).json({ message: "Amount too large" });
+    }
+
     const amountSmallest = Math.round(Number(amount) * 100);
 
     const resp = await paymongo.post("/payment_intents", {
@@ -50,11 +58,12 @@ router.post("/create-intent", verifyToken, requirePermission(DON_PERM), async (r
 
     await pool.query(
       `INSERT INTO donations
-      (paymongo_payment_intent_id, amount, currency, purpose, type, status, donor_name, donor_email)
-      VALUES (?, ?, ?, ?, ?, 'Pending', ?, ?)`,
+        (paymongo_payment_intent_id, amount, currency, purpose, type, status, donor_name, donor_email)
+       VALUES (?, ?, ?, ?, ?, 'Pending', ?, ?)`,
       [pi.id, Number(amount), currency, purpose, type, donor_name, donor_email]
     );
 
+    // ✅ Audit should not crash public checkout if req.user doesn't exist
     try {
       await logAudit(req, {
         action: "CREATE",
@@ -64,7 +73,8 @@ router.post("/create-intent", verifyToken, requirePermission(DON_PERM), async (r
         details: `Created donation intent: PHP ${amount} (${type})`,
       });
     } catch (e) {
-      console.error("Audit log failed (CREATE donation intent):", e);
+      // ignore audit failures for public route
+      console.error("Audit log failed (CREATE donation intent):", e.message);
     }
 
     res.json({
@@ -78,16 +88,89 @@ router.post("/create-intent", verifyToken, requirePermission(DON_PERM), async (r
   }
 });
 
+// ✅ Create Payment Method (backend calls PayMongo) - PUBLIC
+router.post("/create-payment-method", async (req, res) => {
+  try {
+    const { method, billing, card } = req.body;
+
+    const payload = {
+      data: {
+        attributes: {
+          type: method === "card" ? "card" : "gcash",
+          billing: billing || {},
+        },
+      },
+    };
+
+    // ✅ For CARD, PayMongo needs "details.card_number"
+    if (method === "card") {
+      if (!card?.number || !card?.exp_month || !card?.exp_year || !card?.cvc) {
+        return res.status(400).json({ message: "Missing card details" });
+      }
+
+      payload.data.attributes.details = {
+        card_number: String(card.number).replace(/\s+/g, ""),
+        exp_month: Number(card.exp_month),
+        exp_year: Number(card.exp_year),
+        cvc: String(card.cvc),
+      };
+    }
+
+    const resp = await paymongo.post("/payment_methods", payload);
+    res.json({ payment_method_id: resp.data.data.id });
+  } catch (err) {
+    console.error("create-payment-method:", err.response?.data || err.message);
+    res
+      .status(500)
+      .json({
+        message:
+          err.response?.data?.errors?.[0]?.detail ||
+          "Failed to create payment method",
+      });
+  }
+});
+
+// ✅ Attach Payment Method to Payment Intent - PUBLIC
+router.post("/attach-payment-method", async (req, res) => {
+  try {
+    const { payment_intent_id, payment_method_id } = req.body;
+
+    const resp = await paymongo.post(
+      `/payment_intents/${payment_intent_id}/attach`,
+      {
+        data: {
+          attributes: {
+            payment_method: payment_method_id,
+            // ✅ set your real domain in production
+            return_url: "http://localhost:3000/donate-success",
+          },
+        },
+      }
+    );
+
+    res.json(resp.data);
+  } catch (err) {
+    console.error("attach-payment-method:", err.response?.data || err.message);
+    res.status(500).json({ message: "Failed to attach payment method" });
+  }
+});
+
+/* -------------------------------------------
+   ✅ ADMIN ROUTES (TOKEN + PERMISSION REQUIRED)
+-------------------------------------------- */
+
+const adminOnly = [verifyToken, requirePermission(DON_PERM)];
+
 // ✅ List donations (supports search query q)
-router.get("/", verifyToken, requirePermission(DON_PERM), async (req, res) => {
+router.get("/", ...adminOnly, async (req, res) => {
   try {
     const q = (req.query.q || "").toLowerCase();
 
     const [rows] = await pool.query(
       `SELECT *
-      FROM donations
-      WHERE (? = '' OR LOWER(purpose) LIKE CONCAT('%', ?, '%') OR LOWER(method) LIKE CONCAT('%', ?, '%'))
-      ORDER BY created_at DESC`,
+       FROM donations
+       WHERE (? = '' OR LOWER(purpose) LIKE CONCAT('%', ?, '%') OR LOWER(method) LIKE CONCAT('%', ?, '%'))
+       ORDER BY created_at DESC`,
       [q, q, q]
     );
 
@@ -98,43 +181,40 @@ router.get("/", verifyToken, requirePermission(DON_PERM), async (req, res) => {
   }
 });
 
-// ✅ Dashboard metrics (overview cards + charts)
-router.get("/metrics", verifyToken, requirePermission(DON_PERM), async (_req, res) => {
+// ✅ Dashboard metrics
+router.get("/metrics", ...adminOnly, async (_req, res) => {
   try {
-    // totals
     const [[totals]] = await pool.query(
       `SELECT
           COALESCE(SUM(amount),0) AS totalAmount,
           COUNT(*) AS totalTransactions,
           SUM(CASE WHEN type='Monthly' THEN 1 ELSE 0 END) AS recurringDonors
-      FROM donations
-      WHERE status='Completed'`
+       FROM donations
+       WHERE status='Completed'`
     );
 
-    // last 9 months trend (amount + donors = transactions)
     const [trend] = await pool.query(
       `SELECT
           DATE_FORMAT(created_at, '%b') AS month,
           YEAR(created_at) AS yr,
           COALESCE(SUM(amount),0) AS amount,
           COUNT(*) AS donors
-      FROM donations
-      WHERE status='Completed'
-      GROUP BY yr, month
-      ORDER BY yr DESC, MIN(created_at) DESC
-      LIMIT 9`
+       FROM donations
+       WHERE status='Completed'
+       GROUP BY yr, month
+       ORDER BY yr DESC, MIN(created_at) DESC
+       LIMIT 9`
     );
 
-    // purposes distribution by total amount
     const [purposesRaw] = await pool.query(
       `SELECT
           COALESCE(purpose,'Unspecified') AS name,
           COALESCE(SUM(amount),0) AS total
-      FROM donations
-      WHERE status='Completed'
-      GROUP BY name
-      ORDER BY total DESC
-      LIMIT 10`
+       FROM donations
+       WHERE status='Completed'
+       GROUP BY name
+       ORDER BY total DESC
+       LIMIT 10`
     );
 
     const sumPurpose = purposesRaw.reduce((s, r) => s + Number(r.total), 0) || 1;
@@ -143,12 +223,11 @@ router.get("/metrics", verifyToken, requirePermission(DON_PERM), async (_req, re
       value: Math.round((Number(r.total) / sumPurpose) * 100),
     }));
 
-    // recent 3
     const [recent] = await pool.query(
       `SELECT * FROM donations
-      WHERE status='Completed'
-      ORDER BY created_at DESC
-      LIMIT 3`
+       WHERE status='Completed'
+       ORDER BY created_at DESC
+       LIMIT 3`
     );
 
     res.json({
@@ -157,7 +236,7 @@ router.get("/metrics", verifyToken, requirePermission(DON_PERM), async (_req, re
         totalTransactions: Number(totals.totalTransactions),
         recurringDonors: Number(totals.recurringDonors),
       },
-      trend: trend.reverse(), // oldest -> newest for chart
+      trend: trend.reverse(),
       purposes,
       recent,
     });
@@ -167,21 +246,30 @@ router.get("/metrics", verifyToken, requirePermission(DON_PERM), async (_req, re
   }
 });
 
-// ✅ CSV export from backend (optional)
-// GET /api/donations/export.csv?q=...
-router.get("/export.csv", verifyToken, requirePermission(DON_PERM), async (req, res) => {
+// ✅ CSV export (admin only)
+router.get("/export.csv", ...adminOnly, async (req, res) => {
   try {
     const q = (req.query.q || "").toLowerCase();
 
     const [rows] = await pool.query(
       `SELECT paymongo_payment_id, paymongo_payment_intent_id, amount, currency, created_at, purpose, method, status
-      FROM donations
-      WHERE (? = '' OR LOWER(purpose) LIKE CONCAT('%', ?, '%') OR LOWER(method) LIKE CONCAT('%', ?, '%'))
-      ORDER BY created_at DESC`,
+       FROM donations
+       WHERE (? = '' OR LOWER(purpose) LIKE CONCAT('%', ?, '%') OR LOWER(method) LIKE CONCAT('%', ?, '%'))
+       ORDER BY created_at DESC`,
       [q, q, q]
     );
 
-    const header = ["Payment ID", "Payment Intent ID", "Amount", "Currency", "DateTime", "Purpose", "Method", "Status"];
+    const header = [
+      "Payment ID",
+      "Payment Intent ID",
+      "Amount",
+      "Currency",
+      "DateTime",
+      "Purpose",
+      "Method",
+      "Status",
+    ];
+
     const csv =
       header.join(",") +
       "\n" +
@@ -201,72 +289,14 @@ router.get("/export.csv", verifyToken, requirePermission(DON_PERM), async (req, 
         .join("\n");
 
     res.setHeader("Content-Type", "text/csv");
-    res.setHeader("Content-Disposition", "attachment; filename=donations_export.csv");
+    res.setHeader(
+      "Content-Disposition",
+      "attachment; filename=donations_export.csv"
+    );
     res.send(csv);
   } catch (err) {
     console.error("GET /donations/export.csv:", err.message);
     res.status(500).json({ message: "Failed to export csv" });
-  }
-});
-
-// ✅ Create Payment Method (backend calls PayMongo)
-router.post("/create-payment-method", verifyToken, requirePermission(DON_PERM), async (req, res) => {
-  try {
-    const { method, billing, card } = req.body;
-
-    const payload = {
-      data: {
-        attributes: {
-          type: method === "card" ? "card" : "gcash",
-          billing: billing || {},
-        },
-      },
-    };
-
-    // ✅ For CARD, PayMongo needs "details.card_number" (not "card.number")
-    if (method === "card") {
-      if (!card?.number || !card?.exp_month || !card?.exp_year || !card?.cvc) {
-        return res.status(400).json({ message: "Missing card details" });
-      }
-
-      payload.data.attributes.details = {
-        card_number: String(card.number).replace(/\s+/g, ""), // remove spaces
-        exp_month: Number(card.exp_month),
-        exp_year: Number(card.exp_year),
-        cvc: String(card.cvc),
-      };
-    }
-
-    // Use your existing axios instance (paymongo)
-    const resp = await paymongo.post("/payment_methods", payload);
-
-    res.json({ payment_method_id: resp.data.data.id });
-  } catch (err) {
-    console.error("create-payment-method:", err.response?.data || err.message);
-    res
-      .status(500)
-      .json({ message: err.response?.data?.errors?.[0]?.detail || "Failed to create payment method" });
-  }
-});
-
-// ✅ Attach Payment Method to Payment Intent
-router.post("/attach-payment-method", verifyToken, requirePermission(DON_PERM), async (req, res) => {
-  try {
-    const { payment_intent_id, payment_method_id } = req.body;
-
-    const resp = await paymongo.post(`/payment_intents/${payment_intent_id}/attach`, {
-      data: {
-        attributes: {
-          payment_method: payment_method_id,
-          return_url: "http://localhost:3000/donate-success",
-        },
-      },
-    });
-
-    res.json(resp.data);
-  } catch (err) {
-    console.error("attach-payment-method:", err.response?.data || err.message);
-    res.status(500).json({ message: "Failed to attach payment method" });
   }
 });
 

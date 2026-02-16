@@ -45,6 +45,28 @@ const mapUser = (u) => ({
   lastLogin: u.last_login || null,
 });
 
+async function getSecuritySettings(db) {
+  const [rows] = await db.query("SELECT * FROM system_settings ORDER BY id ASC LIMIT 1");
+  return rows[0] || {};
+}
+
+function validatePasswordWithPolicy(password, s) {
+  const minLen = Number(s.password_min_length ?? 8);
+  const reqU = !!s.require_uppercase;
+  const reqL = !!s.require_lowercase;
+  const reqN = !!s.require_numbers;
+  const reqS = !!s.require_special;
+
+  if (!password || password.length < minLen) {
+    return `Password must be at least ${minLen} characters long.`;
+  }
+  if (reqU && !/[A-Z]/.test(password)) return "Password must include at least one uppercase letter.";
+  if (reqL && !/[a-z]/.test(password)) return "Password must include at least one lowercase letter.";
+  if (reqN && !/[0-9]/.test(password)) return "Password must include at least one number.";
+  if (reqS && !/[^A-Za-z0-9]/.test(password)) return "Password must include at least one special character.";
+  return null;
+}
+
 /* =========================
   GET ALL USERS (Admin only)
 ========================= */
@@ -91,6 +113,10 @@ router.post("/", verifyToken, requireAdmin, upload.single("avatar"), async (req,
       return res.status(400).json({ message: "Required fields missing." });
     }
 
+    const sec = await getSecuritySettings(db);
+    const policyError = validatePasswordWithPolicy(password, sec);
+    if (policyError) return res.status(400).json({ message: policyError });
+
     const [existing] = await db.query("SELECT id FROM users WHERE email = ?", [email]);
     if (existing.length > 0) {
       return res.status(400).json({ message: "Email already exists." });
@@ -102,8 +128,8 @@ router.post("/", verifyToken, requireAdmin, upload.single("avatar"), async (req,
     const avatar_url = req.file ? `/uploads/${req.file.filename}` : (body.avatar_url || null);
 
     const [result] = await db.query(
-      `INSERT INTO users (name, email, password_hash, role, phone, status, permissions, avatar_url, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
+      `INSERT INTO users (name, email, password_hash, role, phone, status, permissions, avatar_url, created_at, password_changed_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
       [
         name,
         email,
@@ -282,6 +308,10 @@ router.put("/:id/profile", verifyToken, upload.single("avatar"), async (req, res
         return res.status(400).json({ message: "New password and confirmation do not match." });
       }
 
+      const sec = await getSecuritySettings(db);
+      const policyError = validatePasswordWithPolicy(newPassword, sec);
+      if (policyError) return res.status(400).json({ message: policyError });
+
       const [rows] = await db.query("SELECT password_hash FROM users WHERE id = ?", [id]);
       if (!rows.length) return res.status(404).json({ message: "User not found" });
 
@@ -303,7 +333,10 @@ router.put("/:id/profile", verifyToken, upload.single("avatar"), async (req, res
 
     if (isAdmin && role) { fields.push("role = ?"); values.push(role); }
     if (avatar_url !== undefined) { fields.push("avatar_url = ?"); values.push(avatar_url); }
-    if (newHash) { fields.push("password_hash = ?"); values.push(newHash); }
+    if (newHash) {
+      fields.push("password_hash = ?"); values.push(newHash);
+      fields.push("password_changed_at = NOW()");
+    }
 
     values.push(id);
 
@@ -355,6 +388,10 @@ router.put("/:id/password", verifyToken, async (req, res) => {
       return res.status(400).json({ message: "New password and confirmation do not match." });
     }
 
+    const sec = await getSecuritySettings(db);
+    const policyError = validatePasswordWithPolicy(newPassword, sec);
+    if (policyError) return res.status(400).json({ message: policyError });
+
     const [rows] = await db.query("SELECT password_hash FROM users WHERE id = ?", [id]);
     if (!rows.length) return res.status(404).json({ message: "User not found" });
 
@@ -365,7 +402,10 @@ router.put("/:id/password", verifyToken, async (req, res) => {
     }
 
     const hashed = await bcrypt.hash(newPassword, 10);
-    await db.query("UPDATE users SET password_hash = ? WHERE id = ?", [hashed, id]);
+    await db.query(
+      "UPDATE users SET password_hash = ?, password_changed_at = NOW() WHERE id = ?",
+      [hashed, id]
+    );
 
     res.json({ message: "Password updated successfully." });
   } catch (err) {
