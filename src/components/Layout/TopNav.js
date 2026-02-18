@@ -2,26 +2,39 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { getAllRoutes } from "../../config/routes";
+import { useNotifications } from "../../contexts/NotificationsContext";
 
 const TopNav = ({ onMenuClick }) => {
   const { user, logout } = useAuth();
+
+  const { unread, items, markAllRead, clearAll } = useNotifications();
+  const [notifOpen, setNotifOpen] = useState(false);
+  const notifRef = useRef(null);
+
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const profileRef = useRef(null);
 
   const allRoutes = useMemo(() => getAllRoutes(), []);
-  const profileRoute = allRoutes.find((item) => !item.showInNav && item.name === "Profile");
+  const profileRoute = allRoutes.find(
+    (item) => !item.showInNav && item.name === "Profile"
+  );
 
   // Close dropdown on outside click + ESC
   useEffect(() => {
     const onDown = (e) => {
-      if (e.key === "Escape") setIsProfileOpen(false);
-    };
-    const onClick = (e) => {
-      if (profileRef.current && !profileRef.current.contains(e.target)) {
+      if (e.key === "Escape") {
         setIsProfileOpen(false);
+        setNotifOpen(false);
       }
     };
+
+    const onClick = (e) => {
+      if (profileRef.current && !profileRef.current.contains(e.target))
+        setIsProfileOpen(false);
+      if (notifRef.current && !notifRef.current.contains(e.target))
+        setNotifOpen(false);
+    };
+
     document.addEventListener("keydown", onDown);
     document.addEventListener("mousedown", onClick);
     return () => {
@@ -34,10 +47,10 @@ const TopNav = ({ onMenuClick }) => {
 
   return (
     <header className="sticky top-0 z-40">
-      {/* Glass + border like modern dashboards */}
       <div className="bg-white/80 dark:bg-gray-950/70 backdrop-blur-xl border-b border-slate-200 dark:border-gray-800 transition-colors duration-300">
         <div className="px-2 lg:px-6 py-2">
           <div className="flex items-center justify-between gap-3">
+            
             {/* Left */}
             <div className="flex items-center gap-3 min-w-0">
               <button
@@ -48,14 +61,14 @@ const TopNav = ({ onMenuClick }) => {
                            focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/60"
                 aria-label="Open menu"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                 </svg>
               </button>
 
               {/* Brand (mobile) */}
               <div className="lg:hidden min-w-0">
-                <p className="text-base font-semibold text-slate-900 dark:text-gray-100 leading-tight truncate">
+                <p className="text-base font-semibold text-slate-900 dark:text-gray-100 truncate">
                   Dashboard
                 </p>
                 <p className="text-xs text-slate-500 dark:text-gray-400 -mt-0.5 truncate">
@@ -64,118 +77,103 @@ const TopNav = ({ onMenuClick }) => {
               </div>
             </div>
 
-            {/* Center: Search (desktop) */}
-            <div className="hidden lg:block flex-1 max-w-xl">
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-gray-500">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            {/* Right */}
+            <div className="flex items-center gap-2 lg:gap-3">
+              
+              {/* Notifications */}
+              <div className="relative" ref={notifRef}>
+                <button
+                  onClick={() => setNotifOpen((v) => !v)}
+                  className="inline-flex relative items-center justify-center h-10 w-10 rounded-xl border border-slate-200 dark:border-gray-800
+                          bg-white dark:bg-gray-900 hover:bg-slate-50 dark:hover:bg-gray-800
+                          text-slate-700 dark:text-gray-200 transition
+                          focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/60"
+                  aria-label="Notifications"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       strokeWidth={2}
-                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                      d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0a3 3 0 11-6 0h6z"
                     />
                   </svg>
-                </span>
 
-                <input
-                  type="text"
-                  placeholder="Search..."
-                  className="w-full h-11 pl-10 pr-4 rounded-xl border border-slate-200 dark:border-gray-800
-                           bg-white dark:bg-gray-900 text-sm text-slate-900 dark:text-gray-100
-                           placeholder:text-slate-400 dark:placeholder:text-gray-500
-                           shadow-sm focus:shadow-md transition
-                           focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-transparent"
-                />
+                  {unread > 0 && (
+                    <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[11px] font-bold grid place-items-center ring-2 ring-white dark:ring-gray-900">
+                      {unread > 99 ? "99+" : unread}
+                    </span>
+                  )}
+                </button>
+
+                {notifOpen && (
+                  <div className="absolute right-0 mt-2 w-96 rounded-2xl border border-slate-200 dark:border-gray-800
+                              bg-white dark:bg-gray-900 shadow-xl overflow-hidden z-50">
+                    <div className="px-4 py-3 border-b border-slate-100 dark:border-gray-800 flex items-center justify-between">
+                      <p className="text-sm font-semibold">Notifications</p>
+                      <div className="flex gap-2">
+                        <button onClick={markAllRead} className="text-xs px-2 py-1 rounded-lg hover:bg-slate-50 dark:hover:bg-gray-800">
+                          Mark all read
+                        </button>
+                        <button onClick={clearAll} className="text-xs px-2 py-1 rounded-lg hover:bg-slate-50 dark:hover:bg-gray-800">
+                          Clear
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="max-h-[360px] overflow-auto">
+                      {items.length === 0 ? (
+                        <p className="p-4 text-sm text-slate-600 dark:text-gray-300">
+                          No notifications yet.
+                        </p>
+                      ) : (
+                        items.slice(0, 20).map((n) => (
+                          <div key={n.id} className="px-4 py-3 border-b border-slate-100 dark:border-gray-800">
+                            <p className="text-sm font-semibold">{n.title}</p>
+                            <p className="text-xs text-slate-500 mt-1">
+                              {n.type} • {new Date(n.createdAt).toLocaleString()}
+                            </p>
+                            <p className="text-sm mt-2 whitespace-pre-line">
+                              {n.message}
+                            </p>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
-            </div>
-
-            {/* Right */}
-            <div className="flex items-center gap-2 lg:gap-3">
-              {/* Notifications */}
-              <button
-                className="hidden lg:inline-flex relative items-center justify-center h-10 w-10 rounded-xl border border-slate-200 dark:border-gray-800
-                         bg-white dark:bg-gray-900 hover:bg-slate-50 dark:hover:bg-gray-800
-                         text-slate-700 dark:text-gray-200 transition
-                         focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/60"
-                aria-label="Notifications"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0a3 3 0 11-6 0h6z"
-                  />
-                </svg>
-                <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white dark:ring-gray-900" />
-              </button>
-
-              {/* Mobile search toggle */}
-              <button
-                onClick={() => setMobileSearchOpen((v) => !v)}
-                className="lg:hidden inline-flex items-center justify-center h-10 w-10 rounded-xl border border-slate-200 dark:border-gray-800
-                         bg-white dark:bg-gray-900 hover:bg-slate-50 dark:hover:bg-gray-800
-                         text-slate-700 dark:text-gray-200 transition
-                         focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/60"
-                aria-label="Search"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                  />
-                </svg>
-              </button>
 
               {/* Profile */}
               <div className="relative" ref={profileRef}>
                 <button
                   onClick={() => setIsProfileOpen((v) => !v)}
-                  className="inline-flex items-center gap-2 rounded-xl p-1.5 pr-2 hover:bg-slate-50 dark:hover:bg-gray-800 transition
-                           focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/60"
-                  aria-haspopup="menu"
-                  aria-expanded={isProfileOpen}
+                  className="inline-flex items-center gap-2 rounded-xl p-1.5 pr-2 hover:bg-slate-50 dark:hover:bg-gray-800 transition"
                 >
                   <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 grid place-items-center shadow-sm">
-                    <span className="text-white text-sm font-semibold">{initial}</span>
+                    <span className="text-white text-sm font-semibold">
+                      {initial}
+                    </span>
                   </div>
 
                   <div className="hidden lg:block text-left leading-tight">
-                    <p className="text-sm font-semibold text-slate-900 dark:text-gray-100 max-w-[160px] truncate">
+                    <p className="text-sm font-semibold truncate">
                       {user?.name || "Admin"}
                     </p>
-                    <p className="text-xs text-slate-500 dark:text-gray-400 max-w-[160px] truncate">
+                    <p className="text-xs text-slate-500 truncate">
                       {user?.email || "Administrator"}
                     </p>
                   </div>
-
-                  <svg
-                    className={`hidden lg:block w-4 h-4 text-slate-400 dark:text-gray-500 transition-transform ${
-                      isProfileOpen ? "rotate-180" : ""
-                    }`}
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    aria-hidden="true"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
                 </button>
 
                 {isProfileOpen && (
-                  <div
-                    className="absolute right-0 mt-2 w-56 rounded-2xl border border-slate-200 dark:border-gray-800
-                    bg-white dark:bg-gray-900 shadow-xl shadow-slate-900/10 dark:shadow-black/40 overflow-hidden z-50"
-                    role="menu"
-                  >
+                  <div className="absolute right-0 mt-2 w-56 rounded-2xl border border-slate-200 dark:border-gray-800
+                    bg-white dark:bg-gray-900 shadow-xl overflow-hidden z-50">
                     <div className="px-4 py-3 border-b border-slate-100 dark:border-gray-800">
-                      <p className="text-sm font-semibold text-slate-900 dark:text-gray-100 truncate">
+                      <p className="text-sm font-semibold truncate">
                         {user?.name || "Admin"}
                       </p>
-                      <p className="text-xs text-slate-500 dark:text-gray-400 truncate">
+                      <p className="text-xs text-slate-500 truncate">
                         {user?.email || "Administrator"}
                       </p>
                     </div>
@@ -184,13 +182,9 @@ const TopNav = ({ onMenuClick }) => {
                       {profileRoute && (
                         <Link
                           to={profileRoute.path}
-                          className="flex items-center gap-2 px-4 py-2.5 text-sm text-slate-700 dark:text-gray-200 hover:bg-slate-50 dark:hover:bg-gray-800 transition"
+                          className="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-slate-50 dark:hover:bg-gray-800"
                           onClick={() => setIsProfileOpen(false)}
-                          role="menuitem"
                         >
-                          <svg className="w-4 h-4 text-slate-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4a4 4 0 100 8 4 4 0 000-8zM6 20a6 6 0 1112 0H6z" />
-                          </svg>
                           Profile Settings
                         </Link>
                       )}
@@ -200,43 +194,17 @@ const TopNav = ({ onMenuClick }) => {
                           logout();
                           setIsProfileOpen(false);
                         }}
-                        className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-slate-700 dark:text-gray-200 hover:bg-slate-50 dark:hover:bg-gray-800 transition"
-                        role="menuitem"
+                        className="w-full flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-slate-50 dark:hover:bg-gray-800"
                       >
-                        <svg className="w-4 h-4 text-slate-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H7a2 2 0 01-2-2V7a2 2 0 012-2h4a2 2 0 012 2v1" />
-                        </svg>
                         Sign Out
                       </button>
                     </div>
                   </div>
                 )}
               </div>
+
             </div>
           </div>
-
-          {/* Mobile search bar (toggle) */}
-          {mobileSearchOpen && (
-            <div className="lg:hidden mt-4">
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-gray-500">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                </span>
-
-                <input
-                  type="text"
-                  placeholder="Search..."
-                  className="w-full h-11 pl-10 pr-4 rounded-xl border border-slate-200 dark:border-gray-800
-                          bg-white dark:bg-gray-900 text-sm text-slate-900 dark:text-gray-100
-                          placeholder:text-slate-400 dark:placeholder:text-gray-500
-                          shadow-sm focus:shadow-md transition
-                          focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-transparent"
-                />
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </header>

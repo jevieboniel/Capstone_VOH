@@ -9,6 +9,8 @@ const multer = require("multer");
 const db = require("../db");
 const { verifyToken, requireAdmin } = require("../middleware/auth");
 
+const { emitIfEnabled } = require("../utils/realtimeNotify"); // ✅ NEW
+
 const upload = multer({
   dest: os.tmpdir(),
   limits: { fileSize: 1024 * 1024 * 200 }, // 200MB max upload
@@ -96,7 +98,6 @@ async function logAudit(req, { action, module, resource, resource_id, details, s
 
 /**
  * GET /api/backup/status
- * Simple status endpoint (optional)
  */
 router.get("/status", verifyToken, requireAdmin, async (_req, res) => {
   res.json({ success: true, backupStatus: "OK" });
@@ -104,7 +105,6 @@ router.get("/status", verifyToken, requireAdmin, async (_req, res) => {
 
 /**
  * GET /api/backup/list
- * Lists .sql backups stored on server
  */
 router.get("/list", verifyToken, requireAdmin, async (_req, res) => {
   try {
@@ -118,7 +118,6 @@ router.get("/list", verifyToken, requireAdmin, async (_req, res) => {
         return {
           filename: f,
           size: st.size,
-          // birthtime may not exist in some fs, fallback to mtime
           createdAt: st.birthtime || st.mtime,
         };
       })
@@ -133,14 +132,12 @@ router.get("/list", verifyToken, requireAdmin, async (_req, res) => {
 
 /**
  * GET /api/backup/download/:filename
- * Downloads a backup file (admin only)
  */
 router.get("/download/:filename", verifyToken, requireAdmin, async (req, res) => {
   try {
     const dir = ensureBackupDir();
     const filename = String(req.params.filename || "");
 
-    // prevent path traversal
     if (
       !filename.toLowerCase().endsWith(".sql") ||
       filename.includes("..") ||
@@ -162,7 +159,6 @@ router.get("/download/:filename", verifyToken, requireAdmin, async (req, res) =>
 
 /**
  * POST /api/backup/create
- * Creates a backup in server folder and returns filename
  */
 router.post("/create", verifyToken, requireAdmin, async (req, res) => {
   let cnfPath = null;
@@ -206,9 +202,23 @@ router.post("/create", verifyToken, requireAdmin, async (req, res) => {
       meta: { filename },
     });
 
+    // ✅ REALTIME: Data Backup
+    const io = req.app.get("io");
+    await emitIfEnabled(
+      io,
+      {
+        type: "Data Backup",
+        title: "Backup Created",
+        message: `Database backup created: ${filename}`,
+        severity: "info",
+      },
+      { role: "Admin" }
+    );
+
     res.json({ success: true, message: "Backup created", filename });
   } catch (err) {
     console.error("backup create error:", err.message);
+
     await logAudit(req, {
       action: "create",
       module: "backup",
@@ -217,6 +227,20 @@ router.post("/create", verifyToken, requireAdmin, async (req, res) => {
       severity: "error",
       meta: { error: err.message },
     });
+
+    // ✅ REALTIME: Data Backup failed
+    const io = req.app.get("io");
+    await emitIfEnabled(
+      io,
+      {
+        type: "Data Backup",
+        title: "Backup Failed",
+        message: `Backup failed: ${err.message}`,
+        severity: "warning",
+      },
+      { role: "Admin" }
+    );
+
     res.status(500).json({ success: false, message: "Backup failed", error: err.message });
   } finally {
     if (cnfPath) fs.unlink(cnfPath, () => {});
@@ -225,8 +249,6 @@ router.post("/create", verifyToken, requireAdmin, async (req, res) => {
 
 /**
  * POST /api/backup/restore
- * Upload a .sql file (field name "backup") and restore DB
- * WARNING: This overwrites DB contents. Keep admin-only and audited.
  */
 router.post("/restore", verifyToken, requireAdmin, upload.single("backup"), async (req, res) => {
   let cnfPath = null;
@@ -266,6 +288,19 @@ router.post("/restore", verifyToken, requireAdmin, upload.single("backup"), asyn
       severity: "warning",
     });
 
+    // ✅ REALTIME: restore success
+    const io = req.app.get("io");
+    await emitIfEnabled(
+      io,
+      {
+        type: "Data Backup",
+        title: "Database Restored",
+        message: `Database restored successfully. Saved file: ${savedName}`,
+        severity: "warning",
+      },
+      { role: "Admin" }
+    );
+
     res.json({ success: true, message: "Database restored successfully.", savedName });
   } catch (err) {
     console.error("backup restore error:", err.message);
@@ -279,6 +314,19 @@ router.post("/restore", verifyToken, requireAdmin, upload.single("backup"), asyn
       severity: "critical",
       meta: { error: err.message },
     });
+
+    // ✅ REALTIME: restore failed
+    const io = req.app.get("io");
+    await emitIfEnabled(
+      io,
+      {
+        type: "Data Backup",
+        title: "Restore Failed",
+        message: `Restore failed: ${err.message}`,
+        severity: "warning",
+      },
+      { role: "Admin" }
+    );
 
     res.status(500).json({ success: false, message: "Restore failed", error: err.message });
   } finally {

@@ -7,6 +7,8 @@ const { logAudit } = require("../utils/audit");
 
 // ✅ Use the SAME auth style as your users routes if possible:
 const { verifyToken, requireAdmin } = require("../middleware/auth");
+const { emitIfEnabled } = require("../utils/realtimeNotify");
+
 
 // ✅ Roles must match your Users.js roles exactly
 const VALID_ROLES = new Set(["Admin", "Staff", "Social Worker", "House Parent"]);
@@ -117,6 +119,30 @@ router.post("/", verifyToken, async (req, res) => {
     );
 
     const alertId = insertAlert.insertId;
+
+        // ✅ REALTIME NOTIFICATION (based on Settings > Notifications)
+    const io = req.app.get("io");
+
+    // Map your alert safeType -> Settings notification type
+    const notifType =
+      safeType === "health"
+        ? "Health Alerts"
+        : "System Update"; // maintenance/urgent/admin/general -> System Update
+
+    // Send to each role room
+    for (const r of roles) {
+      await emitIfEnabled(
+        io,
+        {
+          type: notifType, // MUST match notification_settings.type
+          title: `New Alert: ${title}`,
+          message: message,
+          severity: safePriority === "high" ? "warning" : "info",
+        },
+        { role: r }
+      );
+    }
+
 
     try {
       await logAudit(req, {

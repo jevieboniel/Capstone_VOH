@@ -3,9 +3,10 @@ const pool = require("../db");
 const { logAudit } = require("../utils/audit");
 const { verifyToken } = require("../middleware/auth");
 const { requirePermission } = require("../middleware/permissions");
+
+const { emitIfEnabled } = require("../utils/realtimeNotify"); // ✅ NEW
+
 const DEV_PERM = "Development Tracking";
-
-
 const router = express.Router();
 
 /**
@@ -70,7 +71,6 @@ router.get("/", verifyToken, requirePermission(DEV_PERM), async (_req, res) => {
 
 /**
  * POST /api/milestones
- * body: { childId, category, title, description, targetDate, notes, objectives }
  */
 router.post("/", verifyToken, requirePermission(DEV_PERM), async (req, res) => {
   const {
@@ -109,10 +109,7 @@ router.post("/", verifyToken, requirePermission(DEV_PERM), async (req, res) => {
 
     if (cleanObjectives.length) {
       const values = cleanObjectives.map((o) => [milestoneId, o]);
-      await conn.query(
-        `INSERT INTO milestone_objectives (milestone_id, objective) VALUES ?`,
-        [values]
-      );
+      await conn.query(`INSERT INTO milestone_objectives (milestone_id, objective) VALUES ?`, [values]);
     }
 
     try {
@@ -127,6 +124,19 @@ router.post("/", verifyToken, requirePermission(DEV_PERM), async (req, res) => {
       console.error("Audit log failed (CREATE milestone):", e);
     }
 
+    // ✅ REALTIME: Development Milestones
+    const io = req.app.get("io");
+    await emitIfEnabled(
+      io,
+      {
+        type: "Development Milestones",
+        title: "New Milestone Created",
+        message: `Milestone "${title}" was created for childId=${childId}.`,
+        severity: "info",
+      },
+      { role: "Admin" }
+    );
+
     await conn.commit();
     return res.json({ success: true, id: milestoneId });
   } catch (err) {
@@ -140,7 +150,6 @@ router.post("/", verifyToken, requirePermission(DEV_PERM), async (req, res) => {
 
 /**
  * PUT /api/milestones/:id
- * body uses your UI format: { category, milestone, description, targetDate, notes, status, progress, objectives }
  */
 router.put("/:id", verifyToken, requirePermission(DEV_PERM), async (req, res) => {
   const { id } = req.params;
@@ -181,10 +190,7 @@ router.put("/:id", verifyToken, requirePermission(DEV_PERM), async (req, res) =>
 
     if (cleanObjectives.length) {
       const values = cleanObjectives.map((o) => [id, o]);
-      await conn.query(
-        `INSERT INTO milestone_objectives (milestone_id, objective) VALUES ?`,
-        [values]
-      );
+      await conn.query(`INSERT INTO milestone_objectives (milestone_id, objective) VALUES ?`, [values]);
     }
 
     try {
@@ -198,6 +204,19 @@ router.put("/:id", verifyToken, requirePermission(DEV_PERM), async (req, res) =>
     } catch (e) {
       console.error("Audit log failed (UPDATE milestone):", e);
     }
+
+    // ✅ REALTIME: Development Milestones updated
+    const io = req.app.get("io");
+    await emitIfEnabled(
+      io,
+      {
+        type: "Development Milestones",
+        title: "Milestone Updated",
+        message: `Milestone "${milestone}" was updated (ID: ${id}).`,
+        severity: "info",
+      },
+      { role: "Admin" }
+    );
 
     await conn.commit();
     return res.json({ success: true });

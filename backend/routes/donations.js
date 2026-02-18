@@ -6,6 +6,8 @@ const { logAudit } = require("../utils/audit");
 const { verifyToken } = require("../middleware/auth");
 const { requirePermission } = require("../middleware/permissions");
 
+const { emitIfEnabled } = require("../utils/realtimeNotify"); // ✅ NEW
+
 const DON_PERM = "Donations";
 const router = express.Router();
 
@@ -17,7 +19,6 @@ const paymongo = axios.create({
 
 /* -------------------------------------------
    ✅ PUBLIC CHECKOUT ROUTES (NO TOKEN REQUIRED)
-   These are used by your public Donate page.
 -------------------------------------------- */
 
 // ✅ Create PayMongo payment intent (Pending record in DB)
@@ -73,9 +74,23 @@ router.post("/create-intent", async (req, res) => {
         details: `Created donation intent: PHP ${amount} (${type})`,
       });
     } catch (e) {
-      // ignore audit failures for public route
       console.error("Audit log failed (CREATE donation intent):", e.message);
     }
+
+    // ✅ REALTIME: Donation Alerts (based on Settings > Notifications)
+    const io = req.app.get("io");
+    await emitIfEnabled(
+      io,
+      {
+        type: "Donation Alerts",
+        title: "New Donation Intent",
+        message: `A donor started a ${type} donation of ${currency} ${Number(amount).toFixed(
+          2
+        )} for "${purpose}".`,
+        severity: "info",
+      },
+      { role: "Admin" }
+    );
 
     res.json({
       payment_intent_id: pi.id,
@@ -120,13 +135,11 @@ router.post("/create-payment-method", async (req, res) => {
     res.json({ payment_method_id: resp.data.data.id });
   } catch (err) {
     console.error("create-payment-method:", err.response?.data || err.message);
-    res
-      .status(500)
-      .json({
-        message:
-          err.response?.data?.errors?.[0]?.detail ||
-          "Failed to create payment method",
-      });
+    res.status(500).json({
+      message:
+        err.response?.data?.errors?.[0]?.detail ||
+        "Failed to create payment method",
+    });
   }
 });
 
@@ -135,18 +148,15 @@ router.post("/attach-payment-method", async (req, res) => {
   try {
     const { payment_intent_id, payment_method_id } = req.body;
 
-    const resp = await paymongo.post(
-      `/payment_intents/${payment_intent_id}/attach`,
-      {
-        data: {
-          attributes: {
-            payment_method: payment_method_id,
-            // ✅ set your real domain in production
-            return_url: "http://localhost:3000/donate-success",
-          },
+    const resp = await paymongo.post(`/payment_intents/${payment_intent_id}/attach`, {
+      data: {
+        attributes: {
+          payment_method: payment_method_id,
+          // ✅ set your real domain in production
+          return_url: "http://localhost:3000/donate-success",
         },
-      }
-    );
+      },
+    });
 
     res.json(resp.data);
   } catch (err) {
@@ -289,10 +299,7 @@ router.get("/export.csv", ...adminOnly, async (req, res) => {
         .join("\n");
 
     res.setHeader("Content-Type", "text/csv");
-    res.setHeader(
-      "Content-Disposition",
-      "attachment; filename=donations_export.csv"
-    );
+    res.setHeader("Content-Disposition", "attachment; filename=donations_export.csv");
     res.send(csv);
   } catch (err) {
     console.error("GET /donations/export.csv:", err.message);

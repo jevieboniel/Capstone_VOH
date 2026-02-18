@@ -6,10 +6,16 @@ const pool = require("../db");
 const { verifyToken } = require("../middleware/auth");
 const { logAudit } = require("../utils/audit");
 
+const { emitIfEnabled } = require("../utils/realtimeNotify"); // ✅ NEW
+
 const router = express.Router();
 
 function safeParse(txt) {
-  try { return JSON.parse(txt); } catch { return txt ? [txt] : []; }
+  try {
+    return JSON.parse(txt);
+  } catch {
+    return txt ? [txt] : [];
+  }
 }
 
 router.post("/login", async (req, res) => {
@@ -17,7 +23,8 @@ router.post("/login", async (req, res) => {
     const { email, password } = req.body;
 
     const [rows] = await pool.query("SELECT * FROM users WHERE email = ?", [email]);
-    if (rows.length === 0) return res.status(401).json({ success: false, error: "Invalid email or password" });
+    if (rows.length === 0)
+      return res.status(401).json({ success: false, error: "Invalid email or password" });
 
     const user = rows[0];
 
@@ -26,7 +33,8 @@ router.post("/login", async (req, res) => {
     }
 
     const isMatch = await bcrypt.compare(password, user.password_hash);
-    if (!isMatch) return res.status(401).json({ success: false, error: "Invalid email or password" });
+    if (!isMatch)
+      return res.status(401).json({ success: false, error: "Invalid email or password" });
 
     await pool.query("UPDATE users SET last_login = NOW() WHERE id = ?", [user.id]);
 
@@ -46,6 +54,19 @@ router.post("/login", async (req, res) => {
       severity: "info",
       userOverride: { id: user.id, name: user.name, role: user.role },
     });
+
+    // ✅ REALTIME: User Activity
+    const io = req.app.get("io");
+    await emitIfEnabled(
+      io,
+      {
+        type: "User Activity",
+        title: "User Logged In",
+        message: `${user.name} (${user.role}) logged in.`,
+        severity: "info",
+      },
+      { role: "Admin" }
+    );
 
     return res.json({
       success: true,
@@ -75,15 +96,6 @@ router.get("/me", verifyToken, async (req, res) => {
     if (!rows.length) return res.status(404).json({ success: false, error: "User not found" });
 
     const u = rows[0];
-
-    // optional audit (comment out if too noisy)
-    // await logAudit(req, {
-    //   action: "VIEW",
-    //   module: "Authentication",
-    //   resource: "Profile",
-    //   resourceId: u.id,
-    //   details: "Fetched current user profile",
-    // });
 
     return res.json({
       success: true,
