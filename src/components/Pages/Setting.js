@@ -796,7 +796,7 @@ export default function Setting() {
                 className="h-11 px-5 rounded-xl whitespace-nowrap"
                 onClick={() => setActiveSection("backup")}
               >
-                Backup &amp; Maintenance
+                Backup
               </Button>
             </div>
           </CardContent>
