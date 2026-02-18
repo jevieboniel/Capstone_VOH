@@ -19,6 +19,9 @@ const dashboardRoutes = require("./routes/dashboard");
 const reportsRoutes = require("./routes/reports");
 const auditTrailRoutes = require("./routes/auditTrail");
 
+const backupRoutes = require("./routes/backup");
+
+
 const app = express();
 
 app.use(cors({ origin: true, credentials: false }));
@@ -45,6 +48,8 @@ app.use("/api/dashboard", dashboardRoutes);
 // ✅ NEW
 app.use("/api/reports", reportsRoutes);
 app.use("/api/audit-trail", auditTrailRoutes);
+app.use("/api/backup", backupRoutes);
+
 
 app.get("/", (_req, res) => res.send("Backend running ✅"));
 

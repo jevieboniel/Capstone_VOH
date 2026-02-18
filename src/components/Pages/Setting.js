@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState, useEffect, useRef } from "react";
 import {
   Settings,
   Database,
@@ -8,7 +8,6 @@ import {
   Lock,
   Download,
   Upload,
-  AlertCircle,
   CheckCircle,
   Save,
 } from "lucide-react";
@@ -73,7 +72,11 @@ function Button({ children, variant = "default", className = "", type = "button"
 }
 
 function Badge({ children, className = "" }) {
-  return <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${className}`}>{children}</span>;
+  return (
+    <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${className}`}>
+      {children}
+    </span>
+  );
 }
 
 function Toggle({ checked, onChange }) {
@@ -118,7 +121,7 @@ const DEFAULT_SETTINGS = {
   lockoutMinutes: 15,
 };
 
-/* -------------------------------- Sections (MOVED OUTSIDE ✅) -------------------------------- */
+/* -------------------------------- Sections -------------------------------- */
 
 function GeneralSettingsSection({ draftSettings, setDraftField, onReset, saving, loading }) {
   return (
@@ -154,26 +157,17 @@ function GeneralSettingsSection({ draftSettings, setDraftField, onReset, saving,
 
             <div className="md:col-span-2">
               <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Address</label>
-              <Input
-                value={draftSettings.address ?? ""}
-                onChange={(e) => setDraftField("address", e.target.value)}
-              />
+              <Input value={draftSettings.address ?? ""} onChange={(e) => setDraftField("address", e.target.value)} />
             </div>
 
             <div>
               <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Phone Number</label>
-              <Input
-                value={draftSettings.phone ?? ""}
-                onChange={(e) => setDraftField("phone", e.target.value)}
-              />
+              <Input value={draftSettings.phone ?? ""} onChange={(e) => setDraftField("phone", e.target.value)} />
             </div>
 
             <div>
               <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Website</label>
-              <Input
-                value={draftSettings.website ?? ""}
-                onChange={(e) => setDraftField("website", e.target.value)}
-              />
+              <Input value={draftSettings.website ?? ""} onChange={(e) => setDraftField("website", e.target.value)} />
             </div>
           </div>
 
@@ -281,15 +275,19 @@ function SecuritySettingsSection({ draftSettings, setDraftField }) {
   );
 }
 
-function NotificationSettingsSection({ notifState, setNotifState }) {
+function NotificationSettingsSection({ notifState, setNotifState, onSaveNotificationsOnly, saving, loading }) {
   return (
     <div className="space-y-6">
       <Card>
-        <CardHeader>
+        <CardHeader className="flex items-center justify-between gap-3">
           <CardTitle>
             <Bell className="h-5 w-5" />
             Notification Preferences
           </CardTitle>
+
+          <Button variant="outline" onClick={onSaveNotificationsOnly} disabled={saving || loading} className="h-10 px-4">
+            Save Notifications
+          </Button>
         </CardHeader>
 
         <CardContent>
@@ -320,7 +318,21 @@ function NotificationSettingsSection({ notifState, setNotifState }) {
   );
 }
 
-function BackupSettingsSection({ systemStats }) {
+function BackupSettingsSection({
+  systemStats,
+  createBackup,
+  restoreBackup,
+  backupLoading,
+  backupList,
+  backupListLoading,
+  downloadBackup,
+}) {
+  const fileRef = useRef(null);
+
+  const latest = backupList?.[0];
+  const latestDate = latest?.createdAt ? new Date(latest.createdAt).toLocaleString() : "No backups yet";
+  const latestSize = latest?.size ? `${(latest.size / (1024 * 1024)).toFixed(2)} MB` : "";
+
   return (
     <div className="space-y-6">
       <Card>
@@ -369,20 +381,36 @@ function BackupSettingsSection({ systemStats }) {
             <div className="min-w-0">
               <h4 className="font-semibold text-gray-900 dark:text-gray-100">Last Backup</h4>
               <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                {new Date(systemStats.lastBackup).toLocaleString()} — Status: {systemStats.backupStatus}
+                {backupListLoading ? "Loading..." : latestDate}
+                {!backupListLoading && latestSize ? ` — ${latestSize}` : ""}
               </p>
             </div>
-            <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100">Success</Badge>
+            <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100">
+              {latest ? "Available" : "None"}
+            </Badge>
           </div>
 
+          <input
+            ref={fileRef}
+            type="file"
+            accept=".sql"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) restoreBackup(f);
+              e.target.value = "";
+            }}
+          />
+
           <div className="flex flex-wrap gap-2">
-            <Button>
+            <Button onClick={createBackup} disabled={backupLoading}>
               <Download className="mr-2 h-4 w-4" />
-              Create Backup
+              {backupLoading ? "Working..." : "Create Backup"}
             </Button>
-            <Button variant="outline">
+
+            <Button variant="outline" onClick={() => fileRef.current?.click()} disabled={backupLoading}>
               <Upload className="mr-2 h-4 w-4" />
-              Restore Backup
+              {backupLoading ? "Working..." : "Restore Backup"}
             </Button>
           </div>
         </CardContent>
@@ -391,27 +419,39 @@ function BackupSettingsSection({ systemStats }) {
       <Card>
         <CardHeader>
           <CardTitle>
-            <AlertCircle className="h-5 w-5" />
-            System Maintenance
+            <Database className="h-5 w-5" />
+            Backup History
           </CardTitle>
         </CardHeader>
 
-        <CardContent className="space-y-4">
-          <div className="rounded-2xl border border-yellow-200 bg-yellow-50 p-5 dark:border-yellow-900 dark:bg-yellow-950/30">
-            <div className="mb-2 flex items-center gap-2">
-              <AlertCircle className="h-5 w-5 text-yellow-600" />
-              <h4 className="font-semibold text-yellow-800 dark:text-yellow-200">Scheduled Maintenance</h4>
-            </div>
-            <p className="text-sm text-yellow-700 dark:text-yellow-300">
-              System maintenance is scheduled for September 15, 2025 from 2:00 AM to 4:00 AM EAT. All users will be
-              notified 24 hours in advance.
-            </p>
-          </div>
+        <CardContent>
+          {backupListLoading ? (
+            <p className="text-sm text-gray-600 dark:text-gray-400">Loading backups...</p>
+          ) : backupList.length === 0 ? (
+            <p className="text-sm text-gray-600 dark:text-gray-400">No backups found.</p>
+          ) : (
+            <div className="space-y-3">
+              {backupList.slice(0, 10).map((b) => (
+                <div
+                  key={b.filename}
+                  className="flex items-center justify-between gap-3 rounded-xl border border-gray-200 p-4 dark:border-gray-800 dark:bg-gray-950/40"
+                >
+                  <div className="min-w-0">
+                    <p className="font-semibold text-gray-900 dark:text-gray-100 truncate">{b.filename}</p>
+                    <p className="text-xs text-gray-600 dark:text-gray-400">
+                      {b.createdAt ? new Date(b.createdAt).toLocaleString() : ""}
+                      {b.size ? ` • ${(b.size / (1024 * 1024)).toFixed(2)} MB` : ""}
+                    </p>
+                  </div>
 
-          <div className="flex flex-wrap gap-2">
-            <Button variant="outline">View Maintenance Log</Button>
-            <Button variant="outline">Schedule Maintenance</Button>
-          </div>
+                  <Button variant="outline" className="h-10 px-4" onClick={() => downloadBackup(b.filename)}>
+                    <Download className="mr-2 h-4 w-4" />
+                    Download
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
@@ -436,6 +476,10 @@ export default function Setting() {
   const [activeSection, setActiveSection] = useState("general");
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  const [backupLoading, setBackupLoading] = useState(false);
+  const [backupList, setBackupList] = useState([]);
+  const [backupListLoading, setBackupListLoading] = useState(false);
 
   const [darkMode, setDarkMode] = useState(() => {
     const hasDarkClass = document.documentElement.classList.contains("dark");
@@ -538,6 +582,147 @@ export default function Setting() {
     }
   };
 
+  // Save Notifications only (optional button)
+  const saveNotificationsOnly = async () => {
+    const token = localStorage.getItem("admin_token");
+    if (!token) return alert("Not logged in.");
+
+    try {
+      setSaving(true);
+
+      const res = await fetch(`${API_ORIGIN}/api/settings`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ settings: draftSettings, notifState, darkMode }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.success) throw new Error(data.message || "Failed");
+
+      alert("Notifications saved ✅");
+    } catch (e) {
+      alert(e.message || "Failed");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const fetchBackups = async () => {
+    const token = localStorage.getItem("admin_token");
+    if (!token) return;
+
+    try {
+      setBackupListLoading(true);
+      const res = await fetch(`${API_ORIGIN}/api/backup/list`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.success) throw new Error(data.message || "Failed to load backups");
+
+      setBackupList(Array.isArray(data.backups) ? data.backups : []);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setBackupListLoading(false);
+    }
+  };
+
+  const downloadBackup = async (filename) => {
+    const token = localStorage.getItem("admin_token");
+    if (!token) return alert("Not logged in.");
+
+    try {
+      const res = await fetch(`${API_ORIGIN}/api/backup/download/${encodeURIComponent(filename)}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.message || "Download failed");
+      }
+
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch (e) {
+      alert(e.message || "Download failed");
+    }
+  };
+
+  useEffect(() => {
+    if (activeSection === "backup") fetchBackups();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeSection]);
+
+  // Backup: Create (server-stored + download)
+  const createBackup = async () => {
+    const token = localStorage.getItem("admin_token");
+    if (!token) return alert("Not logged in.");
+
+    try {
+      setBackupLoading(true);
+
+      const res = await fetch(`${API_ORIGIN}/api/backup/create`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.success) throw new Error(data.message || "Backup failed");
+
+      // Download the created backup
+      await downloadBackup(data.filename);
+
+      await fetchBackups();
+      alert("Backup created ✅");
+    } catch (e) {
+      alert(e.message || "Backup failed");
+    } finally {
+      setBackupLoading(false);
+    }
+  };
+
+  // Backup: Restore
+  const restoreBackup = async (file) => {
+    const token = localStorage.getItem("admin_token");
+    if (!token) return alert("Not logged in.");
+    if (!file) return;
+
+    const ok = window.confirm("This will overwrite the database. Continue?");
+    if (!ok) return;
+
+    try {
+      setBackupLoading(true);
+
+      const form = new FormData();
+      form.append("backup", file);
+
+      const res = await fetch(`${API_ORIGIN}/api/backup/restore`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: form,
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.success) throw new Error(data.message || "Restore failed");
+
+      await fetchBackups();
+      alert("Backup restored ✅");
+    } catch (e) {
+      alert(e.message || "Restore failed");
+    } finally {
+      setBackupLoading(false);
+    }
+  };
+
   const resetDraft = () => {
     setDraftSettings(settings || DEFAULT_SETTINGS);
     setIsDirty(false);
@@ -628,15 +813,29 @@ export default function Setting() {
           />
         )}
 
-        {activeSection === "security" && (
-          <SecuritySettingsSection draftSettings={draftSettings} setDraftField={setDraftField} />
-        )}
+        {activeSection === "security" && <SecuritySettingsSection draftSettings={draftSettings} setDraftField={setDraftField} />}
 
         {activeSection === "notifications" && (
-          <NotificationSettingsSection notifState={notifState} setNotifState={setNotifState} />
+          <NotificationSettingsSection
+            notifState={notifState}
+            setNotifState={setNotifState}
+            onSaveNotificationsOnly={saveNotificationsOnly}
+            saving={saving}
+            loading={loading}
+          />
         )}
 
-        {activeSection === "backup" && <BackupSettingsSection systemStats={systemStats} />}
+        {activeSection === "backup" && (
+          <BackupSettingsSection
+            systemStats={systemStats}
+            createBackup={createBackup}
+            restoreBackup={restoreBackup}
+            backupLoading={backupLoading}
+            backupList={backupList}
+            backupListLoading={backupListLoading}
+            downloadBackup={downloadBackup}
+          />
+        )}
       </div>
     </div>
   );
