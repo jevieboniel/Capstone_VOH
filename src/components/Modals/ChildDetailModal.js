@@ -615,7 +615,7 @@ const EditEducationSummaryModal = ({ initial, onClose, onSubmit, saving, error }
   };
 
   return (
-    <ModalShell title="Edit Education Summary" subtitle={null} onClose={onClose} maxWidth="max-w-2xl">
+    <ModalShell title="Edit Education Record Summary" subtitle={null} onClose={onClose} maxWidth="max-w-2xl">
       {error ? (
         <div className="mb-5 p-4 rounded-xl border border-red-200 dark:border-red-900/40 bg-red-50 dark:bg-red-950/20 text-red-800 dark:text-red-200">{error}</div>
       ) : null}

@@ -206,7 +206,7 @@ const Dashboard = () => {
   const [loadingHealth, setLoadingHealth] = useState(false);
   const [healthError, setHealthError] = useState("");
   const [healthStatusData, setHealthStatusData] = useState([]);
-  const [vaccinationData, setVaccinationData] = useState([]);
+  // ✅ Vaccinations removed
 
   // donations
   const [loadingDonations, setLoadingDonations] = useState(false);
@@ -218,10 +218,9 @@ const Dashboard = () => {
   const [loadingDevelopment, setLoadingDevelopment] = useState(false);
   const [developmentError, setDevelopmentError] = useState("");
   const [developmentProgressData, setDevelopmentProgressData] = useState([]);
-  // We keep your original “Dev vs Academic” chart shape but backend might not provide it.
   const [developmentVsAcademicData, setDevelopmentVsAcademicData] = useState([]);
 
-  // education (you have tables, but we didn’t implement backend route here; keep placeholders)
+  // education placeholders
   const [performanceTrendsData] = useState([
     { month: "Jan", avgScore: 72, passingRate: 85 },
     { month: "Feb", avgScore: 75, passingRate: 87 },
@@ -324,13 +323,12 @@ const Dashboard = () => {
 
       setHealthStatusData(colored);
 
-      // vaccinationCoverage currently empty (unless you add schema later)
-      setVaccinationData(Array.isArray(data.vaccinationCoverage) ? data.vaccinationCoverage : []);
+      // ✅ Vaccinations removed (no setVaccinationData)
     } catch (e) {
       console.error(e);
       setHealthError(e.message || "Failed to load health");
       setHealthStatusData([]);
-      setVaccinationData([]);
+      // ✅ Vaccinations removed
     } finally {
       setLoadingHealth(false);
     }
@@ -380,8 +378,6 @@ const Dashboard = () => {
       const dp = Array.isArray(data.developmentProgress) ? data.developmentProgress : [];
       setDevelopmentProgressData(dp);
 
-      // If you want the "Development vs Academic" chart, you can later compute it.
-      // For now, show a simple mapping from milestoneStatus if present.
       const ms = Array.isArray(data.milestoneStatus) ? data.milestoneStatus : [];
       const fallback = ms.map((r) => ({
         name: r.name,
@@ -402,7 +398,6 @@ const Dashboard = () => {
   // ---------- initial load ----------
   useEffect(() => {
     fetchOverview();
-    // load overview only at start (fast). other tabs load on demand.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -485,7 +480,7 @@ const Dashboard = () => {
             <div className="flex items-center justify-between gap-4">
               <div className="min-w-0">
                 <p className="text-xs sm:text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
-                  Health Alerts
+                  Health Records
                 </p>
                 <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">
                   {num(stats.healthChecksDue)}
@@ -609,7 +604,6 @@ const Dashboard = () => {
                           </span>
                         </div>
 
-                        {/* If you later fill alert.children from alert_recipients, this will show */}
                         {Array.isArray(alert.children) && alert.children.length > 0 && (
                           <div className="flex flex-wrap gap-1 mt-2">
                             {alert.children.slice(0, 3).map((child, index) => (
@@ -626,12 +620,7 @@ const Dashboard = () => {
                         )}
                       </div>
 
-                      {/* ✅ FUNCTIONAL VIEW BUTTON */}
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => navigate("/children/alerts")}
-                      >
+                      <Button size="sm" variant="outline" onClick={() => navigate("/children/alerts")}>
                         View
                       </Button>
                     </div>
@@ -685,19 +674,11 @@ const Dashboard = () => {
                 <div className="pt-4 border-t border-gray-100 dark:border-gray-800">
                   <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">Quick Actions</h4>
                   <div className="grid grid-cols-2 gap-2">
-                    <Button
-                      size="sm"
-                      className="bg-blue-600 hover:bg-blue-700"
-                      onClick={() => navigate("/children")}
-                    >
+                    <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={() => navigate("/children")}>
                       Add Child
                     </Button>
 
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => navigate("/children/reports")}
-                    >
+                    <Button size="sm" variant="outline" onClick={() => navigate("/children/reports")}>
                       Generate Report
                     </Button>
                   </div>
@@ -719,9 +700,7 @@ const Dashboard = () => {
             <CardContent>
               <div className="space-y-4">
                 {recentActivities.length === 0 ? (
-                  <div className="text-sm text-gray-600 dark:text-gray-400">
-                    No recent activities yet.
-                  </div>
+                  <div className="text-sm text-gray-600 dark:text-gray-400">No recent activities yet.</div>
                 ) : (
                   recentActivities.map((activity) => (
                     <div
@@ -820,7 +799,7 @@ const Dashboard = () => {
                 </CardContent>
               </Card>
 
-              {/* Summary Stats (simple derived from current data) */}
+              {/* Summary Stats */}
               <Card>
                 <CardHeader>
                   <CardTitle>Demographic Summary</CardTitle>
@@ -858,7 +837,6 @@ const Dashboard = () => {
       {/* -------------------- EDUCATION -------------------- */}
       {activeTab === "education" && (
         <div className="space-y-6">
-          {/* NOTE: these are still placeholders until you create /api/dashboard/education */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <ChartContainer title="Academic Performance Trends" icon={TrendingUp} height={300}>
               <LineChart
@@ -1012,9 +990,9 @@ const Dashboard = () => {
               <Button size="sm" variant="outline" onClick={fetchHealth}>Retry</Button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 gap-6">
               {/* Health Status Overview */}
-              <Card>
+              <Card className="lg:col-span-2">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <div className="rounded-xl bg-red-100 dark:bg-red-950/35 p-2">
@@ -1049,7 +1027,10 @@ const Dashboard = () => {
                   <div className="mt-6 grid grid-cols-2 gap-x-10 gap-y-4">
                     {healthPie.map((entry) => (
                       <div key={entry.status} className="flex items-center gap-3">
-                        <span className="inline-block h-3 w-3 rounded-full" style={{ backgroundColor: entry.color || "#3b82f6" }} />
+                        <span
+                          className="inline-block h-3 w-3 rounded-full"
+                          style={{ backgroundColor: entry.color || "#3b82f6" }}
+                        />
                         <span className="text-sm text-gray-700 dark:text-gray-300">
                           {entry.status}: {entry.count}
                         </span>
@@ -1059,17 +1040,7 @@ const Dashboard = () => {
                 </CardContent>
               </Card>
 
-              <ChartContainer title="Vaccination Coverage" icon={Heart} height={300}>
-                <BarChart
-                  data={vaccinationData}
-                  xKey="vaccine"
-                  showLegend
-                  bars={[
-                    { key: "completed", fill: "#10b981", name: "Completed", stackId: "a" },
-                    { key: "pending", fill: "#f59e0b", name: "Pending", stackId: "a" },
-                  ]}
-                />
-              </ChartContainer>
+              {/* ✅ Vaccination Coverage removed */}
 
               <Card className="lg:col-span-2">
                 <CardHeader>
@@ -1077,7 +1048,7 @@ const Dashboard = () => {
                 </CardHeader>
 
                 <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="p-4 bg-green-50 dark:bg-green-950/30 border border-green-100 dark:border-green-900 rounded-xl">
                       <p className="text-sm text-gray-600 dark:text-gray-400">Total Active Children</p>
                       <p className="text-2xl font-bold text-green-700 dark:text-green-300">{num(stats.totalChildren)}</p>
@@ -1095,20 +1066,7 @@ const Dashboard = () => {
                       <p className="text-2xl font-bold text-orange-700 dark:text-orange-300">{num(stats.healthChecksDue)}</p>
                       <p className="text-xs text-gray-600 dark:text-gray-400">Next 30 days</p>
                     </div>
-
-                    <div className="p-4 bg-red-50 dark:bg-red-950/35 border border-red-100 dark:border-red-900 rounded-xl">
-                      <p className="text-sm text-gray-600 dark:text-gray-400">Vaccinations</p>
-                      <p className="text-2xl font-bold text-red-700 dark:text-red-300">{vaccinationData.length || 0}</p>
-                      <p className="text-xs text-gray-600 dark:text-gray-400">Rows loaded</p>
-                    </div>
                   </div>
-
-                  {vaccinationData.length === 0 && (
-                    <div className="mt-4 text-xs text-gray-500 dark:text-gray-400">
-                      Vaccination chart is empty because your current database schema doesn’t include vaccine fields.
-                      If you add a <code>vaccinations</code> table, we can fill this automatically.
-                    </div>
-                  )}
                 </CardContent>
               </Card>
             </div>
