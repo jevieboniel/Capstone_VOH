@@ -67,16 +67,21 @@ const io = new Server(server, {
 app.set("io", io);
 
 const JWT_SECRET =
-  process.env.JWT_SECRET || process.env.SECRET_KEY || process.env.JWT_KEY || "dev_secret_change_me";
+  process.env.JWT_SECRET ||
+  process.env.SECRET_KEY ||
+  process.env.JWT_KEY ||
+  "dev_secret_change_me";
+
+// helper: normalize roles to lowercase to avoid Admin vs admin mismatch
+const normRole = (r) => String(r || "").trim().toLowerCase();
 
 io.use((socket, next) => {
   try {
-    // Expect token in: socket.handshake.auth.token
     const token = socket.handshake.auth?.token;
     if (!token) return next(new Error("No token"));
 
     const decoded = jwt.verify(token, JWT_SECRET);
-    socket.user = decoded; // { id, role, ... } based on your login payload
+    socket.user = decoded; // { id, role, name, email }
     return next();
   } catch (e) {
     return next(new Error("Unauthorized"));
@@ -85,16 +90,15 @@ io.use((socket, next) => {
 
 io.on("connection", (socket) => {
   const id = socket.user?.id;
-  const role = socket.user?.role;
+  const role = normRole(socket.user?.role);
 
   if (id) socket.join(`user:${id}`);
   if (role) socket.join(`role:${role}`);
 
-  // optional: acknowledge connection
   socket.emit("socket:ready", {
     ok: true,
     userId: id,
-    role,
+    role, // normalized role
   });
 
   socket.on("disconnect", () => {});

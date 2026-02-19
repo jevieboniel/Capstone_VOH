@@ -17,11 +17,13 @@ const paymongo = axios.create({
   headers: { "Content-Type": "application/json" },
 });
 
+// ✅ who should receive donation alerts?
+const DONATION_ROLES = ["admin", "staff", "social worker", "house parent"];
+
 /* -------------------------------------------
    ✅ PUBLIC CHECKOUT ROUTES (NO TOKEN REQUIRED)
 -------------------------------------------- */
 
-// ✅ Create PayMongo payment intent (Pending record in DB)
 router.post("/create-intent", async (req, res) => {
   try {
     const {
@@ -37,7 +39,6 @@ router.post("/create-intent", async (req, res) => {
       return res.status(400).json({ message: "Amount must be greater than 0" });
     }
 
-    // Optional safety: prevent crazy amounts (adjust if you want)
     if (Number(amount) > 500000) {
       return res.status(400).json({ message: "Amount too large" });
     }
@@ -64,14 +65,13 @@ router.post("/create-intent", async (req, res) => {
       [pi.id, Number(amount), currency, purpose, type, donor_name, donor_email]
     );
 
-    // ✅ Audit should not crash public checkout if req.user doesn't exist
     try {
       await logAudit(req, {
         action: "CREATE",
         module: "Donation Management",
         resource: "Donation",
         resourceId: pi.id,
-        details: `Created donation intent: PHP ${amount} (${type})`,
+        details: `Created donation intent: ${currency} ${amount} (${type})`,
       });
     } catch (e) {
       console.error("Audit log failed (CREATE donation intent):", e.message);
@@ -89,7 +89,7 @@ router.post("/create-intent", async (req, res) => {
         )} for "${purpose}".`,
         severity: "info",
       },
-      { role: "Admin" }
+      { roles: DONATION_ROLES } // ✅ FIXED (not Admin only)
     );
 
     res.json({
@@ -103,7 +103,6 @@ router.post("/create-intent", async (req, res) => {
   }
 });
 
-// ✅ Create Payment Method (backend calls PayMongo) - PUBLIC
 router.post("/create-payment-method", async (req, res) => {
   try {
     const { method, billing, card } = req.body;
@@ -117,7 +116,6 @@ router.post("/create-payment-method", async (req, res) => {
       },
     };
 
-    // ✅ For CARD, PayMongo needs "details.card_number"
     if (method === "card") {
       if (!card?.number || !card?.exp_month || !card?.exp_year || !card?.cvc) {
         return res.status(400).json({ message: "Missing card details" });
@@ -136,14 +134,11 @@ router.post("/create-payment-method", async (req, res) => {
   } catch (err) {
     console.error("create-payment-method:", err.response?.data || err.message);
     res.status(500).json({
-      message:
-        err.response?.data?.errors?.[0]?.detail ||
-        "Failed to create payment method",
+      message: err.response?.data?.errors?.[0]?.detail || "Failed to create payment method",
     });
   }
 });
 
-// ✅ Attach Payment Method to Payment Intent - PUBLIC
 router.post("/attach-payment-method", async (req, res) => {
   try {
     const { payment_intent_id, payment_method_id } = req.body;
@@ -152,7 +147,6 @@ router.post("/attach-payment-method", async (req, res) => {
       data: {
         attributes: {
           payment_method: payment_method_id,
-          // ✅ set your real domain in production
           return_url: "http://localhost:3000/donate-success",
         },
       },
@@ -171,7 +165,6 @@ router.post("/attach-payment-method", async (req, res) => {
 
 const adminOnly = [verifyToken, requirePermission(DON_PERM)];
 
-// ✅ List donations (supports search query q)
 router.get("/", ...adminOnly, async (req, res) => {
   try {
     const q = (req.query.q || "").toLowerCase();
@@ -191,7 +184,6 @@ router.get("/", ...adminOnly, async (req, res) => {
   }
 });
 
-// ✅ Dashboard metrics
 router.get("/metrics", ...adminOnly, async (_req, res) => {
   try {
     const [[totals]] = await pool.query(
@@ -256,7 +248,6 @@ router.get("/metrics", ...adminOnly, async (_req, res) => {
   }
 });
 
-// ✅ CSV export (admin only)
 router.get("/export.csv", ...adminOnly, async (req, res) => {
   try {
     const q = (req.query.q || "").toLowerCase();

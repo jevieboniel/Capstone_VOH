@@ -212,7 +212,7 @@ router.post("/create", verifyToken, requireAdmin, async (req, res) => {
         message: `Database backup created: ${filename}`,
         severity: "info",
       },
-      { role: "Admin" }
+      { roles: ["admin", "staff"] }
     );
 
     res.json({ success: true, message: "Backup created", filename });
@@ -238,7 +238,7 @@ router.post("/create", verifyToken, requireAdmin, async (req, res) => {
         message: `Backup failed: ${err.message}`,
         severity: "warning",
       },
-      { role: "Admin" }
+      { roles: ["admin", "staff"] }
     );
 
     res.status(500).json({ success: false, message: "Backup failed", error: err.message });
@@ -298,7 +298,7 @@ router.post("/restore", verifyToken, requireAdmin, upload.single("backup"), asyn
         message: `Database restored successfully. Saved file: ${savedName}`,
         severity: "warning",
       },
-      { role: "Admin" }
+      { roles: ["admin"] }
     );
 
     res.json({ success: true, message: "Database restored successfully.", savedName });
@@ -325,7 +325,7 @@ router.post("/restore", verifyToken, requireAdmin, upload.single("backup"), asyn
         message: `Restore failed: ${err.message}`,
         severity: "warning",
       },
-      { role: "Admin" }
+      { roles: ["admin"] }
     );
 
     res.status(500).json({ success: false, message: "Restore failed", error: err.message });

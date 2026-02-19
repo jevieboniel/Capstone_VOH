@@ -134,7 +134,7 @@ router.post("/", verifyToken, requirePermission(DEV_PERM), async (req, res) => {
         message: `Milestone "${title}" was created for childId=${childId}.`,
         severity: "info",
       },
-      { role: "Admin" }
+      { roles: ["admin", "staff", "social worker", "house parent"] }
     );
 
     await conn.commit();
@@ -215,7 +215,7 @@ router.put("/:id", verifyToken, requirePermission(DEV_PERM), async (req, res) =>
         message: `Milestone "${milestone}" was updated (ID: ${id}).`,
         severity: "info",
       },
-      { role: "Admin" }
+      { roles: ["admin", "staff", "social worker", "house parent"] }
     );
 
     await conn.commit();

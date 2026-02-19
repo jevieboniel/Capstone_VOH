@@ -5,6 +5,17 @@ import { useAuth } from "./AuthContext";
 
 const NotificationsContext = createContext(null);
 
+// ✅ helper: get token from common keys (admin + other roles)
+function getAnyToken() {
+  return (
+    localStorage.getItem("admin_token") ||
+    localStorage.getItem("token") ||
+    localStorage.getItem("auth_token") ||
+    localStorage.getItem("user_token") ||
+    null
+  );
+}
+
 export function NotificationsProvider({ children }) {
   const { authFetch, user } = useAuth();
   const socketRef = useRef(null);
@@ -20,7 +31,7 @@ export function NotificationsProvider({ children }) {
 
   const unread = useMemo(() => items.filter((n) => !n.read).length, [items]);
 
-  // Load enabled notification types from Settings (notifState)
+  // ✅ Load enabled notification types from Settings (notifState)
   useEffect(() => {
     let mounted = true;
 
@@ -28,6 +39,7 @@ export function NotificationsProvider({ children }) {
       try {
         const res = await authFetch("/settings", { method: "GET" });
         const data = await res.json();
+
         if (!mounted) return;
 
         const set = new Set(
@@ -37,7 +49,7 @@ export function NotificationsProvider({ children }) {
         );
 
         setEnabledTypes(set);
-      } catch {
+      } catch (e) {
         // ignore
       }
     })();
@@ -47,20 +59,38 @@ export function NotificationsProvider({ children }) {
     };
   }, [authFetch]);
 
-  // Connect socket once logged in
+  // ✅ Connect socket once logged in (ALL ROLES)
   useEffect(() => {
-    const token = localStorage.getItem("admin_token");
-    if (!token || !user) return;
+    const token = getAnyToken();
+    if (!token || !user?.id) return;
+
+    // prevent double connection
+    if (socketRef.current) {
+      try {
+        socketRef.current.disconnect();
+      } catch {}
+      socketRef.current = null;
+    }
 
     const s = createSocket(token);
     socketRef.current = s;
+
+    s.on("connect", () => {
+      // optional debug:
+      // console.log("✅ socket connected", s.id, user?.role);
+    });
+
+    s.on("socket:ready", (info) => {
+      // optional debug:
+      // console.log("✅ socket ready:", info);
+    });
 
     s.on("connect_error", (err) => {
       console.error("Socket error:", err?.message || err);
     });
 
     s.on("notification:new", (notif) => {
-      // Extra safety: if Settings disabled in UI, ignore on client too
+      // Client safety: ignore if disabled in Settings UI
       if (enabledTypes.size && notif?.type && !enabledTypes.has(notif.type)) return;
 
       setItems((prev) => {
@@ -71,10 +101,15 @@ export function NotificationsProvider({ children }) {
     });
 
     return () => {
-      s.disconnect();
+      try {
+        s.off("connect_error");
+        s.off("notification:new");
+        s.off("socket:ready");
+        s.disconnect();
+      } catch {}
       socketRef.current = null;
     };
-  }, [user, enabledTypes]);
+  }, [user?.id, user?.role, enabledTypes]);
 
   const markAllRead = () => {
     setItems((prev) => {
@@ -89,10 +124,7 @@ export function NotificationsProvider({ children }) {
     localStorage.setItem("rt_notifications", "[]");
   };
 
-  const value = useMemo(
-    () => ({ items, unread, markAllRead, clearAll }),
-    [items, unread]
-  );
+  const value = useMemo(() => ({ items, unread, markAllRead, clearAll }), [items, unread]);
 
   return <NotificationsContext.Provider value={value}>{children}</NotificationsContext.Provider>;
 }

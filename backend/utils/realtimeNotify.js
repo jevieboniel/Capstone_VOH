@@ -1,6 +1,8 @@
 // backend/utils/realtimeNotify.js
 const db = require("../db");
 
+const normRole = (r) => String(r || "").trim().toLowerCase();
+
 /**
  * Only emits if enabled in notification_settings table.
  *
@@ -11,8 +13,9 @@ const db = require("../db");
  * @param {string} payload.message
  * @param {string} [payload.severity]  // "info" | "warning" | "error"
  * @param {Object} [target]
- * @param {string} [target.role]       // emits to room: role:<role>
- * @param {number|string} [target.userId] // emits to room: user:<id>
+ * @param {string} [target.role]           // emits to room: role:<role>
+ * @param {string[]} [target.roles]        // emits to MANY roles
+ * @param {number|string} [target.userId]  // emits to room: user:<id>
  */
 async function emitIfEnabled(io, payload, target = {}) {
   try {
@@ -35,11 +38,32 @@ async function emitIfEnabled(io, payload, target = {}) {
       createdAt: new Date().toISOString(),
     };
 
-    if (target.userId) io.to(`user:${target.userId}`).emit("notification:new", data);
-    else if (target.role) io.to(`role:${target.role}`).emit("notification:new", data);
-    else io.emit("notification:new", data);
+    // ✅ Single user
+    if (target.userId) {
+      io.to(`user:${target.userId}`).emit("notification:new", data);
+      return;
+    }
+
+    // ✅ Multiple roles
+    if (Array.isArray(target.roles) && target.roles.length) {
+      for (const r of target.roles) {
+        const rr = normRole(r);
+        if (!rr) continue;
+        io.to(`role:${rr}`).emit("notification:new", data);
+      }
+      return;
+    }
+
+    // ✅ Single role
+    if (target.role) {
+      const rr = normRole(target.role);
+      if (rr) io.to(`role:${rr}`).emit("notification:new", data);
+      return;
+    }
+
+    // ✅ Everyone
+    io.emit("notification:new", data);
   } catch (e) {
-    // never crash main flow
     console.error("emitIfEnabled error:", e?.message || e);
   }
 }

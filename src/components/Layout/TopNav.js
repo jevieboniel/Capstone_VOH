@@ -50,7 +50,6 @@ const TopNav = ({ onMenuClick }) => {
       <div className="bg-white/80 dark:bg-gray-950/70 backdrop-blur-xl border-b border-slate-200 dark:border-gray-800 transition-colors duration-300">
         <div className="px-2 lg:px-6 py-2">
           <div className="flex items-center justify-between gap-3">
-            
             {/* Left */}
             <div className="flex items-center gap-3 min-w-0">
               <button
@@ -61,8 +60,18 @@ const TopNav = ({ onMenuClick }) => {
                            focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/60"
                 aria-label="Open menu"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 6h16M4 12h16M4 18h16"
+                  />
                 </svg>
               </button>
 
@@ -79,7 +88,6 @@ const TopNav = ({ onMenuClick }) => {
 
             {/* Right */}
             <div className="flex items-center gap-2 lg:gap-3">
-              
               {/* Notifications */}
               <div className="relative" ref={notifRef}>
                 <button
@@ -90,7 +98,12 @@ const TopNav = ({ onMenuClick }) => {
                           focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/60"
                   aria-label="Notifications"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -107,15 +120,29 @@ const TopNav = ({ onMenuClick }) => {
                 </button>
 
                 {notifOpen && (
-                  <div className="absolute right-0 mt-2 w-96 rounded-2xl border border-slate-200 dark:border-gray-800
-                              bg-white dark:bg-gray-900 shadow-xl overflow-hidden z-50">
+                  <div
+                    className="absolute right-0 mt-2 w-96 rounded-2xl border border-slate-200 dark:border-gray-800
+                              bg-white dark:bg-gray-900 shadow-xl overflow-hidden z-50"
+                  >
                     <div className="px-4 py-3 border-b border-slate-100 dark:border-gray-800 flex items-center justify-between">
-                      <p className="text-sm font-semibold">Notifications</p>
+                      <p className="text-sm font-semibold text-slate-900 dark:text-gray-100">
+                        Notifications
+                      </p>
                       <div className="flex gap-2">
-                        <button onClick={markAllRead} className="text-xs px-2 py-1 rounded-lg hover:bg-slate-50 dark:hover:bg-gray-800">
+                        <button
+                          onClick={markAllRead}
+                          className="text-xs px-2 py-1 rounded-lg
+                                     text-slate-700 dark:text-gray-200
+                                     hover:bg-slate-50 dark:hover:bg-gray-800"
+                        >
                           Mark all read
                         </button>
-                        <button onClick={clearAll} className="text-xs px-2 py-1 rounded-lg hover:bg-slate-50 dark:hover:bg-gray-800">
+                        <button
+                          onClick={clearAll}
+                          className="text-xs px-2 py-1 rounded-lg
+                                     text-slate-700 dark:text-gray-200
+                                     hover:bg-slate-50 dark:hover:bg-gray-800"
+                        >
                           Clear
                         </button>
                       </div>
@@ -128,12 +155,17 @@ const TopNav = ({ onMenuClick }) => {
                         </p>
                       ) : (
                         items.slice(0, 20).map((n) => (
-                          <div key={n.id} className="px-4 py-3 border-b border-slate-100 dark:border-gray-800">
-                            <p className="text-sm font-semibold">{n.title}</p>
-                            <p className="text-xs text-slate-500 mt-1">
+                          <div
+                            key={n.id}
+                            className="px-4 py-3 border-b border-slate-100 dark:border-gray-800"
+                          >
+                            <p className="text-sm font-semibold text-slate-900 dark:text-gray-100">
+                              {n.title}
+                            </p>
+                            <p className="text-xs text-slate-500 dark:text-gray-400 mt-1">
                               {n.type} • {new Date(n.createdAt).toLocaleString()}
                             </p>
-                            <p className="text-sm mt-2 whitespace-pre-line">
+                            <p className="text-sm mt-2 whitespace-pre-line text-slate-800 dark:text-gray-200">
                               {n.message}
                             </p>
                           </div>
@@ -157,23 +189,27 @@ const TopNav = ({ onMenuClick }) => {
                   </div>
 
                   <div className="hidden lg:block text-left leading-tight">
-                    <p className="text-sm font-semibold truncate">
+                    {/* ✅ FIXED: add text colors for dark mode */}
+                    <p className="text-sm font-semibold truncate text-slate-900 dark:text-gray-100">
                       {user?.name || "Admin"}
                     </p>
-                    <p className="text-xs text-slate-500 truncate">
+                    <p className="text-xs truncate text-slate-500 dark:text-gray-400">
                       {user?.email || "Administrator"}
                     </p>
                   </div>
                 </button>
 
                 {isProfileOpen && (
-                  <div className="absolute right-0 mt-2 w-56 rounded-2xl border border-slate-200 dark:border-gray-800
-                    bg-white dark:bg-gray-900 shadow-xl overflow-hidden z-50">
+                  <div
+                    className="absolute right-0 mt-2 w-56 rounded-2xl border border-slate-200 dark:border-gray-800
+                    bg-white dark:bg-gray-900 shadow-xl overflow-hidden z-50"
+                  >
                     <div className="px-4 py-3 border-b border-slate-100 dark:border-gray-800">
-                      <p className="text-sm font-semibold truncate">
+                      {/* ✅ FIXED: add text colors for dark mode */}
+                      <p className="text-sm font-semibold truncate text-slate-900 dark:text-gray-100">
                         {user?.name || "Admin"}
                       </p>
-                      <p className="text-xs text-slate-500 truncate">
+                      <p className="text-xs truncate text-slate-500 dark:text-gray-400">
                         {user?.email || "Administrator"}
                       </p>
                     </div>
@@ -182,7 +218,9 @@ const TopNav = ({ onMenuClick }) => {
                       {profileRoute && (
                         <Link
                           to={profileRoute.path}
-                          className="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-slate-50 dark:hover:bg-gray-800"
+                          className="flex items-center gap-2 px-4 py-2.5 text-sm
+                                     text-slate-700 dark:text-gray-200
+                                     hover:bg-slate-50 dark:hover:bg-gray-800"
                           onClick={() => setIsProfileOpen(false)}
                         >
                           Profile Settings
@@ -194,7 +232,9 @@ const TopNav = ({ onMenuClick }) => {
                           logout();
                           setIsProfileOpen(false);
                         }}
-                        className="w-full flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-slate-50 dark:hover:bg-gray-800"
+                        className="w-full flex items-center gap-2 px-4 py-2.5 text-sm
+                                   text-slate-700 dark:text-gray-200
+                                   hover:bg-slate-50 dark:hover:bg-gray-800"
                       >
                         Sign Out
                       </button>
@@ -202,7 +242,6 @@ const TopNav = ({ onMenuClick }) => {
                   </div>
                 )}
               </div>
-
             </div>
           </div>
         </div>

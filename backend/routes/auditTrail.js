@@ -6,6 +6,10 @@ const { logAudit } = require("../utils/audit");
 
 const router = express.Router();
 
+function isAdminRole(req) {
+  return String(req.user?.role || "").toLowerCase() === "admin";
+}
+
 /**
  * GET /api/audit-trail
  * query:
@@ -13,8 +17,11 @@ const router = express.Router();
  *  - module
  *  - action
  *  - limit (default 200)
+ *
+ * ✅ Admin: sees all logs
+ * ✅ Other roles: sees ONLY their own logs
  */
-router.get("/", verifyToken, requireAdmin, async (req, res) => {
+router.get("/", verifyToken, async (req, res) => {
   try {
     const q = String(req.query.q || "").trim().toLowerCase();
     const moduleFilter = String(req.query.module || "all");
@@ -23,6 +30,12 @@ router.get("/", verifyToken, requireAdmin, async (req, res) => {
 
     const where = [];
     const params = [];
+
+    // ✅ Non-admin: only own logs
+    if (!isAdminRole(req)) {
+      where.push("user_id = ?");
+      params.push(req.user.id);
+    }
 
     if (q) {
       where.push(`(
@@ -56,24 +69,36 @@ router.get("/", verifyToken, requireAdmin, async (req, res) => {
 
     const [rows] = await pool.query(sql, params);
 
-    // dashboard counters
+    // ✅ stats should match what user can see
+    const whereSql = where.length ? "WHERE " + where.join(" AND ") : "";
+    const baseParams = params.slice(0, params.length - 1); // remove LIMIT param
+
     const [[todayRow]] = await pool.query(
-      `SELECT COUNT(*) AS todayCount
-       FROM audit_trail
-       WHERE DATE(created_at) = CURDATE()`
+      `
+      SELECT COUNT(*) AS todayCount
+      FROM audit_trail
+      ${whereSql ? whereSql + " AND" : "WHERE"} DATE(created_at) = CURDATE()
+      `,
+      baseParams
     );
 
     const [[criticalRow]] = await pool.query(
-      `SELECT COUNT(*) AS criticalCount
-       FROM audit_trail
-       WHERE severity IN ('warning','error','critical')
-         AND DATE(created_at) = CURDATE()`
+      `
+      SELECT COUNT(*) AS criticalCount
+      FROM audit_trail
+      ${whereSql ? whereSql + " AND" : "WHERE"} severity IN ('warning','error','critical')
+        AND DATE(created_at) = CURDATE()
+      `,
+      baseParams
     );
 
     const [[activeUsersRow]] = await pool.query(
-      `SELECT COUNT(DISTINCT user_id) AS activeUsers
-       FROM audit_trail
-       WHERE DATE(created_at) = CURDATE()`
+      `
+      SELECT COUNT(DISTINCT user_id) AS activeUsers
+      FROM audit_trail
+      ${whereSql ? whereSql + " AND" : "WHERE"} DATE(created_at) = CURDATE()
+      `,
+      baseParams
     );
 
     res.json({
@@ -93,6 +118,7 @@ router.get("/", verifyToken, requireAdmin, async (req, res) => {
 
 /**
  * GET /api/audit-trail/export.csv
+ * ✅ Keep admin-only (recommended)
  */
 router.get("/export.csv", verifyToken, requireAdmin, async (req, res) => {
   try {
@@ -166,7 +192,6 @@ router.get("/export.csv", verifyToken, requireAdmin, async (req, res) => {
         )
         .join("\n");
 
-    // log export
     await logAudit(req, {
       action: "EXPORT",
       module: "Audit Trail",

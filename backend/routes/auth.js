@@ -65,7 +65,7 @@ router.post("/login", async (req, res) => {
         message: `${user.name} (${user.role}) logged in.`,
         severity: "info",
       },
-      { role: "Admin" }
+      { roles: ["admin", "staff", "social worker", "house parent"] }
     );
 
     return res.json({
