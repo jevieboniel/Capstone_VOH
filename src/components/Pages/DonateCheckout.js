@@ -341,9 +341,6 @@ export default function DonateCheckout() {
                       </div>
                     </div>
 
-                    <div className="text-xs text-gray-700 dark:text-gray-200">
-                      Tip: Use your PayMongo test card values.
-                    </div>
                   </div>
                 </div>
               </div>
