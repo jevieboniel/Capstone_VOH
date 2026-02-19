@@ -55,14 +55,13 @@ const Children = () => {
         });
 
         const data = await res.json().catch(() => ({}));
-        if (!res.ok) return console.error("Fetch children failed:", data);
+        if (!res.ok || data?.success === false) return console.error("Fetch children failed:", data);
 
         const list = Array.isArray(data) ? data : data.children || [];
         const normalized = list.map((c) => ({
           ...c,
           image: c.image || "https://i.pravatar.cc/100",
           photoUrl: c.photoUrl || c.photo_url || c.photo || null,
-          // keep reintegration if API returns it
           reintegration: c.reintegration || c.reintegration_details || null,
         }));
 
@@ -101,7 +100,7 @@ const Children = () => {
       });
 
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) return console.error("Add child failed:", data);
+      if (!res.ok || data?.success === false) return console.error("Add child failed:", data);
 
       const created = data.child || data;
       const normalized = {
@@ -118,7 +117,7 @@ const Children = () => {
     }
   };
 
-  // Update child
+  // Update child (profile edit)
   const updateChild = async (updatedChild) => {
     try {
       const id = updatedChild.id;
@@ -126,7 +125,8 @@ const Children = () => {
 
       Object.entries(updatedChild).forEach(([key, value]) => {
         if (value === undefined || value === null) return;
-        if (key === "photo") return; // handled below
+        if (key === "photo") return;
+        if (key === "reintegration") return; // reintegration uses separate endpoint
         formData.append(key, value);
       });
 
@@ -139,14 +139,13 @@ const Children = () => {
       });
 
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) return console.error("Update child failed:", data);
+      if (!res.ok || data?.success === false) return console.error("Update child failed:", data);
 
       const saved = data.child || data;
       const normalized = {
         ...saved,
         image: saved.image || "https://i.pravatar.cc/100",
-        photoUrl:
-          saved.photoUrl || saved.photo_url || saved.photo || updatedChild.photoUrl || null,
+        photoUrl: saved.photoUrl || saved.photo_url || saved.photo || updatedChild.photoUrl || null,
         reintegration: saved.reintegration || saved.reintegration_details || updatedChild.reintegration || null,
       };
 
@@ -154,6 +153,36 @@ const Children = () => {
       setSelectedChild((prev) => (prev?.id === normalized.id ? normalized : prev));
     } catch (err) {
       console.error("Update child error:", err);
+    }
+  };
+
+  // ✅ Save reintegration to DB
+  const saveReintegration = async (childId, reintegrationPayload) => {
+    try {
+      const res = await fetch(`${API_URL}/${childId}/reintegration`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(reintegrationPayload),
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || data?.success === false) return console.error("Save reintegration failed:", data);
+
+      const saved = data.child || data;
+      const normalized = {
+        ...saved,
+        image: saved.image || "https://i.pravatar.cc/100",
+        photoUrl: saved.photoUrl || saved.photo_url || saved.photo || null,
+        reintegration: saved.reintegration || saved.reintegration_details || null,
+      };
+
+      setChildren((prev) => prev.map((c) => (c.id === normalized.id ? normalized : c)));
+      setSelectedChild((prev) => (prev?.id === normalized.id ? normalized : prev));
+    } catch (err) {
+      console.error("Save reintegration error:", err);
     }
   };
 
@@ -217,7 +246,7 @@ const Children = () => {
           />
           <input
             type="text"
-            placeholder="🔍 Search children by name, house, or education level..."
+            placeholder="Search children by name, house, or education level..."
             className="w-full pl-11 pr-4 h-12 border border-gray-300 dark:border-gray-700 rounded-xl
                       bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100
                       placeholder:text-gray-400 dark:placeholder:text-gray-500
@@ -306,16 +335,12 @@ const Children = () => {
                   </span>
                 )}
                 {child.healthStatus && (
-                  <span
-                    className={`text-xs px-3 py-1 rounded-full border ${getHealthStatusColor(child.healthStatus)}`}
-                  >
+                  <span className={`text-xs px-3 py-1 rounded-full border ${getHealthStatusColor(child.healthStatus)}`}>
                     {child.healthStatus}
                   </span>
                 )}
                 {child.adoptionStatus && (
-                  <span
-                    className={`text-xs px-3 py-1 rounded-full border ${getAdoptionStatusColor(child.adoptionStatus)}`}
-                  >
+                  <span className={`text-xs px-3 py-1 rounded-full border ${getAdoptionStatusColor(child.adoptionStatus)}`}>
                     {child.adoptionStatus}
                   </span>
                 )}
@@ -343,7 +368,6 @@ const Children = () => {
                   <span>Health: {child.healthStatus || "—"}</span>
                 </p>
 
-                {/* ✅ Reintegration row like your screenshot */}
                 {isReintegrated && (
                   <p className="flex items-center gap-2">
                     <Home size={14} className="text-green-600 dark:text-green-400" />
@@ -372,7 +396,6 @@ const Children = () => {
           child={selectedChild}
           onClose={() => setSelectedChild(null)}
           onEdit={(c) => setEditChild(c)}
-          // when user clicks "View Development" inside ChildDetailModal
           onViewDevelopment={(c) => setDevChild(withFullName(c))}
         />
       )}
@@ -383,7 +406,10 @@ const Children = () => {
         <ReintegrationModal
           child={reintegrationChild}
           onClose={() => setReintegrationChild(null)}
-          onComplete={updateChild}
+          onComplete={(payload) => {
+            // ✅ modal sends { reintegration: {...} }
+            return saveReintegration(reintegrationChild.id, payload.reintegration);
+          }}
         />
       )}
 

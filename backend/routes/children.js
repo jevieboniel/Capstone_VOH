@@ -32,6 +32,12 @@ const BASE_URL = process.env.BASE_URL || "http://localhost:5000";
 
 /* -------------------- helpers -------------------- */
 const toISODate = (d) => (d ? new Date(d).toISOString().slice(0, 10) : "");
+const isReintegratedPair = (status, adoptionStatus) => {
+  const s = String(status || "").toLowerCase();
+  const a = String(adoptionStatus || "").toLowerCase();
+  return s === "reintegrated" && a === "adopted";
+};
+
 
 /* -------------------- GET all children -------------------- */
 router.get("/", verifyToken, requirePermission(CHILD_PERM), async (_req, res) => {
@@ -172,39 +178,55 @@ router.post("/", verifyToken, upload.single("photo"), async (req, res) => {
 });
 
 /* -------------------- PUT edit child (DON'T CLEAR PHOTO) -------------------- */
+/* -------------------- PUT edit child (DON'T CLEAR PHOTO) -------------------- */
 router.put("/:id", verifyToken, upload.single("photo"), async (req, res) => {
   try {
     const { id } = req.params;
     const body = req.body;
 
-    const [existingRows] = await pool.query("SELECT photo_url FROM children WHERE id=?", [id]);
+    const [existingRows] = await pool.query("SELECT photo_url, reintegration FROM children WHERE id=?", [id]);
     if (!existingRows.length) {
       return res.status(404).json({ success: false, error: "Child not found" });
     }
 
     const existingPhotoUrl = existingRows[0].photo_url || null;
+    const existingReintegration = existingRows[0].reintegration || null;
+
     const photoUrl = req.file ? `/uploads/${req.file.filename}` : existingPhotoUrl;
+
+    const nextStatus = body.status || "Active";
+    const nextAdoptionStatus = body.adoptionStatus || "Not Available for Adoption";
+
+    // ✅ BACKEND RULE:
+    // If NOT (Reintegrated + Adopted) => reintegration must be cleared
+    const keepReintegration = isReintegratedPair(nextStatus, nextAdoptionStatus);
+
+    // If frontend sent reintegration but status/adoption doesn't match, ignore it
+    const reintegrationValue = keepReintegration
+      ? (body.reintegration ? JSON.stringify(body.reintegration) : existingReintegration)
+      : null;
 
     await pool.query(
       `UPDATE children SET
-            first_name=?,
-            middle_name=?,
-            last_name=?,
-            age=?,
-            gender=?,
-            admission_date=?,
-            house=?,
-            house_parent=?,
-            health_status=?,
-            education_level=?,
-            emergency_contact=?,
-            case_type=?,
-            status=?,
-            adoption_status=?,
-            notes=?,
-            last_checkup=?,
-            photo_url=?
-        WHERE id=?`,
+          first_name=?,
+          middle_name=?,
+          last_name=?,
+          age=?,
+          gender=?,
+          admission_date=?,
+          house=?,
+          house_parent=?,
+          health_status=?,
+          education_level=?,
+          emergency_contact=?,
+          case_type=?,
+          status=?,
+          adoption_status=?,
+          notes=?,
+          last_checkup=?,
+          photo_url=?,
+          reintegration=?
+      WHERE id=?`,
       [
         body.firstName,
         body.middleName || null,
@@ -218,11 +240,12 @@ router.put("/:id", verifyToken, upload.single("photo"), async (req, res) => {
         body.educationLevel || null,
         body.emergencyContact || null,
         body.caseType || null,
-        body.status || "Active",
-        body.adoptionStatus || "Not Available for Adoption",
+        nextStatus,
+        nextAdoptionStatus,
         body.notes || null,
         body.lastCheckup || null,
         photoUrl,
+        reintegrationValue, // ✅ auto cleared when not reintegrated+adopted
         id,
       ]
     );
@@ -272,6 +295,7 @@ router.put("/:id", verifyToken, upload.single("photo"), async (req, res) => {
     return res.status(500).json({ success: false, error: "Server error" });
   }
 });
+
 
 /* -------------------- PUT reintegration -------------------- */
 router.put("/:id/reintegration", verifyToken, async (req, res) => {

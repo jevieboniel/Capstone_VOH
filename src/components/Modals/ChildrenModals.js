@@ -4,8 +4,9 @@
     import EditProfileModal from "./EditProfileModal";
     import ChildDetailModal from "./ChildDetailModal";
     import ReintegrationModal from "./ReintegrationModal";
+    import ReintegrationDetailsModal from "./ReintegrationDetailsModal";
 
-    export { EditProfileModal, ChildDetailModal, ReintegrationModal };
+    export { EditProfileModal, ChildDetailModal, ReintegrationModal, ReintegrationDetailsModal };
 
     /* ----------------- Badge Color Helpers ----------------- */
     /* ✅ Added dark variants so badges look good in dark mode */
@@ -176,23 +177,23 @@
         <form onSubmit={handleSubmit} className="space-y-5">
             {/* Names */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Field label="First Name *">
+            <Field label="First Name">
                 <Input name="firstName" value={formData.firstName} onChange={handleChange} required />
             </Field>
             <Field label="Middle Name">
                 <Input name="middleName" value={formData.middleName} onChange={handleChange} />
             </Field>
-            <Field label="Last Name *">
+            <Field label="Last Name">
                 <Input name="lastName" value={formData.lastName} onChange={handleChange} required />
             </Field>
             </div>
 
             {/* Age + Gender */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Field label="Age *">
+            <Field label="Age">
                 <Input type="number" name="age" value={formData.age} onChange={handleChange} required />
             </Field>
-            <Field label="Gender *">
+            <Field label="Gender">
                 <Select name="gender" value={formData.gender} onChange={handleChange} required>
                 <option value="">Select gender</option>
                 <option>Male</option>
@@ -207,23 +208,27 @@
                 <Input type="date" name="admissionDate" value={formData.admissionDate} onChange={handleChange} />
             </Field>
             <Field label="Last Check-up">
-                <Input name="lastCheckup" placeholder="MM/DD/YYYY" value={formData.lastCheckup} onChange={handleChange} />
-            </Field>
+                <Input
+                    type="date"
+                    name="lastCheckup"
+                    value={formData.lastCheckup}
+                    onChange={handleChange}
+                />
+                </Field>
             </div>
-
             {/* House + House Parent (TEXT INPUTS) */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Field label="House *">
+                <Field label="Home">
                     <Input
                     name="house"
                     value={formData.house}
                     onChange={handleChange}
-                    placeholder="Enter house (e.g., Sunshine House)"
+                    placeholder="Enter home (e.g., home 1)"
                     required
                     />
                 </Field>
 
-                <Field label="House Parent *">
+                <Field label="House Parent">
                     <Input
                     name="houseParent"
                     value={formData.houseParent}
@@ -245,7 +250,7 @@
                 </Select>
             </Field>
 
-            <Field label="Education Level *">
+            <Field label="Education Level">
                 <Input
                 name="educationLevel"
                 value={formData.educationLevel}
@@ -262,7 +267,7 @@
             </Field>
 
             {/* Case Type */}
-            <Field label="Case Type *">
+            <Field label="Case Type">
             <Select name="caseType" value={formData.caseType} onChange={handleChange} required>
                 <option value="">Select case type</option>
                 <option>Orphan</option>
@@ -273,17 +278,15 @@
 
             {/* Status + Adoption */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Field label="Status *">
+            <Field label="Status">
                 <Select name="status" value={formData.status} onChange={handleChange}>
                 <option>Active</option>
                 <option>Inactive</option>
-                <option>Transitioning</option>
-                <option>Transferred</option>
                 <option>Reintegrated</option>
                 </Select>
             </Field>
 
-            <Field label="Adoption Status *">
+            <Field label="Adoption Status">
                 <Select name="adoptionStatus" value={formData.adoptionStatus} onChange={handleChange}>
                 <option>Not Available for Adoption</option>
                 <option>Open for Adoption</option>
