@@ -6,7 +6,8 @@ const { verifyToken, requireAdmin } = require("../middleware/auth");
 
 /**
  * GET /api/settings
- * - load general + notifications + darkMode + security/access control
+ * - load general + notifications + security/access control
+ * - NOTE: darkMode removed (handled elsewhere, e.g. TopNav/localStorage)
  */
 router.get("/", verifyToken, async (req, res) => {
   try {
@@ -47,8 +48,6 @@ router.get("/", verifyToken, async (req, res) => {
           }
         : null,
 
-      darkMode: !!(settingsRow && settingsRow.dark_mode),
-
       notifState: notifRows.map((n) => ({
         id: n.id,
         type: n.type,
@@ -65,10 +64,12 @@ router.get("/", verifyToken, async (req, res) => {
 /**
  * PUT /api/settings
  * Admin only recommended
+ * - Save general/security + notifState
+ * - NOTE: darkMode removed from this endpoint
  */
 router.put("/", verifyToken, requireAdmin, async (req, res) => {
   try {
-    const { settings, notifState, darkMode } = req.body || {};
+    const { settings, notifState } = req.body || {};
 
     if (!settings) {
       return res
@@ -99,7 +100,6 @@ router.put("/", verifyToken, requireAdmin, async (req, res) => {
         timezone = ?,
         currency = ?,
         language = ?,
-        dark_mode = ?,
 
         -- ✅ security fields
         password_min_length = ?,
@@ -121,7 +121,6 @@ router.put("/", verifyToken, requireAdmin, async (req, res) => {
         settings.timezone || "UTC",
         settings.currency || "USD",
         settings.language || "English",
-        darkMode ? 1 : 0,
 
         // ✅ security values
         passwordMinLength,
@@ -139,10 +138,10 @@ router.put("/", verifyToken, requireAdmin, async (req, res) => {
     if (Array.isArray(notifState)) {
       for (const n of notifState) {
         if (!n?.id) continue;
-        await db.query("UPDATE notification_settings SET enabled = ? WHERE id = ?", [
-          n.enabled ? 1 : 0,
-          n.id,
-        ]);
+        await db.query(
+          "UPDATE notification_settings SET enabled = ? WHERE id = ?",
+          [n.enabled ? 1 : 0, n.id]
+        );
       }
     }
 

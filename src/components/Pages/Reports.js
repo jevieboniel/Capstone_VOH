@@ -418,7 +418,7 @@ const AuditTrailView = memo(function AuditTrailView({
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">System Audit Trail</h2>
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">System Activity Log</h2>
           <p className="text-sm text-gray-600 dark:text-gray-400">Track all system activities and user actions.</p>
         </div>
 
@@ -513,7 +513,7 @@ const AuditTrailView = memo(function AuditTrailView({
               <option value="Authentication">Authentication</option>
               <option value="Reports">Reports</option>
               <option value="Alerts">Alerts</option>
-              <option value="Audit Trail">Audit Trail</option>
+              <option value="Audit Trail">Activity Log</option>
             </Select>
 
             <Select value={auditFilterAction} onChange={(e) => setAuditFilterAction(e.target.value)} onKeyDownCapture={stopKeys}>
@@ -839,8 +839,8 @@ export default function Reports() {
       <div className="mx-auto w-full max-w-[1200px] p-4 sm:p-6 space-y-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">Reports & Audit Trails</h1>
-            <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">View ready-made reports and review the system audit trail.</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">Reports & Activity Log</h1>
+            <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">View ready-made reports and review the system activity log.</p>
           </div>
 
           <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-1 shadow-sm flex gap-2 w-full sm:w-auto">
@@ -861,7 +861,7 @@ export default function Reports() {
               className={`inline-flex items-center gap-2 rounded-xl ${activeView === "audit" ? "shadow-sm" : "border-transparent"}`}
             >
               <Shield className="h-4 w-4" />
-              Audit Trail
+              Activity Log
             </Button>
           </div>
         </div>

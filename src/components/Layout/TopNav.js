@@ -14,6 +14,25 @@ const TopNav = ({ onMenuClick }) => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const profileRef = useRef(null);
 
+  // ✅ Dark Mode (GLOBAL toggle)
+  const [darkMode, setDarkMode] = useState(() => {
+    const hasDarkClass = document.documentElement.classList.contains("dark");
+    if (hasDarkClass) return true;
+    return localStorage.getItem("theme") === "dark";
+  });
+
+  // ✅ Apply theme instantly
+  useEffect(() => {
+    const root = document.documentElement;
+    if (darkMode) {
+      root.classList.add("dark");
+      localStorage.setItem("theme", "dark");
+    } else {
+      root.classList.remove("dark");
+      localStorage.setItem("theme", "light");
+    }
+  }, [darkMode]);
+
   const allRoutes = useMemo(() => getAllRoutes(), []);
   const profileRoute = allRoutes.find(
     (item) => !item.showInNav && item.name === "Profile"
@@ -120,10 +139,7 @@ const TopNav = ({ onMenuClick }) => {
                 </button>
 
                 {notifOpen && (
-                  <div
-                    className="absolute right-0 mt-2 w-96 rounded-2xl border border-slate-200 dark:border-gray-800
-                              bg-white dark:bg-gray-900 shadow-xl overflow-hidden z-50"
-                  >
+                  <div className="absolute right-0 mt-2 w-96 rounded-2xl border border-slate-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-xl overflow-hidden z-50">
                     <div className="px-4 py-3 border-b border-slate-100 dark:border-gray-800 flex items-center justify-between">
                       <p className="text-sm font-semibold text-slate-900 dark:text-gray-100">
                         Notifications
@@ -131,17 +147,13 @@ const TopNav = ({ onMenuClick }) => {
                       <div className="flex gap-2">
                         <button
                           onClick={markAllRead}
-                          className="text-xs px-2 py-1 rounded-lg
-                                     text-slate-700 dark:text-gray-200
-                                     hover:bg-slate-50 dark:hover:bg-gray-800"
+                          className="text-xs px-2 py-1 rounded-lg text-slate-700 dark:text-gray-200 hover:bg-slate-50 dark:hover:bg-gray-800"
                         >
                           Mark all read
                         </button>
                         <button
                           onClick={clearAll}
-                          className="text-xs px-2 py-1 rounded-lg
-                                     text-slate-700 dark:text-gray-200
-                                     hover:bg-slate-50 dark:hover:bg-gray-800"
+                          className="text-xs px-2 py-1 rounded-lg text-slate-700 dark:text-gray-200 hover:bg-slate-50 dark:hover:bg-gray-800"
                         >
                           Clear
                         </button>
@@ -189,7 +201,6 @@ const TopNav = ({ onMenuClick }) => {
                   </div>
 
                   <div className="hidden lg:block text-left leading-tight">
-                    {/* ✅ FIXED: add text colors for dark mode */}
                     <p className="text-sm font-semibold truncate text-slate-900 dark:text-gray-100">
                       {user?.name || "Admin"}
                     </p>
@@ -200,12 +211,8 @@ const TopNav = ({ onMenuClick }) => {
                 </button>
 
                 {isProfileOpen && (
-                  <div
-                    className="absolute right-0 mt-2 w-56 rounded-2xl border border-slate-200 dark:border-gray-800
-                    bg-white dark:bg-gray-900 shadow-xl overflow-hidden z-50"
-                  >
+                  <div className="absolute right-0 mt-2 w-56 rounded-2xl border border-slate-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-xl overflow-hidden z-50">
                     <div className="px-4 py-3 border-b border-slate-100 dark:border-gray-800">
-                      {/* ✅ FIXED: add text colors for dark mode */}
                       <p className="text-sm font-semibold truncate text-slate-900 dark:text-gray-100">
                         {user?.name || "Admin"}
                       </p>
@@ -218,23 +225,41 @@ const TopNav = ({ onMenuClick }) => {
                       {profileRoute && (
                         <Link
                           to={profileRoute.path}
-                          className="flex items-center gap-2 px-4 py-2.5 text-sm
-                                     text-slate-700 dark:text-gray-200
-                                     hover:bg-slate-50 dark:hover:bg-gray-800"
+                          className="flex items-center gap-2 px-4 py-2.5 text-sm text-slate-700 dark:text-gray-200 hover:bg-slate-50 dark:hover:bg-gray-800"
                           onClick={() => setIsProfileOpen(false)}
                         >
                           Profile Settings
                         </Link>
                       )}
 
+                      {/* ✅ Dark Mode here */}
+                      <div className="flex items-center justify-between px-4 py-2.5">
+                        <span className="text-sm text-slate-700 dark:text-gray-200">
+                          Dark Mode
+                        </span>
+
+                        <button
+                          onClick={() => setDarkMode((v) => !v)}
+                          className={`relative inline-flex h-6 w-11 items-center rounded-full ${
+                            darkMode ? "bg-indigo-600" : "bg-gray-300"
+                          }`}
+                        >
+                          <span
+                            className={`inline-block h-5 w-5 transform rounded-full bg-white transition ${
+                              darkMode ? "translate-x-5" : "translate-x-1"
+                            }`}
+                          />
+                        </button>
+                      </div>
+
+                      <div className="my-1 border-t border-slate-100 dark:border-gray-800" />
+
                       <button
                         onClick={() => {
                           logout();
                           setIsProfileOpen(false);
                         }}
-                        className="w-full flex items-center gap-2 px-4 py-2.5 text-sm
-                                   text-slate-700 dark:text-gray-200
-                                   hover:bg-slate-50 dark:hover:bg-gray-800"
+                        className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-slate-700 dark:text-gray-200 hover:bg-slate-50 dark:hover:bg-gray-800"
                       >
                         Sign Out
                       </button>

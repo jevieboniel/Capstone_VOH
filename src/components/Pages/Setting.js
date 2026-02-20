@@ -481,22 +481,7 @@ export default function Setting() {
   const [backupList, setBackupList] = useState([]);
   const [backupListLoading, setBackupListLoading] = useState(false);
 
-  const [darkMode, setDarkMode] = useState(() => {
-    const hasDarkClass = document.documentElement.classList.contains("dark");
-    if (hasDarkClass) return true;
-    return localStorage.getItem("theme") === "dark";
-  });
-
-  useEffect(() => {
-    const root = document.documentElement;
-    if (darkMode) {
-      root.classList.add("dark");
-      localStorage.setItem("theme", "dark");
-    } else {
-      root.classList.remove("dark");
-      localStorage.setItem("theme", "light");
-    }
-  }, [darkMode]);
+  // ✅ DARK MODE REMOVED FROM SETTINGS PAGE
 
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
   const [draftSettings, setDraftSettings] = useState(DEFAULT_SETTINGS);
@@ -511,7 +496,7 @@ export default function Setting() {
     { id: 6, type: "Data Backup", enabled: true, description: "Backup completion notifications" },
   ]);
 
-  // LOAD settings from backend
+  // LOAD settings from backend (darkMode not set here anymore)
   useEffect(() => {
     const token = localStorage.getItem("admin_token");
     if (!token) return;
@@ -526,7 +511,7 @@ export default function Setting() {
         if (!data?.success) return;
 
         if (data.settings) setSettings(data.settings);
-        if (typeof data.darkMode === "boolean") setDarkMode(data.darkMode);
+        // ✅ removed: if (typeof data.darkMode === "boolean") setDarkMode(data.darkMode);
         if (Array.isArray(data.notifState)) setNotifState(data.notifState);
       })
       .catch((err) => console.error("Load settings error:", err))
@@ -554,6 +539,7 @@ export default function Setting() {
 
       setSaving(true);
 
+      // ✅ darkMode removed from payload
       const res = await fetch(`${API_ORIGIN}/api/settings`, {
         method: "PUT",
         headers: {
@@ -563,7 +549,6 @@ export default function Setting() {
         body: JSON.stringify({
           settings: draftSettings,
           notifState,
-          darkMode,
         }),
       });
 
@@ -590,13 +575,14 @@ export default function Setting() {
     try {
       setSaving(true);
 
+      // ✅ darkMode removed from payload
       const res = await fetch(`${API_ORIGIN}/api/settings`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ settings: draftSettings, notifState, darkMode }),
+        body: JSON.stringify({ settings: draftSettings, notifState }),
       });
 
       const data = await res.json().catch(() => ({}));
@@ -678,9 +664,7 @@ export default function Setting() {
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.success) throw new Error(data.message || "Backup failed");
 
-      // Download the created backup
       await downloadBackup(data.filename);
-
       await fetchBackups();
       alert("Backup created ✅");
     } catch (e) {
@@ -743,13 +727,7 @@ export default function Setting() {
           </div>
 
           <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
-            <div className="flex items-center gap-3">
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                {darkMode ? "Dark" : "Default"}
-              </span>
-              <Toggle checked={darkMode} onChange={setDarkMode} />
-            </div>
-
+            {/* ✅ Dark mode block removed */}
             <Button onClick={handleSaveAll} className="w-full sm:w-auto" disabled={saving || loading}>
               <Save className="mr-2 h-4 w-4" />
               {saving ? "Saving..." : "Save All Changes"}
@@ -813,7 +791,9 @@ export default function Setting() {
           />
         )}
 
-        {activeSection === "security" && <SecuritySettingsSection draftSettings={draftSettings} setDraftField={setDraftField} />}
+        {activeSection === "security" && (
+          <SecuritySettingsSection draftSettings={draftSettings} setDraftField={setDraftField} />
+        )}
 
         {activeSection === "notifications" && (
           <NotificationSettingsSection
