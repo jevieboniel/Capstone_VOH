@@ -53,20 +53,20 @@ const CardTitle = ({ children, className = "" }) => (
   </h2>
 );
 
-const CardContent = ({ children, className = "" }) => (
-  <div className={`px-6 py-6 ${className}`}>{children}</div>
-);
+const CardContent = ({ children, className = "" }) => <div className={`px-6 py-6 ${className}`}>{children}</div>;
 
 const Badge = ({ children, variant = "solid", className = "" }) => {
-  const base =
-    "inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold shadow-sm";
+  const base = "inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold shadow-sm";
   const variants = {
-    solid:
-      "bg-gray-900 text-white border-transparent dark:bg-gray-100 dark:text-gray-900",
+    solid: "bg-gray-900 text-white border-transparent dark:bg-gray-100 dark:text-gray-900",
     outline:
       "bg-white text-gray-700 border-gray-300 dark:bg-gray-900 dark:text-gray-200 dark:border-gray-700",
   };
-  return <span className={`${base} ${variants[variant] || ""} ${className}`}>{children}</span>;
+  return (
+    <span className={`${base} ${variants[variant] || ""} ${className}`}>
+      {children}
+    </span>
+  );
 };
 
 const Button = ({ children, variant = "solid", size = "md", className = "", ...props }) => {
@@ -91,9 +91,7 @@ const Button = ({ children, variant = "solid", size = "md", className = "", ...p
 };
 
 const Progress = ({ value = 0, className = "" }) => (
-  <div
-    className={`w-full h-3 rounded-full bg-gray-200 dark:bg-gray-800 overflow-hidden shadow-inner ${className}`}
-  >
+  <div className={`w-full h-3 rounded-full bg-gray-200 dark:bg-gray-800 overflow-hidden shadow-inner ${className}`}>
     <div
       className="h-full bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 rounded-full transition-all shadow-sm"
       style={{ width: `${Math.min(Math.max(value, 0), 100)}%` }}
@@ -182,6 +180,19 @@ const formatDate = (value) => {
   return d.toISOString().slice(0, 10);
 };
 
+// ✅ helper for education colors (no hardcoded palette required)
+const pickBucketColor = (bucket) => {
+  const b = String(bucket || "").toLowerCase();
+  if (b.includes("95") || b.includes("100")) return "#10b981";
+  if (b.includes("90")) return "#22c55e";
+  if (b.includes("85")) return "#3b82f6";
+  if (b.includes("80")) return "#6366f1";
+  if (b.includes("75")) return "#f59e0b";
+  if (b.includes("below")) return "#ef4444";
+  if (b.includes("no grade")) return "#9ca3af";
+  return "#3b82f6";
+};
+
 /* ------------------------------ Dashboard ------------------------------ */
 
 const Dashboard = () => {
@@ -220,22 +231,12 @@ const Dashboard = () => {
   const [developmentProgressData, setDevelopmentProgressData] = useState([]);
   const [developmentVsAcademicData, setDevelopmentVsAcademicData] = useState([]);
 
-  // education placeholders
-  const [performanceTrendsData] = useState([
-    { month: "Jan", avgScore: 72, passingRate: 85 },
-    { month: "Feb", avgScore: 75, passingRate: 87 },
-    { month: "Mar", avgScore: 78, passingRate: 89 },
-    { month: "Apr", avgScore: 76, passingRate: 88 },
-    { month: "May", avgScore: 80, passingRate: 92 },
-    { month: "Jun", avgScore: 82, passingRate: 94 },
-  ]);
-  const [subjectPerformanceData] = useState([
-    { subject: "Math", avgScore: 78, improvement: 5 },
-    { subject: "English", avgScore: 82, improvement: 3 },
-    { subject: "Science", avgScore: 75, improvement: 8 },
-    { subject: "Social Studies", avgScore: 80, improvement: 4 },
-    { subject: "Arts", avgScore: 85, improvement: 2 },
-  ]);
+  // ✅ EDUCATION (REAL from backend)
+  const [loadingEducation, setLoadingEducation] = useState(false);
+  const [educationError, setEducationError] = useState("");
+  const [educationLevelSummaryData, setEducationLevelSummaryData] = useState([]); // [{level,count}]
+  const [avgByLevelData, setAvgByLevelData] = useState([]); // [{level,avg}]
+  const [gradePerformanceData, setGradePerformanceData] = useState([]); // [{bucket,count}]
 
   const tabs = [
     { id: "overview", label: "Overview" },
@@ -322,13 +323,10 @@ const Dashboard = () => {
       });
 
       setHealthStatusData(colored);
-
-      // ✅ Vaccinations removed (no setVaccinationData)
     } catch (e) {
       console.error(e);
       setHealthError(e.message || "Failed to load health");
       setHealthStatusData([]);
-      // ✅ Vaccinations removed
     } finally {
       setLoadingHealth(false);
     }
@@ -395,6 +393,52 @@ const Dashboard = () => {
     }
   };
 
+  // ✅ NEW: Fetch Education analytics from backend
+  const fetchEducation = async () => {
+    setLoadingEducation(true);
+    setEducationError("");
+    try {
+      const res = await fetch(apiUrl("/api/dashboard/education"));
+      const data = await res.json();
+      if (!res.ok || data?.success === false) throw new Error(data?.error || "Failed to load education analytics");
+
+      // Education level summary
+      const levelRows = Array.isArray(data.educationLevelSummary) ? data.educationLevelSummary : [];
+      setEducationLevelSummaryData(
+        levelRows.map((r) => ({
+          level: r.level,
+          count: num(r.count),
+        }))
+      );
+
+      // Average grade per level
+      const avgRows = Array.isArray(data.avgByLevel) ? data.avgByLevel : [];
+      setAvgByLevelData(
+        avgRows.map((r) => ({
+          level: r.level,
+          avg: num(r.avg),
+        }))
+      );
+
+      // Grade performance buckets
+      const bucketRows = Array.isArray(data.gradePerformance) ? data.gradePerformance : [];
+      setGradePerformanceData(
+        bucketRows.map((r) => ({
+          bucket: r.bucket,
+          count: num(r.count),
+        }))
+      );
+    } catch (e) {
+      console.error(e);
+      setEducationError(e.message || "Failed to load education analytics");
+      setEducationLevelSummaryData([]);
+      setAvgByLevelData([]);
+      setGradePerformanceData([]);
+    } finally {
+      setLoadingEducation(false);
+    }
+  };
+
   // ---------- initial load ----------
   useEffect(() => {
     fetchOverview();
@@ -415,17 +459,38 @@ const Dashboard = () => {
     if (activeTab === "development" && developmentProgressData.length === 0 && !loadingDevelopment && !developmentError) {
       fetchDevelopment();
     }
+    // ✅ education
+    if (
+      activeTab === "education" &&
+      educationLevelSummaryData.length === 0 &&
+      gradePerformanceData.length === 0 &&
+      !loadingEducation &&
+      !educationError
+    ) {
+      fetchEducation();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
 
   // ---------- Derived values ----------
   const donationProgress = stats ? (num(stats.monthlyDonations) / Math.max(num(stats.donationGoal), 1)) * 100 : 0;
-  const milestoneProgress = stats ? (num(stats.completedMilestones) / Math.max(num(stats.developmentMilestones), 1)) * 100 : 0;
+  const milestoneProgress = stats
+    ? (num(stats.completedMilestones) / Math.max(num(stats.developmentMilestones), 1)) * 100
+    : 0;
 
   // Pie data with percents
   const genderPie = useMemo(() => withPercent(genderData, "value"), [genderData]);
   const healthPie = useMemo(() => withPercent(healthStatusData, "count"), [healthStatusData]);
   const donorPie = useMemo(() => withPercent(donorTypeData, "value"), [donorTypeData]);
+
+  // ✅ Education derived
+  const avgOverall =
+    avgByLevelData.length > 0
+      ? avgByLevelData.reduce((acc, r) => acc + num(r.avg), 0) / Math.max(avgByLevelData.length, 1)
+      : 0;
+
+  const hasEducationData =
+    educationLevelSummaryData.length > 0 || avgByLevelData.length > 0 || gradePerformanceData.length > 0;
 
   // Loading / error state for overview
   if (loadingOverview) return <div className="p-6">Loading dashboard...</div>;
@@ -434,7 +499,9 @@ const Dashboard = () => {
       <div className="p-6 space-y-3">
         <div className="text-red-600 font-semibold">Failed to load dashboard.</div>
         <div className="text-gray-700 dark:text-gray-300 text-sm">{overviewError}</div>
-        <Button onClick={fetchOverview} className="w-fit">Retry</Button>
+        <Button onClick={fetchOverview} className="w-fit">
+          Retry
+        </Button>
       </div>
     );
   }
@@ -461,9 +528,7 @@ const Dashboard = () => {
                 <p className="text-xs sm:text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
                   Total Children
                 </p>
-                <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">
-                  {num(stats.totalChildren)}
-                </p>
+                <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">{num(stats.totalChildren)}</p>
                 <p className="text-xs sm:text-sm text-green-600 dark:text-green-400 font-medium">
                   +{num(stats.newAdmissions)} new this month
                 </p>
@@ -482,9 +547,7 @@ const Dashboard = () => {
                 <p className="text-xs sm:text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
                   Health Records
                 </p>
-                <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">
-                  {num(stats.healthChecksDue)}
-                </p>
+                <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">{num(stats.healthChecksDue)}</p>
                 <p className="text-xs sm:text-sm text-orange-600 dark:text-orange-400 font-medium">Check-ups due</p>
               </div>
               <div className="bg-gradient-to-br from-red-500 to-rose-600 p-3 sm:p-4 rounded-2xl shadow-sm flex-shrink-0">
@@ -643,32 +706,24 @@ const Dashboard = () => {
               <CardContent className="space-y-6">
                 <div>
                   <div className="flex justify-between items-center mb-2">
-                    <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">
-                      Monthly Donation Goal
-                    </span>
+                    <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">Monthly Donation Goal</span>
                     <span className="text-sm text-gray-600 dark:text-gray-400">
                       ₱{num(stats.monthlyDonations).toLocaleString()} / ₱{num(stats.donationGoal).toLocaleString()}
                     </span>
                   </div>
                   <Progress value={donationProgress} />
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                    {donationProgress.toFixed(0)}% of goal reached
-                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">{donationProgress.toFixed(0)}% of goal reached</p>
                 </div>
 
                 <div>
                   <div className="flex justify-between items-center mb-2">
-                    <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">
-                      Development Milestones
-                    </span>
+                    <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">Development Milestones</span>
                     <span className="text-sm text-gray-600 dark:text-gray-400">
                       {num(stats.completedMilestones)} / {num(stats.developmentMilestones)}
                     </span>
                   </div>
                   <Progress value={milestoneProgress} />
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                    {milestoneProgress.toFixed(0)}% completed
-                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">{milestoneProgress.toFixed(0)}% completed</p>
                 </div>
 
                 <div className="pt-4 border-t border-gray-100 dark:border-gray-800">
@@ -715,9 +770,7 @@ const Dashboard = () => {
                         <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{activity.action}</p>
                         <p className="text-xs text-gray-600 dark:text-gray-400">by {activity.user}</p>
                       </div>
-                      <span className="text-xs text-gray-500 dark:text-gray-400 flex-shrink-0">
-                        {formatDate(activity.time)}
-                      </span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400 flex-shrink-0">{formatDate(activity.time)}</span>
                     </div>
                   ))
                 )}
@@ -735,7 +788,9 @@ const Dashboard = () => {
           ) : demoError ? (
             <div className="space-y-2">
               <div className="text-sm text-red-600">{demoError}</div>
-              <Button size="sm" variant="outline" onClick={fetchDemographics}>Retry</Button>
+              <Button size="sm" variant="outline" onClick={fetchDemographics}>
+                Retry
+              </Button>
             </div>
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -834,60 +889,119 @@ const Dashboard = () => {
         </div>
       )}
 
-      {/* -------------------- EDUCATION -------------------- */}
+      {/* -------------------- EDUCATION (UPDATED REAL) -------------------- */}
       {activeTab === "education" && (
         <div className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <ChartContainer title="Academic Performance Trends" icon={TrendingUp} height={300}>
-              <LineChart
-                data={performanceTrendsData}
-                xKey="month"
-                lines={[
-                  { key: "avgScore", stroke: "#3b82f6", name: "Average Score" },
-                  { key: "passingRate", stroke: "#10b981", name: "Passing Rate %" },
-                ]}
-              />
-            </ChartContainer>
-
-            <ChartContainer title="Subject Performance" icon={BarChart3} height={300}>
-              <BarChart
-                data={subjectPerformanceData}
-                xKey="subject"
-                xAngle={-45}
-                xHeight={80}
-                bars={[{ key: "avgScore", fill: "#10b981", name: "Average Score" }]}
-              />
-            </ChartContainer>
-
-            <Card className="lg:col-span-2">
+          {loadingEducation ? (
+            <div className="text-sm text-gray-600 dark:text-gray-400">Loading education analytics...</div>
+          ) : educationError ? (
+            <div className="space-y-2">
+              <div className="text-sm text-red-600">{educationError}</div>
+              <Button size="sm" variant="outline" onClick={fetchEducation}>
+                Retry
+              </Button>
+            </div>
+          ) : !hasEducationData ? (
+            <Card>
               <CardHeader>
-                <CardTitle>Educational Performance Summary</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <div className="rounded-xl bg-blue-100 dark:bg-blue-950/40 p-2">
+                    <GraduationCap className="h-5 w-5 text-blue-600 dark:text-blue-300" />
+                  </div>
+                  Education
+                </CardTitle>
               </CardHeader>
-
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-                  {subjectPerformanceData.map((subject) => (
-                    <div
-                      key={subject.subject}
-                      className="p-4 border border-gray-200 dark:border-gray-800 rounded-xl
-                      bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
-                    >
-                      <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">{subject.subject}</h4>
-                      <p className="text-2xl font-bold text-blue-700 dark:text-blue-300 mb-1">{subject.avgScore}%</p>
-                      <div className="flex items-center gap-1 text-sm">
-                        <TrendingUp className="h-3 w-3 text-green-600 dark:text-green-400" />
-                        <span className="text-green-700 dark:text-green-300 font-medium">+{subject.improvement}%</span>
-                      </div>
-                    </div>
-                  ))}
+                <div className="text-sm text-gray-600 dark:text-gray-400">
+                  No education analytics yet. Add Education Records per child (Education Level + Final Average) then refresh.
                 </div>
-                <div className="mt-4 text-xs text-gray-500 dark:text-gray-400">
-                  To make this tab real, create a backend endpoint <code>/api/dashboard/education</code> using your
-                  <code> education_records</code> / <code>education_summaries</code> tables.
+                <div className="mt-3">
+                  <Button size="sm" variant="outline" onClick={fetchEducation}>
+                    Refresh
+                  </Button>
                 </div>
               </CardContent>
             </Card>
-          </div>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Chart 1: Education level summary */}
+              <ChartContainer title="Students per Education Level" icon={GraduationCap} height={300}>
+                <BarChart
+                  data={educationLevelSummaryData.map((r) => ({ ...r, label: r.level }))}
+                  xKey="label"
+                  xAngle={-35}
+                  xHeight={80}
+                  bars={[{ key: "count", fill: "#3b82f6", name: "Students" }]}
+                />
+              </ChartContainer>
+
+              {/* Chart 2: Grade performance distribution */}
+              <ChartContainer title="Grade Performance Distribution (Final Average)" icon={BarChart3} height={300}>
+                <BarChart
+                  data={gradePerformanceData.map((r) => ({
+                    bucket: r.bucket,
+                    count: r.count,
+                    fill: pickBucketColor(r.bucket),
+                  }))}
+                  xKey="bucket"
+                  xAngle={-35}
+                  xHeight={80}
+                  // if your BarChart supports per-bar fill using "fillKey"
+                  // it will use each row.fill; otherwise it falls back to solid fill below.
+                  fillKey="fill"
+                  bars={[{ key: "count", fill: "#10b981", name: "Students" }]}
+                />
+              </ChartContainer>
+
+              {/* Chart 3: Average per level (optional) */}
+              <ChartContainer title="Average Final Grade per Level" icon={TrendingUp} height={300}>
+                <LineChart
+                  data={avgByLevelData.map((r) => ({ ...r, label: r.level }))}
+                  xKey="label"
+                  lines={[{ key: "avg", stroke: "#6366f1", name: "Average (%)" }]}
+                />
+              </ChartContainer>
+
+              {/* Summary cards */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Education Summary</CardTitle>
+                  <Button size="sm" variant="outline" onClick={fetchEducation}>
+                    Refresh
+                  </Button>
+                </CardHeader>
+
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="p-4 bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900 rounded-xl">
+                      <p className="text-sm text-gray-600 dark:text-gray-400">Education Levels</p>
+                      <p className="text-2xl font-bold text-blue-700 dark:text-blue-300">
+                        {educationLevelSummaryData.length}
+                      </p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">Distinct levels recorded</p>
+                    </div>
+
+                    <div className="p-4 bg-green-50 dark:bg-green-950/30 border border-green-100 dark:border-green-900 rounded-xl">
+                      <p className="text-sm text-gray-600 dark:text-gray-400">Average Grade</p>
+                      <p className="text-2xl font-bold text-green-700 dark:text-green-300">
+                        {avgOverall ? `${avgOverall.toFixed(2)}%` : "—"}
+                      </p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">From available level records</p>
+                    </div>
+                  </div>
+
+                  <div className="p-4 bg-gray-50 dark:bg-gray-950/40 border border-gray-200 dark:border-gray-800 rounded-xl">
+                    <p className="text-sm text-gray-700 dark:text-gray-200">
+                      This Education tab is based on each child’s <strong>Education Records</strong>:
+                      <span className="block mt-1 text-xs text-gray-600 dark:text-gray-400">
+                        Education Level • School • Final Average • Honor/Recognition
+                      </span>
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
         </div>
       )}
 
@@ -899,7 +1013,9 @@ const Dashboard = () => {
           ) : developmentError ? (
             <div className="space-y-2">
               <div className="text-sm text-red-600">{developmentError}</div>
-              <Button size="sm" variant="outline" onClick={fetchDevelopment}>Retry</Button>
+              <Button size="sm" variant="outline" onClick={fetchDevelopment}>
+                Retry
+              </Button>
             </div>
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -920,9 +1036,7 @@ const Dashboard = () => {
                     developmentProgressData.map((category) => (
                       <div key={category.category}>
                         <div className="flex justify-between items-center mb-2">
-                          <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">
-                            {category.category}
-                          </span>
+                          <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">{category.category}</span>
                           <span className="text-sm text-gray-600 dark:text-gray-400">{num(category.progress)}%</span>
                         </div>
                         <Progress value={num(category.progress)} />
@@ -933,12 +1047,7 @@ const Dashboard = () => {
               </Card>
 
               <ChartContainer title="Milestone Status Breakdown" icon={BarChart3} height={300}>
-                <BarChart
-                  data={developmentVsAcademicData}
-                  xKey="name"
-                  showLegend={false}
-                  bars={[{ key: "count", fill: "#8b5cf6", name: "Count" }]}
-                />
+                <BarChart data={developmentVsAcademicData} xKey="name" showLegend={false} bars={[{ key: "count", fill: "#8b5cf6", name: "Count" }]} />
               </ChartContainer>
 
               <Card className="lg:col-span-2">
@@ -950,25 +1059,19 @@ const Dashboard = () => {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="p-4 bg-purple-50 dark:bg-purple-950/30 border border-purple-100 dark:border-purple-900 rounded-xl">
                       <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Milestones Completed</p>
-                      <p className="text-3xl font-bold text-purple-700 dark:text-purple-300 mb-1">
-                        {num(stats.completedMilestones)}
-                      </p>
+                      <p className="text-3xl font-bold text-purple-700 dark:text-purple-300 mb-1">{num(stats.completedMilestones)}</p>
                       <p className="text-xs text-gray-600 dark:text-gray-400">Total completed milestones</p>
                     </div>
 
                     <div className="p-4 bg-green-50 dark:bg-green-950/30 border border-green-100 dark:border-green-900 rounded-xl">
                       <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Total Milestones</p>
-                      <p className="text-2xl font-bold text-green-700 dark:text-green-300 mb-1">
-                        {num(stats.developmentMilestones)}
-                      </p>
+                      <p className="text-2xl font-bold text-green-700 dark:text-green-300 mb-1">{num(stats.developmentMilestones)}</p>
                       <p className="text-xs text-gray-600 dark:text-gray-400">Across all categories</p>
                     </div>
 
                     <div className="p-4 bg-orange-50 dark:bg-orange-950/25 border border-orange-100 dark:border-orange-900 rounded-xl">
                       <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Completion Rate</p>
-                      <p className="text-2xl font-bold text-orange-700 dark:text-orange-300 mb-1">
-                        {milestoneProgress.toFixed(0)}%
-                      </p>
+                      <p className="text-2xl font-bold text-orange-700 dark:text-orange-300 mb-1">{milestoneProgress.toFixed(0)}%</p>
                       <p className="text-xs text-gray-600 dark:text-gray-400">Completed vs total</p>
                     </div>
                   </div>
@@ -987,7 +1090,9 @@ const Dashboard = () => {
           ) : healthError ? (
             <div className="space-y-2">
               <div className="text-sm text-red-600">{healthError}</div>
-              <Button size="sm" variant="outline" onClick={fetchHealth}>Retry</Button>
+              <Button size="sm" variant="outline" onClick={fetchHealth}>
+                Retry
+              </Button>
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-6">
@@ -1027,10 +1132,7 @@ const Dashboard = () => {
                   <div className="mt-6 grid grid-cols-2 gap-x-10 gap-y-4">
                     {healthPie.map((entry) => (
                       <div key={entry.status} className="flex items-center gap-3">
-                        <span
-                          className="inline-block h-3 w-3 rounded-full"
-                          style={{ backgroundColor: entry.color || "#3b82f6" }}
-                        />
+                        <span className="inline-block h-3 w-3 rounded-full" style={{ backgroundColor: entry.color || "#3b82f6" }} />
                         <span className="text-sm text-gray-700 dark:text-gray-300">
                           {entry.status}: {entry.count}
                         </span>
@@ -1039,8 +1141,6 @@ const Dashboard = () => {
                   </div>
                 </CardContent>
               </Card>
-
-              {/* ✅ Vaccination Coverage removed */}
 
               <Card className="lg:col-span-2">
                 <CardHeader>
@@ -1082,7 +1182,9 @@ const Dashboard = () => {
           ) : donationsError ? (
             <div className="space-y-2">
               <div className="text-sm text-red-600">{donationsError}</div>
-              <Button size="sm" variant="outline" onClick={fetchDonations}>Retry</Button>
+              <Button size="sm" variant="outline" onClick={fetchDonations}>
+                Retry
+              </Button>
             </div>
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -1178,33 +1280,25 @@ const Dashboard = () => {
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div className="p-4 bg-green-50 dark:bg-green-950/30 border border-green-100 dark:border-green-900 rounded-xl">
                       <p className="text-sm text-gray-600 dark:text-gray-400">Total Donations</p>
-                      <p className="text-2xl font-bold text-green-700 dark:text-green-300">
-                        ₱{num(stats.totalDonations).toLocaleString()}
-                      </p>
+                      <p className="text-2xl font-bold text-green-700 dark:text-green-300">₱{num(stats.totalDonations).toLocaleString()}</p>
                       <p className="text-xs text-gray-600 dark:text-gray-400">All-time</p>
                     </div>
 
                     <div className="p-4 bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900 rounded-xl">
                       <p className="text-sm text-gray-600 dark:text-gray-400">This Month</p>
-                      <p className="text-2xl font-bold text-blue-700 dark:text-blue-300">
-                        ₱{num(stats.monthlyDonations).toLocaleString()}
-                      </p>
+                      <p className="text-2xl font-bold text-blue-700 dark:text-blue-300">₱{num(stats.monthlyDonations).toLocaleString()}</p>
                       <p className="text-xs text-gray-600 dark:text-gray-400">Current month</p>
                     </div>
 
                     <div className="p-4 bg-purple-50 dark:bg-purple-950/30 border border-purple-100 dark:border-purple-900 rounded-xl">
                       <p className="text-sm text-gray-600 dark:text-gray-400">Donation Goal</p>
-                      <p className="text-2xl font-bold text-purple-700 dark:text-purple-300">
-                        ₱{num(stats.donationGoal).toLocaleString()}
-                      </p>
+                      <p className="text-2xl font-bold text-purple-700 dark:text-purple-300">₱{num(stats.donationGoal).toLocaleString()}</p>
                       <p className="text-xs text-gray-600 dark:text-gray-400">Monthly goal</p>
                     </div>
 
                     <div className="p-4 bg-orange-50 dark:bg-orange-950/25 border border-orange-100 dark:border-orange-900 rounded-xl">
                       <p className="text-sm text-gray-600 dark:text-gray-400">Goal Progress</p>
-                      <p className="text-2xl font-bold text-orange-700 dark:text-orange-300">
-                        {donationProgress.toFixed(0)}%
-                      </p>
+                      <p className="text-2xl font-bold text-orange-700 dark:text-orange-300">{donationProgress.toFixed(0)}%</p>
                       <p className="text-xs text-gray-600 dark:text-gray-400">
                         ₱{num(stats.monthlyDonations).toLocaleString()} / ₱{num(stats.donationGoal).toLocaleString()}
                       </p>
@@ -1213,14 +1307,12 @@ const Dashboard = () => {
 
                   <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900 rounded-xl">
                     <p className="text-sm text-gray-700 dark:text-gray-200">
-                      <strong>Note:</strong> For detailed donation analytics including donor management, transaction
-                      history, and detailed reports, please visit the Donation Management module.
+                      <strong>Note:</strong> For detailed donation analytics including donor management, transaction history, and detailed reports, please visit the Donation Management module.
                     </p>
                   </div>
 
                   <div className="mt-3 text-xs text-gray-500 dark:text-gray-400">
-                    If your donation totals show 0, check your <code>donations.status</code> values. The backend query
-                    counts only <code>Paid</code> or <code>Success</code>.
+                    If your donation totals show 0, check your <code>donations.status</code> values. The backend query counts only <code>Paid</code> or <code>Success</code>.
                   </div>
                 </div>
               </div>

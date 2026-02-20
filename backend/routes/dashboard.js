@@ -115,6 +115,7 @@ router.get("/overview", async (_req, res) => {
     const donationGoal = toNumber(process.env.MONTHLY_DONATION_GOAL) || 20000;
 
     res.json({
+      success: true,
       stats: {
         totalChildren: toNumber(childrenRows[0]?.totalChildren),
         newAdmissions: toNumber(newRows[0]?.newAdmissions),
@@ -126,7 +127,7 @@ router.get("/overview", async (_req, res) => {
         completedMilestones: toNumber(milestoneRows[0]?.completedMilestones),
       },
 
-      alerts: alertsRows.map((a) => ({
+      alerts: (alertsRows || []).map((a) => ({
         id: a.id,
         type: a.type || "general",
         priority: a.priority || "medium",
@@ -143,7 +144,7 @@ router.get("/overview", async (_req, res) => {
     });
   } catch (err) {
     console.error("Dashboard overview error:", err);
-    res.status(500).json({ error: "Dashboard overview error" });
+    res.status(500).json({ success: false, error: "Dashboard overview error" });
   }
 });
 
@@ -169,6 +170,7 @@ router.get("/demographics", async (_req, res) => {
       )
     `);
 
+    // ✅ This is just "education level summary" (not subject performance)
     const [educationRows] = await db.query(`
       SELECT education_level AS grade, COUNT(*) AS count
       FROM children
@@ -186,13 +188,14 @@ router.get("/demographics", async (_req, res) => {
     `);
 
     res.json({
+      success: true,
       ageDistribution: ageRows,
-      gradeDistribution: educationRows,
+      gradeDistribution: educationRows, // kept for compatibility
       genderDistribution: genderRows,
     });
   } catch (err) {
     console.error("Dashboard demographics error:", err);
-    res.status(500).json({ error: "Dashboard demographics error" });
+    res.status(500).json({ success: false, error: "Dashboard demographics error" });
   }
 });
 
@@ -207,12 +210,13 @@ router.get("/health", async (_req, res) => {
     `);
 
     res.json({
+      success: true,
       healthStatusDistribution: statusRows,
       vaccinationCoverage: [],
     });
   } catch (err) {
     console.error("Dashboard health error:", err);
-    res.status(500).json({ error: "Dashboard health error" });
+    res.status(500).json({ success: false, error: "Dashboard health error" });
   }
 });
 
@@ -239,6 +243,7 @@ router.get("/donations", async (_req, res) => {
     `);
 
     res.json({
+      success: true,
       donationTrends: trendRows,
       donorTypeDistribution: typeRows.map((r) => ({
         type: r.type || "Unknown",
@@ -247,7 +252,7 @@ router.get("/donations", async (_req, res) => {
     });
   } catch (err) {
     console.error("Dashboard donations error:", err);
-    res.status(500).json({ error: "Dashboard donations error" });
+    res.status(500).json({ success: false, error: "Dashboard donations error" });
   }
 });
 
@@ -268,12 +273,177 @@ router.get("/development", async (_req, res) => {
     `);
 
     res.json({
+      success: true,
       developmentProgress: progressRows,
       milestoneStatus: statusRows,
     });
   } catch (err) {
     console.error("Dashboard development error:", err);
-    res.status(500).json({ error: "Dashboard development error" });
+    res.status(500).json({ success: false, error: "Dashboard development error" });
+  }
+});
+
+router.get("/education", async (_req, res) => {
+  try {
+    let educationLevelSummary = [];
+    let avgByLevel = [];
+    let gradePerformance = [];
+
+    const bucketCaseSQL = `
+      CASE
+        WHEN finalAvg IS NULL THEN 'No Grade'
+        WHEN finalAvg < 75 THEN 'Below 75'
+        WHEN finalAvg BETWEEN 75 AND 79.99 THEN '75-79'
+        WHEN finalAvg BETWEEN 80 AND 84.99 THEN '80-84'
+        WHEN finalAvg BETWEEN 85 AND 89.99 THEN '85-89'
+        WHEN finalAvg BETWEEN 90 AND 94.99 THEN '90-94'
+        WHEN finalAvg BETWEEN 95 AND 100 THEN '95-100'
+        ELSE 'Over 100'
+      END
+    `;
+
+    // ----------------------------
+    // Try NEW schema first
+    // ----------------------------
+    try {
+      // 1) Education level summary (latest per child)
+      const [lvlRows] = await db.query(`
+        SELECT t.education_level AS level, COUNT(*) AS count
+        FROM (
+          SELECT el.*
+          FROM education_levels el
+          INNER JOIN (
+            SELECT child_id, MAX(id) AS max_id
+            FROM education_levels
+            GROUP BY child_id
+          ) last ON last.child_id = el.child_id AND last.max_id = el.id
+        ) t
+        WHERE t.education_level IS NOT NULL AND t.education_level <> ''
+        GROUP BY t.education_level
+        ORDER BY t.education_level
+      `);
+
+      educationLevelSummary = lvlRows.map((r) => ({
+        level: r.level,
+        count: toNumber(r.count),
+      }));
+
+      // 2) Average final average per level (latest per child)
+      const [avgRows] = await db.query(`
+        SELECT t.education_level AS level, ROUND(AVG(t.final_average), 2) AS avg
+        FROM (
+          SELECT el.*
+          FROM education_levels el
+          INNER JOIN (
+            SELECT child_id, MAX(id) AS max_id
+            FROM education_levels
+            GROUP BY child_id
+          ) last ON last.child_id = el.child_id AND last.max_id = el.id
+        ) t
+        WHERE t.education_level IS NOT NULL AND t.education_level <> ''
+          AND t.final_average IS NOT NULL
+        GROUP BY t.education_level
+        ORDER BY t.education_level
+      `);
+
+      avgByLevel = avgRows.map((r) => ({
+        level: r.level,
+        avg: toNumber(r.avg),
+      }));
+
+      // 3) Grade performance buckets (latest per child)
+      const [bucketRows] = await db.query(`
+        SELECT ${bucketCaseSQL} AS bucket, COUNT(*) AS count
+        FROM (
+          SELECT
+            el.child_id,
+            el.final_average AS finalAvg
+          FROM education_levels el
+          INNER JOIN (
+            SELECT child_id, MAX(id) AS max_id
+            FROM education_levels
+            GROUP BY child_id
+          ) last ON last.child_id = el.child_id AND last.max_id = el.id
+        ) x
+        GROUP BY bucket
+        ORDER BY FIELD(bucket,'95-100','90-94','85-89','80-84','75-79','Below 75','No Grade','Over 100')
+      `);
+
+      gradePerformance = bucketRows.map((r) => ({
+        bucket: r.bucket,
+        count: toNumber(r.count),
+      }));
+    } catch (_e) {
+      // ----------------------------
+      // Fallback: children table only
+      // ----------------------------
+      const [lvlRowsFallback] = await db.query(`
+        SELECT education_level AS level, COUNT(*) AS count
+        FROM children
+        WHERE education_level IS NOT NULL AND education_level <> ''
+        GROUP BY education_level
+        ORDER BY education_level
+      `);
+
+      educationLevelSummary = lvlRowsFallback.map((r) => ({
+        level: r.level,
+        count: toNumber(r.count),
+      }));
+
+      // Change COALESCE(...) to match your real column names if needed
+      const [avgRowsFallback] = await db.query(`
+        SELECT education_level AS level, ROUND(AVG(COALESCE(average_grade, final_average)), 2) AS avg
+        FROM children
+        WHERE education_level IS NOT NULL AND education_level <> ''
+          AND COALESCE(average_grade, final_average) IS NOT NULL
+        GROUP BY education_level
+        ORDER BY education_level
+      `);
+
+      avgByLevel = avgRowsFallback.map((r) => ({
+        level: r.level,
+        avg: toNumber(r.avg),
+      }));
+
+      const [bucketRowsFallback] = await db.query(`
+        SELECT
+          CASE
+            WHEN g IS NULL THEN 'No Grade'
+            WHEN g < 75 THEN 'Below 75'
+            WHEN g BETWEEN 75 AND 79.99 THEN '75-79'
+            WHEN g BETWEEN 80 AND 84.99 THEN '80-84'
+            WHEN g BETWEEN 85 AND 89.99 THEN '85-89'
+            WHEN g BETWEEN 90 AND 94.99 THEN '90-94'
+            WHEN g BETWEEN 95 AND 100 THEN '95-100'
+            ELSE 'Over 100'
+          END AS bucket,
+          COUNT(*) AS count
+        FROM (
+          SELECT COALESCE(average_grade, final_average) AS g
+          FROM children
+        ) x
+        GROUP BY bucket
+        ORDER BY FIELD(bucket,'95-100','90-94','85-89','80-84','75-79','Below 75','No Grade','Over 100')
+      `);
+
+      gradePerformance = bucketRowsFallback.map((r) => ({
+        bucket: r.bucket,
+        count: toNumber(r.count),
+      }));
+    }
+
+    res.json({
+      success: true,
+      // Chart 1: counts per educationLevel (summary)
+      educationLevelSummary,
+      // Optional: average finalAverage by level
+      avgByLevel,
+      // Chart 2: performance distribution using finalAverage
+      gradePerformance,
+    });
+  } catch (err) {
+    console.error("Dashboard education error:", err);
+    res.status(500).json({ success: false, error: "Dashboard education error" });
   }
 });
 
