@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState, useEffect, useCallback } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import {
   Search,
@@ -42,8 +42,27 @@ const Children = () => {
   // child that is currently being viewed in Development modal
   const [devChild, setDevChild] = useState(null);
 
-  const API_URL = "http://localhost:5000/api/children";
+  // ✅ Use env for deploy, fallback to localhost
+  const API_BASE = process.env.REACT_APP_API_BASE || "http://localhost:5000";
+  const API_URL = `${API_BASE}/api/children`;
+
   const token = localStorage.getItem("admin_token");
+
+  // ✅ Make photo URL ALWAYS valid:
+  // - full URL => keep
+  // - "/uploads/.." => prefix API_BASE
+  // - "child_123.jpg" => force "/uploads/"
+  const normalizePhoto = useCallback((c) => {
+  const raw = c?.photoUrl || c?.photo_url || c?.photo || null;
+  if (!raw) return null;
+
+  const s = String(raw);
+
+  if (s.startsWith("http://") || s.startsWith("https://")) return s;
+  if (s.startsWith("/uploads/")) return `${API_BASE}${s}`;
+
+  return `${API_BASE}/uploads/${s}`;
+}, [API_BASE]);
 
   // Fetch children on load
   useEffect(() => {
@@ -58,12 +77,17 @@ const Children = () => {
         if (!res.ok || data?.success === false) return console.error("Fetch children failed:", data);
 
         const list = Array.isArray(data) ? data : data.children || [];
-        const normalized = list.map((c) => ({
-          ...c,
-          image: c.image || "https://i.pravatar.cc/100",
-          photoUrl: c.photoUrl || c.photo_url || c.photo || null,
-          reintegration: c.reintegration || c.reintegration_details || null,
-        }));
+        const normalized = list.map((c) => {
+          const photoUrl = normalizePhoto(c);
+
+          return {
+            ...c,
+            // ✅ Use the real photo if available, otherwise fallback
+            photoUrl,
+            image: photoUrl || c.image || "https://i.pravatar.cc/100",
+            reintegration: c.reintegration || c.reintegration_details || null,
+          };
+        });
 
         setChildren(normalized);
       } catch (err) {
@@ -72,7 +96,7 @@ const Children = () => {
     };
 
     fetchChildren();
-  }, [API_URL, token]);
+  }, [API_URL, token, normalizePhoto]); // API_URL changes only if API_BASE changes
 
   // Auto-open Add Child modal via /children?add=1
   useEffect(() => {
@@ -103,10 +127,12 @@ const Children = () => {
       if (!res.ok || data?.success === false) return console.error("Add child failed:", data);
 
       const created = data.child || data;
+      const photoUrl = normalizePhoto(created);
+
       const normalized = {
         ...created,
-        image: created.image || "https://i.pravatar.cc/100",
-        photoUrl: created.photoUrl || created.photo_url || created.photo || null,
+        photoUrl,
+        image: photoUrl || created.image || "https://i.pravatar.cc/100",
         reintegration: created.reintegration || created.reintegration_details || null,
       };
 
@@ -142,10 +168,18 @@ const Children = () => {
       if (!res.ok || data?.success === false) return console.error("Update child failed:", data);
 
       const saved = data.child || data;
+
+      // Prefer server response; fallback to existing photoUrl if server didn't include it
+      const photoUrl =
+        normalizePhoto(saved) ||
+        normalizePhoto(updatedChild) ||
+        (updatedChild.photoUrl && normalizePhoto({ photoUrl: updatedChild.photoUrl })) ||
+        null;
+
       const normalized = {
         ...saved,
-        image: saved.image || "https://i.pravatar.cc/100",
-        photoUrl: saved.photoUrl || saved.photo_url || saved.photo || updatedChild.photoUrl || null,
+        photoUrl,
+        image: photoUrl || saved.image || "https://i.pravatar.cc/100",
         reintegration: saved.reintegration || saved.reintegration_details || updatedChild.reintegration || null,
       };
 
@@ -172,10 +206,12 @@ const Children = () => {
       if (!res.ok || data?.success === false) return console.error("Save reintegration failed:", data);
 
       const saved = data.child || data;
+      const photoUrl = normalizePhoto(saved);
+
       const normalized = {
         ...saved,
-        image: saved.image || "https://i.pravatar.cc/100",
-        photoUrl: saved.photoUrl || saved.photo_url || saved.photo || null,
+        photoUrl,
+        image: photoUrl || saved.image || "https://i.pravatar.cc/100",
         reintegration: saved.reintegration || saved.reintegration_details || null,
       };
 
@@ -286,6 +322,10 @@ const Children = () => {
                     src={child.photoUrl || child.image}
                     alt={fullName}
                     className="w-12 h-12 rounded-full object-cover border border-gray-200 dark:border-gray-700 shrink-0"
+                    onError={(e) => {
+                      // If the URL is bad, fallback to avatar
+                      e.currentTarget.src = "https://i.pravatar.cc/100";
+                    }}
                   />
                   <div className="min-w-0">
                     <h2 className="font-semibold text-gray-900 dark:text-gray-100 truncate">{fullName}</h2>
@@ -340,7 +380,9 @@ const Children = () => {
                   </span>
                 )}
                 {child.adoptionStatus && (
-                  <span className={`text-xs px-3 py-1 rounded-full border ${getAdoptionStatusColor(child.adoptionStatus)}`}>
+                  <span
+                    className={`text-xs px-3 py-1 rounded-full border ${getAdoptionStatusColor(child.adoptionStatus)}`}
+                  >
                     {child.adoptionStatus}
                   </span>
                 )}

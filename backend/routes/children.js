@@ -9,7 +9,6 @@ const { logAudit } = require("../utils/audit");
 const { requirePermission } = require("../middleware/permissions");
 const CHILD_PERM = "Child Management";
 
-
 const router = express.Router();
 
 /* -------------------- Multer upload setup -------------------- */
@@ -32,12 +31,18 @@ const BASE_URL = process.env.BASE_URL || "http://localhost:5000";
 
 /* -------------------- helpers -------------------- */
 const toISODate = (d) => (d ? new Date(d).toISOString().slice(0, 10) : "");
+
 const isReintegratedPair = (status, adoptionStatus) => {
   const s = String(status || "").toLowerCase();
   const a = String(adoptionStatus || "").toLowerCase();
   return s === "reintegrated" && a === "adopted";
 };
 
+const numOrNull = (v) => {
+  if (v === "" || v === null || v === undefined) return null;
+  const n = Number(v);
+  return Number.isNaN(n) ? null : n;
+};
 
 /* -------------------- GET all children -------------------- */
 router.get("/", verifyToken, requirePermission(CHILD_PERM), async (_req, res) => {
@@ -178,7 +183,6 @@ router.post("/", verifyToken, upload.single("photo"), async (req, res) => {
 });
 
 /* -------------------- PUT edit child (DON'T CLEAR PHOTO) -------------------- */
-/* -------------------- PUT edit child (DON'T CLEAR PHOTO) -------------------- */
 router.put("/:id", verifyToken, upload.single("photo"), async (req, res) => {
   try {
     const { id } = req.params;
@@ -197,7 +201,6 @@ router.put("/:id", verifyToken, upload.single("photo"), async (req, res) => {
     const nextStatus = body.status || "Active";
     const nextAdoptionStatus = body.adoptionStatus || "Not Available for Adoption";
 
-    // ✅ BACKEND RULE:
     // If NOT (Reintegrated + Adopted) => reintegration must be cleared
     const keepReintegration = isReintegratedPair(nextStatus, nextAdoptionStatus);
 
@@ -245,7 +248,7 @@ router.put("/:id", verifyToken, upload.single("photo"), async (req, res) => {
         body.notes || null,
         body.lastCheckup || null,
         photoUrl,
-        reintegrationValue, // ✅ auto cleared when not reintegrated+adopted
+        reintegrationValue,
         id,
       ]
     );
@@ -295,7 +298,6 @@ router.put("/:id", verifyToken, upload.single("photo"), async (req, res) => {
     return res.status(500).json({ success: false, error: "Server error" });
   }
 });
-
 
 /* -------------------- PUT reintegration -------------------- */
 router.put("/:id/reintegration", verifyToken, async (req, res) => {
@@ -369,7 +371,6 @@ router.get("/:id/health-records", verifyToken, requirePermission(CHILD_PERM), as
   try {
     const { id } = req.params;
 
-    // ensure child exists (optional but nice)
     const [childRows] = await pool.query("SELECT id FROM children WHERE id=?", [id]);
     if (!childRows.length) return res.status(404).json({ success: false, error: "Child not found" });
 
@@ -553,11 +554,12 @@ router.delete("/health-records/:recordId", verifyToken, async (req, res) => {
 });
 
 /* =========================================================
-    EDUCATION ROUTES
+    EDUCATION ROUTES (PER LEVEL)
     Base: /api/children
+    Requires table: education_levels
     ========================================================= */
 
-/** GET education summary + subject details */
+/** GET education levels for a child */
 router.get("/:id/education", verifyToken, requirePermission(CHILD_PERM), async (req, res) => {
   try {
     const { id } = req.params;
@@ -565,151 +567,75 @@ router.get("/:id/education", verifyToken, requirePermission(CHILD_PERM), async (
     const [childRows] = await pool.query("SELECT id FROM children WHERE id=?", [id]);
     if (!childRows.length) return res.status(404).json({ success: false, error: "Child not found" });
 
-    const [sumRows] = await pool.query(
-      `SELECT school, average_grade, honor
-        FROM education_summaries
-        WHERE child_id=?`,
+    const [rows] = await pool.query(
+      `SELECT id, child_id, education_level, school, final_average, honor, created_at, updated_at
+       FROM education_levels
+       WHERE child_id=?
+       ORDER BY created_at DESC, id DESC`,
       [id]
     );
 
-    const summaryRow = sumRows[0] || { school: "", average_grade: "", honor: "None" };
-
-    const [subRows] = await pool.query(
-      `SELECT id, child_id, subject, grade, teacher, term, comments
-        FROM education_records
-        WHERE child_id=?
-        ORDER BY id DESC`,
-      [id]
-    );
-
-    const summary = {
-      school: summaryRow.school || "",
-      averageGrade: summaryRow.average_grade ?? "",
-      honor: summaryRow.honor || "None",
-    };
-
-    const subjects = subRows.map((r) => ({
+    const levels = rows.map((r) => ({
       id: r.id,
       childId: r.child_id,
-      subject: r.subject,
-      grade: r.grade,
-      teacher: r.teacher,
-      term: r.term || "",
-      comments: r.comments || "",
+      educationLevel: r.education_level,
+      school: r.school || "",
+      finalAverage: r.final_average === null ? "" : Number(r.final_average),
+      honor: r.honor || "None",
+      createdAt: r.created_at,
+      updatedAt: r.updated_at,
     }));
 
-    return res.json({ success: true, summary, subjects });
+    return res.json({ success: true, levels });
   } catch (err) {
     console.error("GET /children/:id/education error:", err);
     return res.status(500).json({ success: false, error: "Server error" });
   }
 });
 
-/** PUT upsert education summary (edit summary card) */
-router.put("/:id/education-summary", verifyToken, async (req, res) => {
+/** POST add education level record */
+router.post("/:id/education-levels", verifyToken, async (req, res) => {
   try {
     const { id } = req.params;
     const body = req.body;
 
-    const school = body.school || "";
-    const averageGrade =
-      body.averageGrade === "" || body.averageGrade === null || body.averageGrade === undefined
-        ? null
-        : Number(body.averageGrade);
-    const honor = body.honor || "None";
+    const educationLevel = String(body.educationLevel || body.education_level || "").trim();
+    const school = String(body.school || "").trim() || null;
+    const finalAverage = numOrNull(body.finalAverage ?? body.final_average);
+    const honor = String(body.honor || "None").trim() || "None";
 
-    if (averageGrade !== null && Number.isNaN(averageGrade)) {
-      return res.status(400).json({ success: false, error: "averageGrade must be a number" });
+    if (!educationLevel) {
+      return res.status(400).json({ success: false, error: "educationLevel is required" });
     }
-
-    const [childRows] = await pool.query("SELECT id FROM children WHERE id=?", [id]);
-    if (!childRows.length) return res.status(404).json({ success: false, error: "Child not found" });
-
-    await pool.query(
-      `INSERT INTO education_summaries (child_id, school, average_grade, honor)
-        VALUES (?, ?, ?, ?)
-        ON DUPLICATE KEY UPDATE
-            school=VALUES(school),
-            average_grade=VALUES(average_grade),
-            honor=VALUES(honor)`,
-      [id, school || null, averageGrade, honor]
-    );
-
-    try {
-      await logAudit(req, {
-        action: "UPDATE",
-        module: "Children Management",
-        resource: "Education Summary",
-        resourceId: id,
-        details: `Updated education summary for child #${id}`,
-        severity: "info",
-      });
-    } catch (e) {
-      console.error("Audit log failed (UPDATE education summary):", e);
-    }
-
-    const [rows] = await pool.query(
-      `SELECT school, average_grade, honor
-        FROM education_summaries WHERE child_id=?`,
-      [id]
-    );
-
-    const r = rows[0] || { school: "", average_grade: "", honor: "None" };
-
-    const summary = {
-      school: r.school || "",
-      averageGrade: r.average_grade ?? "",
-      honor: r.honor || "None",
-    };
-
-    return res.json({ success: true, summary });
-  } catch (err) {
-    console.error("PUT /children/:id/education-summary error:", err);
-    return res.status(500).json({ success: false, error: "Server error" });
-  }
-});
-
-/** POST add education subject record */
-router.post("/:id/education-records", verifyToken, async (req, res) => {
-  try {
-    const { id } = req.params;
-    const body = req.body;
-
-    const subject = body.subject;
-    const grade = body.grade;
-    const teacher = body.teacher;
-    const term = body.term || null;
-    const comments = body.comments || null;
-
-    if (!subject || !grade || !teacher) {
-      return res.status(400).json({ success: false, error: "Missing required fields" });
+    if (finalAverage !== null && Number.isNaN(finalAverage)) {
+      return res.status(400).json({ success: false, error: "finalAverage must be a number" });
     }
 
     const [childRows] = await pool.query("SELECT id FROM children WHERE id=?", [id]);
     if (!childRows.length) return res.status(404).json({ success: false, error: "Child not found" });
 
     const [result] = await pool.query(
-      `INSERT INTO education_records (child_id, subject, grade, teacher, term, comments)
-        VALUES (?, ?, ?, ?, ?, ?)`,
-      [id, subject, grade, teacher, term, comments]
+      `INSERT INTO education_levels (child_id, education_level, school, final_average, honor)
+       VALUES (?, ?, ?, ?, ?)`,
+      [id, educationLevel, school, finalAverage, honor]
     );
 
     try {
       await logAudit(req, {
         action: "CREATE",
         module: "Children Management",
-        resource: "Education Record",
+        resource: "Education Level",
         resourceId: result.insertId,
-        details: `Created education record for child #${id} (${subject})`,
+        details: `Created education level record for child #${id} (${educationLevel})`,
         severity: "info",
       });
     } catch (e) {
-      console.error("Audit log failed (CREATE education record):", e);
+      console.error("Audit log failed (CREATE education level):", e);
     }
 
     const [rows] = await pool.query(
-      `SELECT id, child_id, subject, grade, teacher, term, comments
-        FROM education_records WHERE id=?`,
+      `SELECT id, child_id, education_level, school, final_average, honor, created_at, updated_at
+       FROM education_levels WHERE id=?`,
       [result.insertId]
     );
 
@@ -717,109 +643,113 @@ router.post("/:id/education-records", verifyToken, async (req, res) => {
     const record = {
       id: r.id,
       childId: r.child_id,
-      subject: r.subject,
-      grade: r.grade,
-      teacher: r.teacher,
-      term: r.term || "",
-      comments: r.comments || "",
+      educationLevel: r.education_level,
+      school: r.school || "",
+      finalAverage: r.final_average === null ? "" : Number(r.final_average),
+      honor: r.honor || "None",
+      createdAt: r.created_at,
+      updatedAt: r.updated_at,
     };
 
     return res.json({ success: true, record });
   } catch (err) {
-    console.error("POST /children/:id/education-records error:", err);
+    console.error("POST /children/:id/education-levels error:", err);
     return res.status(500).json({ success: false, error: "Server error" });
   }
 });
 
-/** PUT update education subject record */
-router.put("/education-records/:recordId", verifyToken, async (req, res) => {
+/** PUT update education level record */
+router.put("/education-levels/:levelId", verifyToken, async (req, res) => {
   try {
-    const { recordId } = req.params;
+    const { levelId } = req.params;
     const body = req.body;
 
-    const subject = body.subject;
-    const grade = body.grade;
-    const teacher = body.teacher;
-    const term = body.term || null;
-    const comments = body.comments || null;
+    const educationLevel = String(body.educationLevel || body.education_level || "").trim();
+    const school = String(body.school || "").trim() || null;
+    const finalAverage = numOrNull(body.finalAverage ?? body.final_average);
+    const honor = String(body.honor || "None").trim() || "None";
 
-    if (!subject || !grade || !teacher) {
-      return res.status(400).json({ success: false, error: "Missing required fields" });
+    if (!educationLevel) {
+      return res.status(400).json({ success: false, error: "educationLevel is required" });
+    }
+    if (finalAverage !== null && Number.isNaN(finalAverage)) {
+      return res.status(400).json({ success: false, error: "finalAverage must be a number" });
     }
 
-    const [existing] = await pool.query("SELECT id FROM education_records WHERE id=?", [recordId]);
+    const [existing] = await pool.query("SELECT id FROM education_levels WHERE id=?", [levelId]);
     if (!existing.length) return res.status(404).json({ success: false, error: "Record not found" });
 
     await pool.query(
-      `UPDATE education_records
-        SET subject=?, grade=?, teacher=?, term=?, comments=?
-        WHERE id=?`,
-      [subject, grade, teacher, term, comments, recordId]
+      `UPDATE education_levels
+       SET education_level=?, school=?, final_average=?, honor=?
+       WHERE id=?`,
+      [educationLevel, school, finalAverage, honor, levelId]
     );
 
     try {
       await logAudit(req, {
         action: "UPDATE",
         module: "Children Management",
-        resource: "Education Record",
-        resourceId: recordId,
-        details: `Updated education record #${recordId} (${subject})`,
+        resource: "Education Level",
+        resourceId: levelId,
+        details: `Updated education level record #${levelId} (${educationLevel})`,
         severity: "info",
       });
     } catch (e) {
-      console.error("Audit log failed (UPDATE education record):", e);
+      console.error("Audit log failed (UPDATE education level):", e);
     }
 
     const [rows] = await pool.query(
-      `SELECT id, child_id, subject, grade, teacher, term, comments
-        FROM education_records WHERE id=?`,
-      [recordId]
+      `SELECT id, child_id, education_level, school, final_average, honor, created_at, updated_at
+       FROM education_levels WHERE id=?`,
+      [levelId]
     );
 
     const r = rows[0];
     const record = {
       id: r.id,
       childId: r.child_id,
-      subject: r.subject,
-      grade: r.grade,
-      teacher: r.teacher,
-      term: r.term || "",
-      comments: r.comments || "",
+      educationLevel: r.education_level,
+      school: r.school || "",
+      finalAverage: r.final_average === null ? "" : Number(r.final_average),
+      honor: r.honor || "None",
+      createdAt: r.created_at,
+      updatedAt: r.updated_at,
     };
 
     return res.json({ success: true, record });
   } catch (err) {
-    console.error("PUT /children/education-records/:recordId error:", err);
+    console.error("PUT /children/education-levels/:levelId error:", err);
     return res.status(500).json({ success: false, error: "Server error" });
   }
 });
 
-/** DELETE education subject record */
-router.delete("/education-records/:recordId", verifyToken, async (req, res) => {
+/** DELETE education level record */
+router.delete("/education-levels/:levelId", verifyToken, async (req, res) => {
   try {
-    const { recordId } = req.params;
+    const { levelId } = req.params;
 
-    const [existing] = await pool.query("SELECT id FROM education_records WHERE id=?", [recordId]);
+    const [existing] = await pool.query("SELECT id FROM education_levels WHERE id=?", [levelId]);
     if (!existing.length) return res.status(404).json({ success: false, error: "Record not found" });
 
-    await pool.query("DELETE FROM education_records WHERE id=?", [recordId]);
+    await pool.query("DELETE FROM education_levels WHERE id=?", [levelId]);
 
     try {
       await logAudit(req, {
         action: "DELETE",
         module: "Children Management",
-        resource: "Education Record",
-        resourceId: recordId,
-        details: `Deleted education record #${recordId}`,
+        resource: "Education Level",
+        resourceId: levelId,
+        details: `Deleted education level record #${levelId}`,
         severity: "info",
       });
     } catch (e) {
-      console.error("Audit log failed (DELETE education record):", e);
+      console.error("Audit log failed (DELETE education level):", e);
     }
 
     return res.json({ success: true });
   } catch (err) {
-    console.error("DELETE /children/education-records/:recordId error:", err);
+    console.error("DELETE /children/education-levels/:levelId error:", err);
     return res.status(500).json({ success: false, error: "Server error" });
   }
 });

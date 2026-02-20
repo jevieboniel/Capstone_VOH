@@ -16,7 +16,6 @@ const reportsDir = path.join(uploadDir, "reports");
 const { requirePermission } = require("../middleware/permissions");
 const REP_PERM = "Reports";
 
-
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
 if (!fs.existsSync(reportsDir)) fs.mkdirSync(reportsDir);
 
@@ -35,6 +34,20 @@ function safeName(s) {
 function pdfPathToUrl(absPath) {
   const rel = absPath.split(path.join("uploads"))[1].replaceAll("\\", "/"); // windows safe
   return `${BASE_URL}/uploads${rel}`;
+}
+
+function isoDate(d) {
+  try {
+    return d ? new Date(d).toISOString().slice(0, 10) : "";
+  } catch {
+    return "";
+  }
+}
+
+function fmtAvg(v) {
+  if (v === null || v === undefined || v === "") return "-";
+  const n = Number(v);
+  return Number.isNaN(n) ? String(v) : `${n.toFixed(2)}%`;
 }
 
 /**
@@ -97,7 +110,11 @@ router.get("/", verifyToken, requirePermission(REP_PERM), async (req, res) => {
         childName,
         generatedAt: r.created_at,
         meta: (() => {
-          try { return r.meta ? JSON.parse(r.meta) : {}; } catch { return {}; }
+          try {
+            return r.meta ? JSON.parse(r.meta) : {};
+          } catch {
+            return {};
+          }
         })(),
       };
     });
@@ -137,7 +154,10 @@ router.post("/generate", verifyToken, requirePermission(REP_PERM), async (req, r
     } else if (reportKey === "child_profile") {
       category = "Children";
       subcategory = "Child Reports";
-      if (!childId) return res.status(400).json({ success: false, message: "childId is required for child_profile." });
+      if (!childId)
+        return res
+          .status(400)
+          .json({ success: false, message: "childId is required for child_profile." });
     } else if (reportKey === "development_overview") {
       category = "Development";
       title = "Development Milestones Summary Report";
@@ -171,11 +191,12 @@ router.post("/generate", verifyToken, requirePermission(REP_PERM), async (req, r
       if (!c) return res.status(404).json({ success: false, message: "Child not found." });
       childRow = c;
 
-      const childName = `${c.first_name || ""} ${c.middle_name ? c.middle_name + " " : ""}${c.last_name || ""}`.trim();
+      const childName = `${c.first_name || ""} ${c.middle_name ? c.middle_name + " " : ""}${
+        c.last_name || ""
+      }`.trim();
       title = `Child Profile Report: ${childName}`;
-      description = "Single child profile including health and education summary.";
-
-      // optional: get latest health/education summaries
+      description =
+        "Single child profile including recent health records and education history per level.";
     }
 
     // Create PDF file
@@ -204,20 +225,34 @@ router.post("/generate", verifyToken, requirePermission(REP_PERM), async (req, r
 
         // Content per report
         if (reportKey === "children_overview") {
-          const [rows] = await pool.query(`SELECT id, first_name, middle_name, last_name, age, gender, house, health_status, education_level, status FROM children ORDER BY id DESC LIMIT 200`);
+          const [rows] = await pool.query(
+            `SELECT id, first_name, middle_name, last_name, age, gender, house, health_status, education_level, status
+             FROM children
+             ORDER BY id DESC
+             LIMIT 200`
+          );
+
           doc.fontSize(14).text(`Total children: ${rows.length}`);
           doc.moveDown(0.5);
 
           doc.fontSize(11);
           rows.forEach((r, i) => {
-            const name = `${r.first_name || ""} ${r.middle_name ? r.middle_name + " " : ""}${r.last_name || ""}`.trim();
-            doc.text(`${i + 1}. ${name} • Age: ${r.age} • ${r.gender} • House: ${r.house || "-"} • Health: ${r.health_status || "-"} • Edu: ${r.education_level || "-"} • Status: ${r.status || "-"}`);
+            const name = `${r.first_name || ""} ${r.middle_name ? r.middle_name + " " : ""}${
+              r.last_name || ""
+            }`.trim();
+            doc.text(
+              `${i + 1}. ${name} • Age: ${r.age} • ${r.gender} • House: ${r.house || "-"} • Health: ${
+                r.health_status || "-"
+              } • Edu: ${r.education_level || "-"} • Status: ${r.status || "-"}`
+            );
           });
         }
 
         if (reportKey === "child_profile") {
           const c = childRow;
-          const childName = `${c.first_name || ""} ${c.middle_name ? c.middle_name + " " : ""}${c.last_name || ""}`.trim();
+          const childName = `${c.first_name || ""} ${c.middle_name ? c.middle_name + " " : ""}${
+            c.last_name || ""
+          }`.trim();
 
           doc.fontSize(14).text("Child Information");
           doc.moveDown(0.5);
@@ -225,7 +260,7 @@ router.post("/generate", verifyToken, requirePermission(REP_PERM), async (req, r
           doc.text(`Age: ${c.age}   •   Gender: ${c.gender}`);
           doc.text(`House: ${c.house || "-"}   •   House Parent: ${c.house_parent || "-"}`);
           doc.text(`Health Status: ${c.health_status || "-"}`);
-          doc.text(`Education Level: ${c.education_level || "-"}`);
+          doc.text(`Current Education Level: ${c.education_level || "-"}`);
           doc.text(`Status: ${c.status || "-"}`);
           doc.moveDown(1);
 
@@ -244,46 +279,39 @@ router.post("/generate", verifyToken, requirePermission(REP_PERM), async (req, r
           doc.fontSize(11);
           if (!health.length) doc.text("No health records found.");
           health.forEach((h, i) => {
-            doc.text(`${i + 1}. ${h.record_type} • ${h.provider} • ${h.record_date ? new Date(h.record_date).toISOString().slice(0, 10) : ""}`);
+            doc.text(
+              `${i + 1}. ${h.record_type} • ${h.provider} • ${h.record_date ? isoDate(h.record_date) : ""}`
+            );
             doc.text(`   Notes: ${String(h.notes || "").slice(0, 200)}`);
           });
 
           doc.moveDown(1);
 
-          // Education summary
-          const [[eduSum]] = await pool.query(
-            `SELECT school, average_grade, honor
-             FROM education_summaries
-             WHERE child_id=?`,
-            [childId]
-          );
-
-          doc.fontSize(14).text("Education Summary");
-          doc.moveDown(0.5);
-          doc.fontSize(11);
-          doc.text(`School: ${eduSum?.school || "-"}`);
-          doc.text(`Average Grade: ${eduSum?.average_grade ?? "-"}`);
-          doc.text(`Honor: ${eduSum?.honor || "-"}`);
-
-          doc.moveDown(1);
-
-          // Education records (latest 5)
-          const [eduRec] = await pool.query(
-            `SELECT subject, grade, teacher, term
-             FROM education_records
+          // ✅ Education history per level (NEW)
+          const [eduLevels] = await pool.query(
+            `SELECT education_level, school, final_average, honor, updated_at
+             FROM education_levels
              WHERE child_id=?
-             ORDER BY id DESC
-             LIMIT 5`,
+             ORDER BY updated_at DESC, id DESC
+             LIMIT 10`,
             [childId]
           );
 
-          doc.fontSize(14).text("Recent Subjects");
+          doc.fontSize(14).text("Education Records (Per Level)");
           doc.moveDown(0.5);
           doc.fontSize(11);
-          if (!eduRec.length) doc.text("No education records found.");
-          eduRec.forEach((e, i) => {
-            doc.text(`${i + 1}. ${e.subject} • Grade: ${e.grade} • Teacher: ${e.teacher} ${e.term ? `• Term: ${e.term}` : ""}`);
-          });
+
+          if (!eduLevels.length) {
+            doc.text("No education level records found.");
+          } else {
+            eduLevels.forEach((e, i) => {
+              doc.text(
+                `${i + 1}. Level: ${e.education_level || "-"} • School: ${e.school || "-"} • Final Avg: ${fmtAvg(
+                  e.final_average
+                )} • Honor: ${e.honor || "None"} • Updated: ${isoDate(e.updated_at)}`
+              );
+            });
+          }
         }
 
         if (reportKey === "development_overview") {
@@ -302,8 +330,12 @@ router.post("/generate", verifyToken, requirePermission(REP_PERM), async (req, r
 
           doc.fontSize(11);
           rows.forEach((r, i) => {
-            const name = `${r.first_name || ""} ${r.middle_name ? r.middle_name + " " : ""}${r.last_name || ""}`.trim();
-            doc.text(`${i + 1}. ${r.title} • Child: ${name} • Status: ${r.status} • Progress: ${r.progress}%`);
+            const name = `${r.first_name || ""} ${r.middle_name ? r.middle_name + " " : ""}${
+              r.last_name || ""
+            }`.trim();
+            doc.text(
+              `${i + 1}. ${r.title} • Child: ${name} • Status: ${r.status} • Progress: ${r.progress}%`
+            );
           });
         }
 
@@ -318,7 +350,9 @@ router.post("/generate", verifyToken, requirePermission(REP_PERM), async (req, r
 
           doc.fontSize(14).text("Donation Totals");
           doc.moveDown(0.5);
-          doc.fontSize(11).text(`Total Amount: PHP ${Number(totals.totalAmount || 0).toLocaleString()}`);
+          doc
+            .fontSize(11)
+            .text(`Total Amount: PHP ${Number(totals.totalAmount || 0).toLocaleString()}`);
           doc.text(`Transactions: ${Number(totals.totalTransactions || 0)}`);
           doc.moveDown(1);
 
@@ -358,7 +392,9 @@ router.post("/generate", verifyToken, requirePermission(REP_PERM), async (req, r
         if (reportKey === "annual_summary") {
           const [[cCount]] = await pool.query(`SELECT COUNT(*) AS c FROM children`);
           const [[mCount]] = await pool.query(`SELECT COUNT(*) AS c FROM milestones`);
-          const [[dCount]] = await pool.query(`SELECT COUNT(*) AS c FROM donations WHERE status='Completed'`);
+          const [[dCount]] = await pool.query(
+            `SELECT COUNT(*) AS c FROM donations WHERE status='Completed'`
+          );
 
           doc.fontSize(14).text("Yearly Summary Snapshot");
           doc.moveDown(0.5);

@@ -14,10 +14,10 @@ import {
   Plus,
   Save,
   Award,
-  Home, // ✅ added
+  Home,
 } from "lucide-react";
 import Button from "../UI/Button";
-import ReintegrationDetailsModal from "./ReintegrationDetailsModal"; // ✅ added
+import ReintegrationDetailsModal from "./ReintegrationDetailsModal";
 
 /* ----------------- Badge Color Helpers ----------------- */
 export const getStatusColor = (status) => {
@@ -360,8 +360,18 @@ const HealthRecordFormModal = ({ mode = "add", childName, initial, onClose, onSu
         <div>
           <FieldLabel>Date *</FieldLabel>
           <div className="relative">
-            <TextInput type="date" value={date} onChange={(e) => setDate(e.target.value)} required className="pr-10" disabled={saving} />
-            <Calendar size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 pointer-events-none" />
+            <TextInput
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              required
+              className="pr-10"
+              disabled={saving}
+            />
+            <Calendar
+              size={18}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 pointer-events-none"
+            />
           </div>
         </div>
 
@@ -379,8 +389,17 @@ const HealthRecordFormModal = ({ mode = "add", childName, initial, onClose, onSu
         <div>
           <FieldLabel>Next Appointment (Optional)</FieldLabel>
           <div className="relative">
-            <TextInput type="date" value={nextAppointment} onChange={(e) => setNextAppointment(e.target.value)} className="pr-10" disabled={saving} />
-            <Calendar size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 pointer-events-none" />
+            <TextInput
+              type="date"
+              value={nextAppointment}
+              onChange={(e) => setNextAppointment(e.target.value)}
+              className="pr-10"
+              disabled={saving}
+            />
+            <Calendar
+              size={18}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 pointer-events-none"
+            />
           </div>
         </div>
 
@@ -399,75 +418,83 @@ const HealthRecordFormModal = ({ mode = "add", childName, initial, onClose, onSu
 };
 
 /* =========================================================
-   EDUCATION RECORDS (Modal + Add + Edit Summary)
+   EDUCATION RECORDS (Modal + Add/Edit PER LEVEL)
+   - ✅ Removed the old "Add Education Record" (subject details) modal
+   - ✅ Subject details replaced with Education Records per level:
+     educationLevel, school, finalAverage, honor/recognition
    ========================================================= */
-const GRADE_OPTIONS = ["A", "A-", "B+", "B", "B-", "C+", "C", "C-", "D", "F"];
-const HONOR_OPTIONS = ["None", "With Honors", "High Honors", "Magna Cum Laude (High Honors)", "Summa Cum Laude", "Outstanding Student"];
+const HONOR_OPTIONS = [
+  "None",
+  "With Honors",
+  "High Honors",
+  "Magna Cum Laude (High Honors)",
+  "Summa Cum Laude",
+  "Outstanding Student",
+];
 
-const EducationSummaryCard = ({ school, averageGrade, honor, onEdit }) => {
-  const hasAvg = String(averageGrade ?? "").trim() !== "";
-  return (
-    <div className="rounded-2xl border border-blue-200 dark:border-blue-900/50 bg-blue-50 dark:bg-blue-950/20 p-5 md:p-6 flex items-start justify-between gap-4">
-      <div className="min-w-0">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-base font-semibold text-gray-900 dark:text-gray-100">School:</span>
-          <span className="text-base text-gray-900 dark:text-gray-100">{school || "—"}</span>
-        </div>
-
-        <div className="mt-3 flex flex-wrap items-center gap-3">
-          <span className="text-base font-semibold text-gray-900 dark:text-gray-100">Average Grade:</span>
-          {hasAvg ? (
-            <span className="text-sm px-3 py-1 rounded-full bg-blue-600 text-white">{Number(averageGrade).toFixed(1)}%</span>
-          ) : (
-            <span className="text-gray-600 dark:text-gray-400">—</span>
-          )}
-        </div>
-
-        {honor && honor !== "None" ? (
-          <div className="mt-3 flex items-center gap-2 text-orange-600 dark:text-orange-400">
-            <Award size={16} />
-            <span className="text-sm">{honor}</span>
-          </div>
-        ) : null}
-      </div>
-
-      <button
-        type="button"
-        onClick={onEdit}
-        className="shrink-0 inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-950/30 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-gray-900 dark:text-gray-100"
-      >
-        <Pencil size={16} />
-        Edit
-      </button>
-    </div>
-  );
-};
-
-const SubjectCard = ({ subject, teacher, term, comments, grade }) => {
+const EducationLevelCard = ({ record, onEdit }) => {
+  const hasAvg = String(record?.finalAverage ?? "").trim() !== "";
   return (
     <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-5 md:p-6 shadow-sm">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
-          <h4 className="text-base md:text-lg font-semibold text-gray-900 dark:text-gray-100">{subject || "—"}</h4>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-            {teacher || "—"}
-            {term ? <span className="mx-1">•</span> : null}
-            {term || ""}
-          </p>
-          <p className="text-sm text-gray-800 dark:text-gray-200 mt-3 whitespace-pre-wrap">{comments || "—"}</p>
+          <h4 className="text-base md:text-lg font-semibold text-gray-900 dark:text-gray-100">
+            {record?.educationLevel || "Education Level"}
+          </h4>
+
+          <div className="mt-2 text-sm text-gray-700 dark:text-gray-300 space-y-1">
+            <div className="flex flex-wrap gap-x-2">
+              <span className="font-medium text-gray-900 dark:text-gray-100">School:</span>
+              <span>{record?.school || "—"}</span>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-x-2">
+              <span className="font-medium text-gray-900 dark:text-gray-100">Final Average:</span>
+              {hasAvg ? (
+                <span className="text-xs px-2.5 py-1 rounded-full bg-blue-600 text-white">
+                  {Number(record.finalAverage).toFixed(2)}%
+                </span>
+              ) : (
+                <span className="text-gray-600 dark:text-gray-400">—</span>
+              )}
+            </div>
+
+            <div className="flex flex-wrap items-center gap-x-2">
+              <span className="font-medium text-gray-900 dark:text-gray-100">Honor/Recognition:</span>
+              {record?.honor && record.honor !== "None" ? (
+                <span className="inline-flex items-center gap-2 text-orange-600 dark:text-orange-400">
+                  <Award size={16} />
+                  <span>{record.honor}</span>
+                </span>
+              ) : (
+                <span className="text-gray-600 dark:text-gray-400">None</span>
+              )}
+            </div>
+          </div>
         </div>
 
-        <div className="shrink-0">
-          <span className="text-sm px-3 py-1 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-950/30 text-gray-900 dark:text-gray-100">
-            {grade || "—"}
-          </span>
-        </div>
+        <button
+          type="button"
+          onClick={onEdit}
+          className="shrink-0 inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-950/30 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-gray-900 dark:text-gray-100"
+        >
+          <Pencil size={16} />
+          Edit
+        </button>
       </div>
     </div>
   );
 };
 
-const EducationRecordsModal = ({ childName, summary, subjects, onClose, onAddClick, onEditSummaryClick, loading, error }) => {
+const EducationRecordsModal = ({
+  childName,
+  levels,
+  onClose,
+  onAddClick,
+  onEditClick,
+  loading,
+  error,
+}) => {
   return (
     <ModalShell
       title={
@@ -485,7 +512,7 @@ const EducationRecordsModal = ({ childName, summary, subjects, onClose, onAddCli
       <div className="flex items-center justify-end mb-5">
         <Button type="button" variant="primary" size="medium" onClick={onAddClick} className="flex items-center gap-2">
           <Plus size={16} />
-          Add Record
+          Add Level Record
         </Button>
       </div>
 
@@ -497,138 +524,101 @@ const EducationRecordsModal = ({ childName, summary, subjects, onClose, onAddCli
         <div className="p-4 rounded-xl border border-red-200 dark:border-red-900/40 bg-red-50 dark:bg-red-950/20 text-red-800 dark:text-red-200">
           {error}
         </div>
+      ) : levels?.length ? (
+        <div className="space-y-5">
+          {levels.map((lvl) => (
+            <EducationLevelCard key={lvl.id} record={lvl} onEdit={() => onEditClick?.(lvl)} />
+          ))}
+        </div>
       ) : (
-        <>
-          <EducationSummaryCard school={summary?.school} averageGrade={summary?.averageGrade} honor={summary?.honor} onEdit={onEditSummaryClick} />
-
-          <div className="my-6 border-t border-gray-200 dark:border-gray-800" />
-
-          <h3 className="text-base md:text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Subject Details</h3>
-
-          {subjects?.length ? (
-            <div className="space-y-5">
-              {subjects.map((s) => (
-                <SubjectCard key={s.id} subject={s.subject} teacher={s.teacher} term={s.term} comments={s.comments} grade={s.grade} />
-              ))}
-            </div>
-          ) : (
-            <div className="border border-dashed border-gray-300 dark:border-gray-700 rounded-2xl p-8 text-center">
-              <p className="text-gray-900 dark:text-gray-100 font-semibold">No subject records yet</p>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Click “Add Record” to add a subject.</p>
-            </div>
-          )}
-        </>
+        <div className="border border-dashed border-gray-300 dark:border-gray-700 rounded-2xl p-8 text-center">
+          <p className="text-gray-900 dark:text-gray-100 font-semibold">No education records yet</p>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+            Click “Add Level Record” to create the first one.
+          </p>
+        </div>
       )}
     </ModalShell>
   );
 };
 
-const AddEducationRecordModal = ({ childName, onClose, onSubmit, saving, error }) => {
-  const [subject, setSubject] = useState("");
-  const [grade, setGrade] = useState("");
-  const [teacher, setTeacher] = useState("");
-  const [term, setTerm] = useState("");
-  const [comments, setComments] = useState("");
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const payload = { subject: subject.trim(), grade, teacher: teacher.trim(), term: term.trim(), comments: comments.trim() };
-    if (!payload.subject || !payload.grade || !payload.teacher) return;
-    onSubmit?.(payload);
-  };
-
-  return (
-    <ModalShell title="Add Education Record" subtitle={null} onClose={onClose} maxWidth="max-w-2xl">
-      <div className="p-4 rounded-xl bg-blue-50 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/40 text-gray-800 dark:text-gray-200 mb-6">
-        Adding education record for: <span className="font-semibold">{childName}</span>
-      </div>
-
-      {error ? (
-        <div className="mb-5 p-4 rounded-xl border border-red-200 dark:border-red-900/40 bg-red-50 dark:bg-red-950/20 text-red-800 dark:text-red-200">{error}</div>
-      ) : null}
-
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div>
-          <FieldLabel>Subject *</FieldLabel>
-          <TextInput value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="e.g., Mathematics, English, Science" required disabled={saving} />
-        </div>
-
-        <div>
-          <FieldLabel>Grade *</FieldLabel>
-          <SelectInput value={grade} onChange={(e) => setGrade(e.target.value)} required disabled={saving}>
-            <option value="" disabled>
-              Select grade
-            </option>
-            {GRADE_OPTIONS.map((g) => (
-              <option key={g} value={g}>
-                {g}
-              </option>
-            ))}
-          </SelectInput>
-        </div>
-
-        <div>
-          <FieldLabel>Teacher *</FieldLabel>
-          <TextInput value={teacher} onChange={(e) => setTeacher(e.target.value)} placeholder="Teacher name" required disabled={saving} />
-        </div>
-
-        <div>
-          <FieldLabel>Term/Quarter</FieldLabel>
-          <TextInput value={term} onChange={(e) => setTerm(e.target.value)} placeholder="e.g., Term 2 2025, Q1 2025" disabled={saving} />
-        </div>
-
-        <div>
-          <FieldLabel>Comments/Observations</FieldLabel>
-          <TextArea value={comments} onChange={(e) => setComments(e.target.value)} placeholder="Teacher comments or observations" disabled={saving} />
-        </div>
-
-        <div className="pt-2 flex items-center justify-end gap-3">
-          <Button type="button" variant="outline" size="medium" onClick={onClose} disabled={saving}>
-            Cancel
-          </Button>
-          <Button type="submit" variant="primary" size="medium" className="flex items-center gap-2" disabled={saving}>
-            <Save size={16} />
-            {saving ? "Saving..." : "Add Record"}
-          </Button>
-        </div>
-      </form>
-    </ModalShell>
-  );
-};
-
-const EditEducationSummaryModal = ({ initial, onClose, onSubmit, saving, error }) => {
+const EducationLevelFormModal = ({ mode = "add", childName, initial, onClose, onSubmit, saving, error }) => {
+  const [educationLevel, setEducationLevel] = useState(initial?.educationLevel || "");
   const [school, setSchool] = useState(initial?.school || "");
-  const [averageGrade, setAverageGrade] = useState(String(initial?.averageGrade ?? ""));
+  const [finalAverage, setFinalAverage] = useState(String(initial?.finalAverage ?? ""));
   const [honor, setHonor] = useState(initial?.honor || "None");
 
   useEffect(() => {
+    setEducationLevel(initial?.educationLevel || "");
     setSchool(initial?.school || "");
-    setAverageGrade(String(initial?.averageGrade ?? ""));
+    setFinalAverage(String(initial?.finalAverage ?? ""));
     setHonor(initial?.honor || "None");
   }, [initial]);
 
+  const title = mode === "edit" ? "Edit Education Record" : "Add Education Record";
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    const avg = averageGrade === "" ? "" : Number(averageGrade);
-    if (averageGrade !== "" && Number.isNaN(avg)) return;
-    onSubmit?.({ school: school.trim(), averageGrade: averageGrade === "" ? "" : avg, honor });
+    const avg = finalAverage === "" ? "" : Number(finalAverage);
+    if (finalAverage !== "" && Number.isNaN(avg)) return;
+
+    onSubmit?.({
+      ...initial,
+      educationLevel: educationLevel.trim(),
+      school: school.trim(),
+      finalAverage: finalAverage === "" ? "" : avg,
+      honor,
+    });
   };
 
   return (
-    <ModalShell title="Edit Education Record Summary" subtitle={null} onClose={onClose} maxWidth="max-w-2xl">
+    <ModalShell title={title} subtitle={null} onClose={onClose} maxWidth="max-w-2xl">
+      {mode === "add" ? (
+        <div className="p-4 rounded-xl bg-blue-50 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/40 text-gray-800 dark:text-gray-200 mb-6">
+          Adding education record for: <span className="font-semibold">{childName}</span>
+        </div>
+      ) : null}
+
       {error ? (
-        <div className="mb-5 p-4 rounded-xl border border-red-200 dark:border-red-900/40 bg-red-50 dark:bg-red-950/20 text-red-800 dark:text-red-200">{error}</div>
+        <div className="mb-5 p-4 rounded-xl border border-red-200 dark:border-red-900/40 bg-red-50 dark:bg-red-950/20 text-red-800 dark:text-red-200">
+          {error}
+        </div>
       ) : null}
 
       <form onSubmit={handleSubmit} className="space-y-6">
+        {/* ✅ NEW FIELD */}
         <div>
-          <FieldLabel>School</FieldLabel>
-          <TextInput value={school} onChange={(e) => setSchool(e.target.value)} placeholder="Grade 3" disabled={saving} />
+          <FieldLabel>Education Level *</FieldLabel>
+          <TextInput
+            value={educationLevel}
+            onChange={(e) => setEducationLevel(e.target.value)}
+            placeholder="e.g., Grade 6, Junior High, Senior High, College"
+            required
+            disabled={saving}
+          />
         </div>
 
         <div>
-          <FieldLabel>Average Grade (%)</FieldLabel>
-          <TextInput type="number" step="0.1" value={averageGrade} onChange={(e) => setAverageGrade(e.target.value)} placeholder="91.8" disabled={saving} />
+          <FieldLabel>School *</FieldLabel>
+          <TextInput
+            value={school}
+            onChange={(e) => setSchool(e.target.value)}
+            placeholder="School name"
+            required
+            disabled={saving}
+          />
+        </div>
+
+        <div>
+          <FieldLabel>Final Average (%)</FieldLabel>
+          <TextInput
+            type="number"
+            step="0.01"
+            value={finalAverage}
+            onChange={(e) => setFinalAverage(e.target.value)}
+            placeholder="e.g., 91.00"
+            disabled={saving}
+          />
         </div>
 
         <div>
@@ -648,7 +638,7 @@ const EditEducationSummaryModal = ({ initial, onClose, onSubmit, saving, error }
           </Button>
           <Button type="submit" variant="primary" size="medium" className="flex items-center gap-2" disabled={saving}>
             <Save size={16} />
-            {saving ? "Saving..." : "Save Changes"}
+            {saving ? "Saving..." : mode === "edit" ? "Save Changes" : "Add Record"}
           </Button>
         </div>
       </form>
@@ -667,10 +657,8 @@ const ChildDetailModal = ({ child, onClose, onEdit, onViewDevelopment }) => {
   const lastName = safeChild.lastName ?? safeChild.last_name ?? "";
   const fullName = `${firstName} ${middleName ? middleName + " " : ""}${lastName}`.trim();
 
-  // ✅ reintegration details modal state
   const [showReintegrationDetails, setShowReintegrationDetails] = useState(false);
 
-  // API like Children.js
   const API_URL = "http://localhost:5000/api/children";
   const token = localStorage.getItem("admin_token");
 
@@ -837,50 +825,46 @@ const ChildDetailModal = ({ child, onClose, onEdit, onViewDevelopment }) => {
     }
   };
 
-  /* --------- Education state --------- */
-  const fallbackEducationSummary = useMemo(() => {
-    const s =
+  /* --------- Education state (PER LEVEL) --------- */
+  const fallbackEducationLevels = useMemo(() => {
+    // If you don’t have backend "levels" yet, we create 1 level record from existing fields.
+    const summary =
       safeChild.educationSummary ??
       safeChild.education_summary ??
       {
-        school: safeChild.educationLevel || "",
+        school: "",
         averageGrade: "",
         honor: "None",
       };
 
-    return {
-      school: s.school ?? s.level ?? "",
-      averageGrade: s.averageGrade ?? s.average_grade ?? "",
-      honor: s.honor ?? s.recognition ?? "None",
-    };
+    const school = summary.school ?? summary.level ?? safeChild.school ?? "";
+    const avg = summary.averageGrade ?? summary.average_grade ?? "";
+    const honor = summary.honor ?? summary.recognition ?? "None";
+    const level = safeChild.educationLevel || summary.educationLevel || summary.education_level || "";
+
+    return [
+      {
+        id: "summary", // special local id
+        educationLevel: level || "—",
+        school: school || "",
+        finalAverage: avg === "" ? "" : avg,
+        honor: honor || "None",
+      },
+    ];
   }, [safeChild]);
 
-  const fallbackEducationSubjects = useMemo(() => {
-    const list = safeChild.educationRecords ?? safeChild.education_records ?? safeChild.subjects ?? [];
-    return (Array.isArray(list) ? list : []).map((r, idx) => ({
-      id: r.id ?? r._id ?? `${safeChild.id || "child"}-e-${idx}`,
-      subject: r.subject ?? r.name ?? "",
-      grade: r.grade ?? r.score ?? "",
-      teacher: r.teacher ?? r.instructor ?? "",
-      term: r.term ?? r.quarter ?? "",
-      comments: r.comments ?? r.observations ?? "",
-      ...r,
-    }));
-  }, [safeChild]);
-
-  const [educationSummary, setEducationSummary] = useState(fallbackEducationSummary);
-  const [educationSubjects, setEducationSubjects] = useState(fallbackEducationSubjects);
-
+  const [educationLevels, setEducationLevels] = useState(fallbackEducationLevels);
   const [isEducationOpen, setIsEducationOpen] = useState(false);
-  const [isEduAddOpen, setIsEduAddOpen] = useState(false);
-  const [isEduSummaryEditOpen, setIsEduSummaryEditOpen] = useState(false);
+
+  // ✅ Only one modal now for add/edit education level records
+  const [isEduLevelFormOpen, setIsEduLevelFormOpen] = useState(false);
+  const [eduEditingLevel, setEduEditingLevel] = useState(null);
 
   const [eduLoading, setEduLoading] = useState(false);
   const [eduError, setEduError] = useState("");
   const [eduSaving, setEduSaving] = useState(false);
 
-  useEffect(() => setEducationSummary(fallbackEducationSummary), [fallbackEducationSummary]);
-  useEffect(() => setEducationSubjects(fallbackEducationSubjects), [fallbackEducationSubjects]);
+  useEffect(() => setEducationLevels(fallbackEducationLevels), [fallbackEducationLevels]);
 
   const fetchEducation = async () => {
     if (!safeChild?.id) return;
@@ -896,8 +880,31 @@ const ChildDetailModal = ({ child, onClose, onEdit, onViewDevelopment }) => {
         throw new Error(data?.error || "Failed to fetch education records");
       }
 
-      setEducationSummary(data.summary || { school: "", averageGrade: "", honor: "None" });
-      setEducationSubjects(Array.isArray(data.subjects) ? data.subjects : []);
+      // Prefer new backend shape: { levels: [...] }
+      if (Array.isArray(data.levels)) {
+        setEducationLevels(
+          data.levels.map((r, idx) => ({
+            id: r.id ?? r._id ?? `${safeChild.id}-lvl-${idx}`,
+            educationLevel: r.educationLevel ?? r.education_level ?? "",
+            school: r.school ?? "",
+            finalAverage: r.finalAverage ?? r.final_average ?? "",
+            honor: r.honor ?? r.recognition ?? "None",
+          }))
+        );
+        return;
+      }
+
+      // Fallback to old backend shape: { summary: {...} }
+      const s = data.summary || {};
+      setEducationLevels([
+        {
+          id: "summary",
+          educationLevel: s.educationLevel ?? s.education_level ?? safeChild.educationLevel ?? "",
+          school: s.school ?? "",
+          finalAverage: s.averageGrade ?? s.average_grade ?? s.finalAverage ?? s.final_average ?? "",
+          honor: s.honor ?? s.recognition ?? "None",
+        },
+      ]);
     } catch (e) {
       setEduError(e.message || "Failed to fetch education records");
     } finally {
@@ -912,50 +919,115 @@ const ChildDetailModal = ({ child, onClose, onEdit, onViewDevelopment }) => {
 
   const closeEducationRecords = () => setIsEducationOpen(false);
 
-  const handleAddEducationSubject = async (payload) => {
+  const handleUpsertEducationLevel = async (payload) => {
     if (!safeChild?.id) return;
     setEduSaving(true);
     setEduError("");
+
+    // Normalize payload for backend
+    const body = {
+      educationLevel: payload.educationLevel,
+      school: payload.school,
+      finalAverage: payload.finalAverage,
+      honor: payload.honor,
+    };
+
     try {
-      const res = await fetch(`${API_URL}/${safeChild.id}/education-records`, {
-        method: "POST",
-        headers: jsonHeaders,
-        body: JSON.stringify(payload),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok || !data?.success) {
-        throw new Error(data?.error || "Failed to add education record");
+      // If you have NEW endpoints, this will work:
+      // POST   /api/children/:id/education-levels
+      // PUT    /api/children/education-levels/:levelId
+      // If not available yet, we fallback to old /education-summary for the "summary" record.
+      let res;
+      let data;
+
+      const isEdit = !!payload?.id && payload.id !== "summary";
+
+      if (isEdit) {
+        res = await fetch(`${API_URL}/education-levels/${payload.id}`, {
+          method: "PUT",
+          headers: jsonHeaders,
+          body: JSON.stringify(body),
+        });
+        data = await res.json().catch(() => ({}));
+        if (!res.ok || !data?.success) throw new Error(data?.error || "Failed to update education level");
+        const rec = data.level || data.record || body;
+        setEducationLevels((prev) =>
+          prev.map((x) =>
+            x.id === payload.id
+              ? {
+                  ...x,
+                  educationLevel: rec.educationLevel ?? rec.education_level ?? body.educationLevel,
+                  school: rec.school ?? body.school,
+                  finalAverage: rec.finalAverage ?? rec.final_average ?? body.finalAverage,
+                  honor: rec.honor ?? rec.recognition ?? body.honor,
+                }
+              : x
+          )
+        );
+      } else {
+        // Add mode
+        res = await fetch(`${API_URL}/${safeChild.id}/education-levels`, {
+          method: "POST",
+          headers: jsonHeaders,
+          body: JSON.stringify(body),
+        });
+
+        // If backend does not have /education-levels, fallback to old /education-summary
+        if (res.status === 404 || res.status === 405) {
+          res = await fetch(`${API_URL}/${safeChild.id}/education-summary`, {
+            method: "PUT",
+            headers: jsonHeaders,
+            body: JSON.stringify({
+              school: body.school,
+              // old field name
+              averageGrade: body.finalAverage,
+              honor: body.honor,
+              // try to store education level too if backend supports extra column
+              educationLevel: body.educationLevel,
+            }),
+          });
+        }
+
+        data = await res.json().catch(() => ({}));
+        if (!res.ok || !data?.success) throw new Error(data?.error || "Failed to save education record");
+
+        const rec = data.level || data.summary || data.record || body;
+
+        // If using old endpoint, just update the single "summary" record
+        if (data.summary || payload.id === "summary") {
+          setEducationLevels((prev) => [
+            {
+              id: "summary",
+              educationLevel: rec.educationLevel ?? rec.education_level ?? body.educationLevel,
+              school: rec.school ?? body.school,
+              finalAverage:
+                rec.finalAverage ??
+                rec.final_average ??
+                rec.averageGrade ??
+                rec.average_grade ??
+                body.finalAverage,
+              honor: rec.honor ?? rec.recognition ?? body.honor,
+            },
+          ]);
+        } else {
+          // New endpoint create returns a new id
+          setEducationLevels((prev) => [
+            {
+              id: rec.id ?? rec._id ?? `${safeChild.id}-lvl-${Date.now()}`,
+              educationLevel: rec.educationLevel ?? rec.education_level ?? body.educationLevel,
+              school: rec.school ?? body.school,
+              finalAverage: rec.finalAverage ?? rec.final_average ?? body.finalAverage,
+              honor: rec.honor ?? rec.recognition ?? body.honor,
+            },
+            ...prev,
+          ]);
+        }
       }
 
-      const record = data.record;
-      setEducationSubjects((prev) => [record, ...prev]);
-      setIsEduAddOpen(false);
+      setIsEduLevelFormOpen(false);
+      setEduEditingLevel(null);
     } catch (e) {
-      setEduError(e.message || "Failed to add education record");
-    } finally {
-      setEduSaving(false);
-    }
-  };
-
-  const handleSaveEducationSummary = async (payload) => {
-    if (!safeChild?.id) return;
-    setEduSaving(true);
-    setEduError("");
-    try {
-      const res = await fetch(`${API_URL}/${safeChild.id}/education-summary`, {
-        method: "PUT",
-        headers: jsonHeaders,
-        body: JSON.stringify(payload),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok || !data?.success) {
-        throw new Error(data?.error || "Failed to save education summary");
-      }
-
-      setEducationSummary(data.summary || payload);
-      setIsEduSummaryEditOpen(false);
-    } catch (e) {
-      setEduError(e.message || "Failed to save education summary");
+      setEduError(e.message || "Failed to save education record");
     } finally {
       setEduSaving(false);
     }
@@ -966,16 +1038,41 @@ const ChildDetailModal = ({ child, onClose, onEdit, onViewDevelopment }) => {
 
   return (
     <>
-      <ModalShell title={fullName} subtitle={`${safeChild.age} years old • ${safeChild.gender}`} onClose={onClose} maxWidth="max-w-3xl">
+      <ModalShell
+        title={fullName}
+        subtitle={`${safeChild.age} years old • ${safeChild.gender}`}
+        onClose={onClose}
+        maxWidth="max-w-3xl"
+      >
         {/* Header chips */}
         <div className="flex items-start gap-4">
-          <img src={safeChild.photoUrl || safeChild.image} alt={fullName} className="w-14 h-14 rounded-full object-cover border border-gray-200 dark:border-gray-800" />
+          <img
+            src={safeChild.photoUrl || safeChild.image}
+            alt={fullName}
+            className="w-14 h-14 rounded-full object-cover border border-gray-200 dark:border-gray-800"
+          />
 
           <div className="flex-1">
             <div className="flex flex-wrap gap-2">
-              {safeChild.status && <span className={`text-xs px-3 py-1 rounded-full border ${getStatusColor(safeChild.status)}`}>{safeChild.status}</span>}
-              {safeChild.healthStatus && <span className={`text-xs px-3 py-1 rounded-full border ${getHealthStatusColor(safeChild.healthStatus)}`}>{safeChild.healthStatus}</span>}
-              {safeChild.adoptionStatus && <span className={`text-xs px-3 py-1 rounded-full border ${getAdoptionStatusColor(safeChild.adoptionStatus)}`}>{safeChild.adoptionStatus}</span>}
+              {safeChild.status && (
+                <span className={`text-xs px-3 py-1 rounded-full border ${getStatusColor(safeChild.status)}`}>
+                  {safeChild.status}
+                </span>
+              )}
+              {safeChild.healthStatus && (
+                <span
+                  className={`text-xs px-3 py-1 rounded-full border ${getHealthStatusColor(safeChild.healthStatus)}`}
+                >
+                  {safeChild.healthStatus}
+                </span>
+              )}
+              {safeChild.adoptionStatus && (
+                <span
+                  className={`text-xs px-3 py-1 rounded-full border ${getAdoptionStatusColor(safeChild.adoptionStatus)}`}
+                >
+                  {safeChild.adoptionStatus}
+                </span>
+              )}
             </div>
           </div>
         </div>
@@ -1035,22 +1132,39 @@ const ChildDetailModal = ({ child, onClose, onEdit, onViewDevelopment }) => {
 
         {/* Actions */}
         <div className="mt-8 flex flex-wrap gap-3">
-          <Button type="button" variant="primary" size="medium" onClick={() => onViewDevelopment?.(safeChild)} className="flex items-center gap-2">
+          <Button
+            type="button"
+            variant="primary"
+            size="medium"
+            onClick={() => onViewDevelopment?.(safeChild)}
+            className="flex items-center gap-2"
+          >
             <LineChart size={16} />
             View Development
           </Button>
 
-          <Button type="button" variant="outline" size="medium" onClick={openHealthRecords} className="flex items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="medium"
+            onClick={openHealthRecords}
+            className="flex items-center gap-2"
+          >
             <Stethoscope size={16} />
             Health Records
           </Button>
 
-          <Button type="button" variant="outline" size="medium" onClick={openEducationRecords} className="flex items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="medium"
+            onClick={openEducationRecords}
+            className="flex items-center gap-2"
+          >
             <GraduationCap size={16} />
             Education Records
           </Button>
 
-          {/* ✅ View Reintegration Details button */}
           {(safeChild.status === "Reintegrated" || !!safeChild.reintegration) && (
             <Button
               type="button"
@@ -1064,14 +1178,20 @@ const ChildDetailModal = ({ child, onClose, onEdit, onViewDevelopment }) => {
             </Button>
           )}
 
-          <Button type="button" variant="outline" size="medium" onClick={() => onEdit?.(safeChild)} className="flex items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="medium"
+            onClick={() => onEdit?.(safeChild)}
+            className="flex items-center gap-2"
+          >
             <Pencil size={16} />
             Edit Profile
           </Button>
         </div>
       </ModalShell>
 
-      {/* ✅ Reintegration Details Modal */}
+      {/* Reintegration Details Modal */}
       {showReintegrationDetails && (
         <ReintegrationDetailsModal child={safeChild} onClose={() => setShowReintegrationDetails(false)} />
       )}
@@ -1121,34 +1241,50 @@ const ChildDetailModal = ({ child, onClose, onEdit, onViewDevelopment }) => {
         />
       ) : null}
 
-      {/* ===================== EDUCATION MODALS ===================== */}
+      {/* ===================== EDUCATION MODALS (UPDATED) ===================== */}
       {isEducationOpen ? (
         <EducationRecordsModal
           childName={fullName}
-          summary={educationSummary}
-          subjects={educationSubjects}
+          levels={educationLevels}
           onClose={closeEducationRecords}
           onAddClick={() => {
             closeEducationRecords();
             setEduError("");
-            setIsEduAddOpen(true);
+            setEduEditingLevel(null);
+            setIsEduLevelFormOpen(true);
           }}
-          onEditSummaryClick={() => {
+          onEditClick={(level) => {
             closeEducationRecords();
             setEduError("");
-            setIsEduSummaryEditOpen(true);
+            setEduEditingLevel(level);
+            setIsEduLevelFormOpen(true);
           }}
           loading={eduLoading}
           error={eduError}
         />
       ) : null}
 
-      {isEduAddOpen ? (
-        <AddEducationRecordModal childName={fullName} onClose={() => setIsEduAddOpen(false)} onSubmit={handleAddEducationSubject} saving={eduSaving} error={eduError} />
-      ) : null}
-
-      {isEduSummaryEditOpen ? (
-        <EditEducationSummaryModal initial={educationSummary} onClose={() => setIsEduSummaryEditOpen(false)} onSubmit={handleSaveEducationSummary} saving={eduSaving} error={eduError} />
+      {isEduLevelFormOpen ? (
+        <EducationLevelFormModal
+          mode={eduEditingLevel ? "edit" : "add"}
+          childName={fullName}
+          initial={
+            eduEditingLevel || {
+              id: null,
+              educationLevel: safeChild.educationLevel || "",
+              school: "",
+              finalAverage: "",
+              honor: "None",
+            }
+          }
+          onClose={() => {
+            setIsEduLevelFormOpen(false);
+            setEduEditingLevel(null);
+          }}
+          onSubmit={handleUpsertEducationLevel}
+          saving={eduSaving}
+          error={eduError}
+        />
       ) : null}
     </>
   );

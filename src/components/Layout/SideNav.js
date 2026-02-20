@@ -33,7 +33,7 @@ const navItems = getNavItemsForUser(user);
         <div className="flex items-center gap-3">
           <div className="h-16 w-16 flex-shrink-0 rounded-full overflow-hidden border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-950 flex items-center justify-center">
                 <img
-                  src="/voh.png"
+                  src="/./assets/voh.png"
                   alt="Village of Hope Logo"
                   className="h-full w-full rounded-full object-contain"
                 />

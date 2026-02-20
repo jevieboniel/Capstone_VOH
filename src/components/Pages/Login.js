@@ -88,7 +88,7 @@ const Login = () => {
             <div className="bg-white/90 backdrop-blur border border-white/60 shadow-2xl p-8 rounded-3xl">
               <div className="flex flex-col items-center mb-6">
                 <div className="h-20 w-20 rounded-full bg-white shadow-lg overflow-hidden border border-slate-200 flex items-center justify-center">
-                  <img src="/voh.png" alt="Logo" className="h-full w-full object-cover" />
+                  <img src="/./assets/voh.png" alt="Logo" className="h-full w-full object-cover" />
                 </div>
                 <h2 className="mt-4 text-2xl font-bold text-slate-900">
                   Village of Hope
